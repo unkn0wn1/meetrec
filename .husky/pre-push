@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+set -e
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+if [ "$branch" = "main" ] && [ -z "${ALLOW_MAIN_PUSH:-}" ]; then
+  echo "[husky] Direct pushes to main are blocked. Open a PR instead."
+  echo "Override (emergency only): ALLOW_MAIN_PUSH=1 git push"
+  exit 1
+fi
+
+echo "[husky] Running unit tests..."
+npm run --silent test

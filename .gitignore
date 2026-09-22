@@ -1,0 +1,15 @@
+node_modules/
+.grok-briefs/
+.grok-logs/
+dist/
+out/
+recordings/
+.env
+.env.*
+!.env.example
+secrets/
+coverage/
+*.log
+.DS_Store
+.eslintcache
+*.tsbuildinfo
