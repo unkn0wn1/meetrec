@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -e
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+if [ "$branch" = "main" ] && [ -z "${ALLOW_MAIN_COMMIT:-}" ]; then
+  echo "[husky] Direct commits to main are blocked."
+  echo "  git checkout -b feature/your-change"
+  echo "Override (emergency only): ALLOW_MAIN_COMMIT=1 git commit ..."
+  exit 1
+fi
+
+echo "[husky] Running guard:file-size..."
+npm run --silent guard:file-size
+
+echo "[husky] Auto-formatting staged files (lint-staged)..."
+npx --no-install lint-staged
+
+echo "[husky] Running typecheck..."
+npm run --silent typecheck
