@@ -46,6 +46,7 @@ export interface CalendarCore {
   publish(): Promise<void>
   saveRuntime(): Promise<void>
   fetchGoogle(): Promise<void>
+  fetchMicrosoft(): Promise<void>
   run<T>(work: () => Promise<T>): Promise<T>
 }
 

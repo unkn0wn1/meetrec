@@ -91,6 +91,18 @@ export async function fireArm(core: CalendarCore, arm: CalendarArm): Promise<voi
   })
 }
 
+export async function disconnectMicrosoft(core: CalendarCore): Promise<void> {
+  await core.deps.secrets.update((draft) => {
+    draft.microsoftOAuth = null
+  })
+  core.memory.events.microsoft = []
+  core.memory.fetchedAt.microsoft = null
+  core.memory.errors.microsoft = null
+  core.memory.runtime = withoutProvider(core.memory.runtime, 'microsoft')
+  await core.saveRuntime()
+  await core.publish()
+}
+
 export async function disconnectGoogle(core: CalendarCore): Promise<void> {
   const bag = await core.deps.secrets.readBag()
   const refresh = bag.googleOAuth?.refreshToken

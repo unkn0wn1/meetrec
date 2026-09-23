@@ -20,7 +20,7 @@ xAI sign-in uses the public device-code client id `b1a00492-073a-47ea-816f-4c329
 
 ## Calendar OAuth (Google and Microsoft)
 
-Google Calendar connect uses this flow. Microsoft Calendar and the upload consent are not in the app yet. It is separate from the xAI device-code client. Do not reuse that client id.
+Google Calendar and Microsoft Calendar connect use this flow. The upload consent is not in the app yet. It is separate from the xAI device-code client. Do not reuse that client id.
 
 Desktop public client: authorization code + PKCE (S256) + loopback. The system browser opens the provider page. That page never loads inside Electron. `state` must match. A mismatch stores nothing.
 
