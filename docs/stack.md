@@ -13,7 +13,7 @@
 | Package manager   | **npm**                                                                                     |
 | Packaging         | **electron-builder** (Win NSIS + portable, Linux AppImage)                                  |
 | Platform priority | **Linux first**. Windows capture is experimental. macOS is a stub.                          |
-| Calendar          | Google Calendar readonly is in the app (PKCE + loopback). Microsoft Graph follows.          |
+| Calendar          | Google Calendar readonly and Microsoft Graph are in the app (PKCE + loopback).              |
 | Default STT       | xAI Grok Voice Transcribe 2.0 (`diarize` on) on a fresh install                             |
 | Default LLM       | `grok-4.5` on a fresh install. Voice and AI defaults are separate                           |
 | Other users       | Pluggable provider list + API keys                                                          |

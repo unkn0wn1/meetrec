@@ -8,7 +8,8 @@ describe('secret bag codec', () => {
       openaiApiKey: null,
       xaiOAuth: null,
       googleClientSecret: null,
-      googleOAuth: null
+      googleOAuth: null,
+      microsoftOAuth: null
     })
   })
 
@@ -45,6 +46,14 @@ describe('secret bag codec', () => {
         tokenType: 'Bearer',
         scope: 'openid email',
         accountEmail: 'ada@example.com'
+      },
+      microsoftOAuth: {
+        accessToken: 'ms-access',
+        refreshToken: 'ms-refresh',
+        expiresAt: 90,
+        tokenType: 'Bearer',
+        scope: 'Calendars.Read',
+        accountEmail: 'ada@contoso.com'
       }
     }
     expect(decodeSecretBag(encodeSecretBag(bag))).toEqual(bag)

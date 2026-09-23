@@ -171,6 +171,11 @@ export class SecretStore {
 
 function bagHasSecret(bag: SecretBag): boolean {
   return Boolean(
-    bag.xaiApiKey || bag.openaiApiKey || bag.xaiOAuth || bag.googleClientSecret || bag.googleOAuth
+    bag.xaiApiKey ||
+    bag.openaiApiKey ||
+    bag.xaiOAuth ||
+    bag.googleClientSecret ||
+    bag.googleOAuth ||
+    bag.microsoftOAuth
   )
 }

@@ -50,6 +50,18 @@ export const useCalendarStore = defineStore('calendar', () => {
     return run(() => useMeetrec().calendar.disconnect({ provider: 'google' }))
   }
 
+  async function saveMicrosoft(clientId: string): Promise<boolean> {
+    return run(() => useMeetrec().calendar.saveMicrosoftClient({ clientId }))
+  }
+
+  async function connectMicrosoft(): Promise<boolean> {
+    return run(() => useMeetrec().calendar.connect({ provider: 'microsoft', purpose: 'calendar' }))
+  }
+
+  async function disconnectMicrosoft(): Promise<boolean> {
+    return run(() => useMeetrec().calendar.disconnect({ provider: 'microsoft' }))
+  }
+
   async function dismiss(occurrenceKey: string): Promise<boolean> {
     return run(() => useMeetrec().calendar.dismiss({ occurrenceKey }))
   }
@@ -77,6 +89,9 @@ export const useCalendarStore = defineStore('calendar', () => {
     connectGoogle,
     cancelConnect,
     disconnectGoogle,
+    saveMicrosoft,
+    connectMicrosoft,
+    disconnectMicrosoft,
     dismiss,
     arm,
     start

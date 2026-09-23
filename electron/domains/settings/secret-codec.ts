@@ -23,6 +23,7 @@ export interface SecretBag {
   xaiOAuth: OAuthTokenSet | null
   googleClientSecret: string | null
   googleOAuth: CalendarTokenSet | null
+  microsoftOAuth: CalendarTokenSet | null
 }
 
 export function emptySecretBag(): SecretBag {
@@ -31,7 +32,8 @@ export function emptySecretBag(): SecretBag {
     openaiApiKey: null,
     xaiOAuth: null,
     googleClientSecret: null,
-    googleOAuth: null
+    googleOAuth: null,
+    microsoftOAuth: null
   }
 }
 
@@ -41,7 +43,8 @@ export function encodeSecretBag(bag: SecretBag): string {
     openaiApiKey: bag.openaiApiKey,
     xaiOAuth: bag.xaiOAuth,
     googleClientSecret: bag.googleClientSecret,
-    googleOAuth: bag.googleOAuth
+    googleOAuth: bag.googleOAuth,
+    microsoftOAuth: bag.microsoftOAuth
   })
 }
 
@@ -60,7 +63,8 @@ export function decodeSecretBag(raw: string): SecretBag | null {
     openaiApiKey: trimOrNull(record.openaiApiKey),
     xaiOAuth: parseOAuth(record.xaiOAuth),
     googleClientSecret: trimOrNull(record.googleClientSecret),
-    googleOAuth: parseCalendarToken(record.googleOAuth)
+    googleOAuth: parseCalendarToken(record.googleOAuth),
+    microsoftOAuth: parseCalendarToken(record.microsoftOAuth)
   }
 }
 
