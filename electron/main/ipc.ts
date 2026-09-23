@@ -12,25 +12,38 @@ import {
 } from '../shared/ipc-contract'
 import type { RecordingController } from './recording-controller'
 
+export interface RecordingHooks {
+  afterSaved?: (id: string) => Promise<void>
+}
+
 export function registerAppIpc(
   controller: RecordingController,
   library: LibraryService,
-  settings: SettingsService
+  settings: SettingsService,
+  hooks: RecordingHooks = {}
 ): void {
   ipcMain.handle(IPC.recordingStart, () => controller.start())
-  ipcMain.handle(IPC.recordingStop, () => controller.stop())
+  ipcMain.handle(IPC.recordingStop, async () => {
+    const result = await controller.stop()
+    await runHook(hooks, result.id)
+    return result
+  })
   ipcMain.handle(IPC.recordingStatus, () => controller.status())
   ipcMain.handle(IPC.libraryList, () => library.list())
   ipcMain.handle(IPC.libraryDetail, (_event, id: string) => library.detail(id).then(toDetailView))
   ipcMain.handle(IPC.librarySpeakers, (_event, id: string, names: Record<string, string>) =>
     library.updateSpeakers(id, names).then(toMetaView)
   )
-  ipcMain.handle(IPC.libraryTranscribe, (_event, id: string) =>
-    library.transcribe(id).then(toDetailView)
-  )
-  ipcMain.handle(IPC.librarySummarize, (_event, id: string) =>
-    library.summarize(id).then(toDetailView)
-  )
+  ipcMain.handle(IPC.libraryTranscribe, async (_event, id: string) => {
+    const detail = await library.transcribe(id)
+    await runHook(hooks, id)
+    return toDetailView(detail)
+  })
+  ipcMain.handle(IPC.librarySummarize, async (_event, id: string) => {
+    const detail = await library.summarize(id)
+    await runHook(hooks, id)
+    return toDetailView(detail)
+  })
   ipcMain.handle(IPC.settingsGet, (): Promise<SettingsStatus> => settings.status())
   ipcMain.handle(IPC.settingsSetVoiceDefault, (_event, provider: ProviderId) =>
     settings.setVoiceDefault(provider)
@@ -74,6 +87,15 @@ export function registerAppIpc(
     settings.signOutXaiOAuth()
   )
   ipcMain.handle(IPC.settingsValidate, (): Promise<SettingsStatus> => settings.validate())
+}
+
+async function runHook(hooks: RecordingHooks, id: string): Promise<void> {
+  try {
+    await hooks.afterSaved?.(id)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Upload failed.'
+    console.warn(message)
+  }
 }
 
 function toMetaView(meta: {

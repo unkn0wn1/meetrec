@@ -4,6 +4,17 @@ export interface Speaker {
   name: string
 }
 
+export interface UploadFileIds {
+  audio?: string
+  transcript?: string
+  summary?: string
+}
+
+export interface RecordingUploads {
+  google?: { folderId: string; files: UploadFileIds }
+  microsoft?: { files: UploadFileIds }
+}
+
 export interface RecordingCalendarLink {
   provider: 'google' | 'microsoft'
   occurrenceKey: string
@@ -24,6 +35,7 @@ export interface RecordingMeta {
   note: string | null
   title: string | null
   calendar: RecordingCalendarLink | null
+  uploads?: RecordingUploads
   paths: {
     audio: string
     transcript: string
@@ -126,6 +138,7 @@ export function parseMeta(raw: string): RecordingMeta | null {
     note: typeof record.note === 'string' ? record.note : null,
     title: typeof record.title === 'string' && record.title.trim() ? record.title : null,
     calendar: parseCalendarLink(record.calendar),
+    ...uploadField(parseUploads(record.uploads)),
     paths: {
       audio: typeof pathRecord.audio === 'string' ? pathRecord.audio : 'audio.wav',
       transcript:
@@ -133,6 +146,41 @@ export function parseMeta(raw: string): RecordingMeta | null {
       summary: typeof pathRecord.summary === 'string' ? pathRecord.summary : 'summary.md'
     }
   }
+}
+
+function uploadField(uploads: RecordingUploads | undefined): { uploads?: RecordingUploads } {
+  return uploads ? { uploads } : {}
+}
+
+function parseUploads(value: unknown): RecordingUploads | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const record = value as Record<string, unknown>
+  const uploads: RecordingUploads = {}
+  const google = record.google
+  if (google && typeof google === 'object') {
+    const folderId = (google as Record<string, unknown>).folderId
+    if (typeof folderId === 'string' && folderId) {
+      uploads.google = {
+        folderId,
+        files: parseFileIds((google as Record<string, unknown>).files)
+      }
+    }
+  }
+  const microsoft = record.microsoft
+  if (microsoft && typeof microsoft === 'object') {
+    uploads.microsoft = { files: parseFileIds((microsoft as Record<string, unknown>).files) }
+  }
+  return uploads.google || uploads.microsoft ? uploads : undefined
+}
+
+function parseFileIds(value: unknown): UploadFileIds {
+  if (!value || typeof value !== 'object') return {}
+  const record = value as Record<string, unknown>
+  const ids: UploadFileIds = {}
+  if (typeof record.audio === 'string' && record.audio) ids.audio = record.audio
+  if (typeof record.transcript === 'string' && record.transcript) ids.transcript = record.transcript
+  if (typeof record.summary === 'string' && record.summary) ids.summary = record.summary
+  return ids
 }
 
 function parseCalendarLink(value: unknown): RecordingCalendarLink | null {

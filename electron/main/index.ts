@@ -5,7 +5,8 @@ import { SecretStore } from '../domains/settings/secret-store'
 import { SettingsService } from '../domains/settings/settings-service'
 import { attachHideToTray, markAppQuitting } from './app-lifecycle'
 import { attachCalendar } from './calendar-runtime'
-import { registerAppIpc } from './ipc'
+import { uploadIfEnabled } from './cloud-ipc'
+import { registerAppIpc, type RecordingHooks } from './ipc'
 import { registerLibraryProtocol } from './library-protocol'
 import { RecordingController, recordingsDir } from './recording-controller'
 import { loadRenderer, preloadPath } from './renderer-window'
@@ -75,10 +76,12 @@ app.whenReady().then(() => {
     openExternal: (url) => shell.openExternal(url)
   })
   const controller = new RecordingController()
+  const hooks: RecordingHooks = {}
   registerAppIpc(
     controller,
     new LibraryService(recordingsDir, (role) => settings.readAuth(role)),
-    settings
+    settings,
+    hooks
   )
   mainWindow = createWindow()
   const calendar = attachCalendar({
@@ -87,6 +90,7 @@ app.whenReady().then(() => {
     controller,
     userDataDir
   })
+  hooks.afterSaved = (id) => uploadIfEnabled(calendar.service, id)
   stopCalendar = calendar.stop
 
   app.on('activate', () => {

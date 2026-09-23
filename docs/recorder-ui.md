@@ -28,7 +28,7 @@
 2. **Transcript** — full text, or a **Transcribe** button when it is missing
 3. **Summary** — minutes and action items, or **Generate summary** when it is missing (requires a transcript)
 
-Order of work: record, optionally rename speakers, transcribe, then summarize.
+Order of work: record, optionally rename speakers, transcribe, then summarize. **Upload to Google Drive** and **Upload to OneDrive** copy the files that exist. They stay disabled until that provider's upload consent is granted in Settings. When the matching upload checkbox is on, meetrec also uploads after Stop, after Transcribe, and after Generate summary.
 
 ## Per-recording folder
 

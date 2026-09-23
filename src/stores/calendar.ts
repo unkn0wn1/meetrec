@@ -58,6 +58,14 @@ export const useCalendarStore = defineStore('calendar', () => {
     return run(() => useMeetrec().calendar.connect({ provider: 'microsoft', purpose: 'calendar' }))
   }
 
+  async function connectDrive(provider: 'google' | 'microsoft'): Promise<boolean> {
+    return run(() => useMeetrec().calendar.connect({ provider, purpose: 'drive' }))
+  }
+
+  async function setUpload(provider: 'google' | 'microsoft', enabled: boolean): Promise<boolean> {
+    return run(() => useMeetrec().cloud.setUpload({ provider, enabled }))
+  }
+
   async function disconnectMicrosoft(): Promise<boolean> {
     return run(() => useMeetrec().calendar.disconnect({ provider: 'microsoft' }))
   }
@@ -92,6 +100,8 @@ export const useCalendarStore = defineStore('calendar', () => {
     saveMicrosoft,
     connectMicrosoft,
     disconnectMicrosoft,
+    connectDrive,
+    setUpload,
     dismiss,
     arm,
     start

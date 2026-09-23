@@ -34,6 +34,10 @@ const api: MeetrecApi = {
     start: (input) => ipcRenderer.invoke(IPC.calendarStart, input),
     onChanged: (listener) => subscribe<CalendarStatus>(IPC.calendarChanged, listener)
   },
+  cloud: {
+    setUpload: (input) => ipcRenderer.invoke(IPC.cloudSetUpload, input),
+    upload: (input) => ipcRenderer.invoke(IPC.cloudUpload, input)
+  },
   library: {
     list: () => ipcRenderer.invoke(IPC.libraryList),
     detail: (id) => ipcRenderer.invoke(IPC.libraryDetail, id),

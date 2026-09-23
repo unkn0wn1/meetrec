@@ -2,7 +2,7 @@
 
 meetrec does not ship a Google or Microsoft client id. You register a desktop client and paste the id into Settings, or set the environment variable. Nothing on this page belongs in git.
 
-Google Calendar and Microsoft Calendar connect are in Settings. Register each desktop client before you try it. Drive and OneDrive upload are not in the app yet.
+Google Calendar, Microsoft Calendar, and optional Drive / OneDrive upload are in Settings. Register each desktop client, including `drive.file` and `Files.ReadWrite.AppFolder`, before you try upload.
 
 The xAI device-code client id in [providers.md](providers.md) is unrelated. Do not paste it here.
 

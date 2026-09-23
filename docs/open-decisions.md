@@ -20,7 +20,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 ### 5. Artifacts — LOCKED (2026-09-23)
 
-**Local files stay the copy of record.** Optional upload is in scope: a `meetrec` folder in Google Drive, and the OneDrive app folder (`Files.ReadWrite.AppFolder`). Upload is off until the user turns it on. The control ships with the upload work; it is not in the app yet.
+**Local files stay the copy of record.** Optional upload copies artifacts to a `meetrec` folder in Google Drive and to the OneDrive app folder (`Files.ReadWrite.AppFolder`). Both stay off until the user turns them on.
 
 ### 6. Calendar / arm UX — LOCKED (2026-09-23)
 
@@ -33,7 +33,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Auto-arm starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). A user-facing offset control stays unwired. Inside that last minute, Auto-arm starts immediately.
 - A recording started from that event stops at the event end plus **2 minutes** (`CALENDAR_END_GRACE_MS`). Manual Record with no calendar link keeps today’s stop behavior. User Stop or tray Stop cancels that grace.
 - The always-on-top Stop popup stays deferred. Tray **Stop recording** stops a calendar-started recording while the main window is hidden.
-- Google Calendar and Microsoft Calendar connect, the 10-minute prompt, and Auto-arm are in the app. Drive and OneDrive upload are not yet.
+- Google Calendar and Microsoft Calendar connect, the 10-minute prompt, Auto-arm, and optional Drive / OneDrive upload are in the app.
 
 ### 7. Vue version — LOCKED 2026-09-22
 

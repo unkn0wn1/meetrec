@@ -1,4 +1,4 @@
-import { MICROSOFT_CALENDAR_SCOPE, OAUTH_TIMEOUT_MS } from './constants'
+import { MICROSOFT_APPFOLDER_SCOPE, MICROSOFT_CALENDAR_SCOPE, OAUTH_TIMEOUT_MS } from './constants'
 import type { CalendarCore } from './deps'
 import { effectiveMicrosoftClientId } from './env'
 import { openLoopback } from './loopback'
@@ -6,7 +6,11 @@ import { exchangeMicrosoftCode, fetchMicrosoftEmail } from './microsoft-oauth'
 import { authorizeUrl } from './oauth-request'
 import { codeChallenge, codeVerifier, oauthState } from './pkce'
 
-export async function runMicrosoftConnect(core: CalendarCore, generation: number): Promise<void> {
+export async function runMicrosoftConnect(
+  core: CalendarCore,
+  generation: number,
+  purpose: 'calendar' | 'drive' = 'calendar'
+): Promise<void> {
   const clientId = effectiveMicrosoftClientId(core.memory.prefs)
   if (generation !== core.memory.connectGeneration) return
   try {
@@ -31,7 +35,10 @@ export async function runMicrosoftConnect(core: CalendarCore, generation: number
         provider: 'microsoft',
         clientId,
         redirectUri: session.redirectUri,
-        scope: MICROSOFT_CALENDAR_SCOPE,
+        scope:
+          purpose === 'drive'
+            ? `${MICROSOFT_CALENDAR_SCOPE} ${MICROSOFT_APPFOLDER_SCOPE}`
+            : MICROSOFT_CALENDAR_SCOPE,
         state,
         codeChallenge: codeChallenge(verifier)
       })

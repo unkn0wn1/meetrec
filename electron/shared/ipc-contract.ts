@@ -6,6 +6,7 @@ import type {
   MicrosoftClientInput,
   OccurrenceInput
 } from './calendar-contract'
+import type { CloudSetUploadInput, CloudUploadInput, CloudUploadResult } from './cloud-contract'
 
 export const IPC = {
   recordingStart: 'recording:start',
@@ -41,7 +42,9 @@ export const IPC = {
   calendarArm: 'calendar:arm',
   calendarCancelArm: 'calendar:cancelArm',
   calendarStart: 'calendar:start',
-  calendarChanged: 'calendar:changed'
+  calendarChanged: 'calendar:changed',
+  cloudSetUpload: 'cloud:setUpload',
+  cloudUpload: 'cloud:upload'
 } as const
 
 export type CaptureMode = 'mix' | 'mic-only'
@@ -208,6 +211,10 @@ export interface MeetrecApi {
     cancelArm: () => Promise<CalendarStatus>
     start: (input: OccurrenceInput) => Promise<CalendarStatus>
     onChanged: (listener: (status: CalendarStatus) => void) => () => void
+  }
+  cloud: {
+    setUpload: (input: CloudSetUploadInput) => Promise<CalendarStatus>
+    upload: (input: CloudUploadInput) => Promise<CloudUploadResult>
   }
   library: {
     list: () => Promise<LibraryListItem[]>

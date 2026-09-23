@@ -1,4 +1,4 @@
-import { GOOGLE_CALENDAR_SCOPE, OAUTH_TIMEOUT_MS } from './constants'
+import { GOOGLE_CALENDAR_SCOPE, GOOGLE_DRIVE_SCOPE, OAUTH_TIMEOUT_MS } from './constants'
 import type { CalendarCore } from './deps'
 import { effectiveGoogleClientId, effectiveGoogleSecret } from './env'
 import { exchangeGoogleCode, fetchGoogleEmail } from './google-oauth'
@@ -6,7 +6,11 @@ import { openLoopback } from './loopback'
 import { authorizeUrl } from './oauth-request'
 import { codeChallenge, codeVerifier, oauthState } from './pkce'
 
-export async function runGoogleConnect(core: CalendarCore, generation: number): Promise<void> {
+export async function runGoogleConnect(
+  core: CalendarCore,
+  generation: number,
+  purpose: 'calendar' | 'drive' = 'calendar'
+): Promise<void> {
   const clientId = effectiveGoogleClientId(core.memory.prefs)
   if (generation !== core.memory.connectGeneration) return
   try {
@@ -31,7 +35,10 @@ export async function runGoogleConnect(core: CalendarCore, generation: number): 
         provider: 'google',
         clientId,
         redirectUri: session.redirectUri,
-        scope: GOOGLE_CALENDAR_SCOPE,
+        scope:
+          purpose === 'drive'
+            ? `${GOOGLE_CALENDAR_SCOPE} ${GOOGLE_DRIVE_SCOPE}`
+            : GOOGLE_CALENDAR_SCOPE,
         state,
         codeChallenge: codeChallenge(verifier)
       })

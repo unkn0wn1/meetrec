@@ -22,7 +22,7 @@ It records what you already hear and say. It does not join the call. **0.1.0-alp
 | Transcript and summary  | Available once the Voice default and the AI default pass a Live check and the machine can reach those APIs.                                                       |
 | Google Calendar         | Connect in Settings. A prompt and tray actions appear about 10 minutes before a timed event. Register a desktop client in [oauth clients](docs/oauth-clients.md). |
 | Microsoft Calendar      | Same prompt and tray actions via Microsoft Graph. No client secret. See [oauth clients](docs/oauth-clients.md).                                                   |
-| Cloud upload            | Decided (Google Drive and the OneDrive app folder). Not in the app yet.                                                                                           |
+| Cloud upload            | Optional. A `meetrec` folder in Google Drive, and the OneDrive app folder. Off until you enable it.                                                               |
 | Silence auto-stop       | Not built.                                                                                                                                                        |
 | Signing and auto-update | Not set up. Installers are unsigned. Linux and Windows builds include ffmpeg.                                                                                     |
 

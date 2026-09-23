@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import CloudUploadButton from '@/components/CloudUploadButton.vue'
 import ModeNav from '@/components/ModeNav.vue'
 import PlaybackPanel from '@/components/PlaybackPanel.vue'
 import RecordingHeader from '@/components/RecordingHeader.vue'
@@ -51,6 +52,7 @@ const panes = [
         :busy="library.busy"
         @save="library.saveSpeakers(id, $event)"
       />
+      <CloudUploadButton :recording-id="id" />
 
       <div class="grid gap-4 md:grid-cols-[11rem_1fr]">
         <nav class="flex flex-row gap-2 md:flex-col" aria-label="Recording sections">

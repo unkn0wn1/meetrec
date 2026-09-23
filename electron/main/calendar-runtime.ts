@@ -6,6 +6,7 @@ import type { CalendarStatus } from '../shared/calendar-contract'
 import { IPC, type RecordingStatus } from '../shared/ipc-contract'
 import { quitMeetrec, showMeetrecWindow } from './app-lifecycle'
 import { registerCalendarIpc } from './calendar-ipc'
+import { registerCloudIpc } from './cloud-ipc'
 import { createCalendarPrompt, showCalendarNotice } from './calendar-prompt'
 import type { RecordingController } from './recording-controller'
 import { createTray } from './tray'
@@ -15,7 +16,7 @@ export function attachCalendar(input: {
   secrets: SecretStore
   controller: RecordingController
   userDataDir: () => string
-}): { stop: () => void } {
+}): { stop: () => void; service: CalendarService } {
   const prompt = createCalendarPrompt()
   let promptKey: string | null = null
   let service: CalendarService | null = null
@@ -63,10 +64,12 @@ export function attachCalendar(input: {
   })
 
   registerCalendarIpc(service)
+  registerCloudIpc(service)
   service.start()
   return {
+    service,
     stop: () => {
-      service?.stop()
+      service.stop()
     }
   }
 }

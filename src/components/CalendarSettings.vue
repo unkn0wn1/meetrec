@@ -33,6 +33,11 @@ async function saveMicrosoft(): Promise<void> {
   if (ok) microsoftDirty.value = false
 }
 
+function onUpload(provider: 'google' | 'microsoft', event: Event): void {
+  const checked = event.target instanceof HTMLInputElement && event.target.checked
+  void calendar.setUpload(provider, checked)
+}
+
 async function save(): Promise<void> {
   const ok = await calendar.saveGoogle(clientId.value, clientSecret.value)
   if (ok) {
@@ -134,6 +139,23 @@ function formatWhen(iso: string): string {
     <p v-if="calendar.status?.google.error" class="text-sm text-destructive" role="alert">
       {{ calendar.status.google.error }}
     </p>
+    <label class="flex items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        :checked="calendar.status?.google.uploadEnabled === true"
+        :disabled="calendar.busy || calendar.status?.google.uploadScopeGranted !== true"
+        @change="onUpload('google', $event)"
+      />
+      Upload to Google Drive (folder meetrec in My Drive)
+    </label>
+    <Button
+      v-if="calendar.status?.google.uploadScopeGranted !== true"
+      variant="outline"
+      :disabled="calendar.busy || calendar.status?.connectPending === 'google'"
+      @click="calendar.connectDrive('google')"
+    >
+      Connect Google Drive
+    </Button>
 
     <ul v-if="calendar.status && calendar.status.upcoming.length > 0" class="flex flex-col gap-2">
       <li
@@ -208,6 +230,23 @@ function formatWhen(iso: string): string {
       <p v-if="calendar.status?.microsoft.error" class="text-sm text-destructive" role="alert">
         {{ calendar.status.microsoft.error }}
       </p>
+      <label class="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          :checked="calendar.status?.microsoft.uploadEnabled === true"
+          :disabled="calendar.busy || calendar.status?.microsoft.uploadScopeGranted !== true"
+          @change="onUpload('microsoft', $event)"
+        />
+        Upload to OneDrive (the meetrec app folder)
+      </label>
+      <Button
+        v-if="calendar.status?.microsoft.uploadScopeGranted !== true"
+        variant="outline"
+        :disabled="calendar.busy || calendar.status?.connectPending === 'microsoft'"
+        @click="calendar.connectDrive('microsoft')"
+      >
+        Connect OneDrive
+      </Button>
     </div>
   </section>
 </template>

@@ -5,6 +5,7 @@ import {
   MICROSOFT_APPFOLDER_SCOPE,
   TICK_INTERVAL_MS
 } from './constants'
+import { loadAccess } from './access'
 import {
   armOccurrence,
   clearLinkedStop,
@@ -20,6 +21,7 @@ import { runMicrosoftConnect } from './microsoft-connect'
 import { emptyMemory, type CalendarCore, type CalendarDeps, type CalendarMemory } from './deps'
 import { effectiveGoogleClientId, effectiveGoogleSecret, effectiveMicrosoftClientId } from './env'
 import { emptyPreferences, readPreferences, writePreferences } from './preferences'
+import { saveUploadPreference } from './upload-pref'
 import { decideSchedule } from './schedule'
 import { cachedEvents, fetchGoogleSnapshot, fetchMicrosoftSnapshot, freshEvents } from './snapshot'
 import type { CalendarEvent } from './source'
@@ -164,13 +166,12 @@ export class CalendarService implements CalendarCore {
   connect(input: { provider: unknown; purpose: unknown }): Promise<CalendarStatus> {
     const provider = cleanProvider(input.provider)
     const purpose = cleanPurpose(input.purpose)
-    if (purpose === 'drive') return Promise.reject(new Error('Drive connect is not available yet.'))
     if (this.memory.connectPending) {
       return Promise.reject(new Error('Sign-in already in progress.'))
     }
     this.memory.connectPending = provider
     const generation = ++this.memory.connectGeneration
-    return this.finishConnect(provider, generation)
+    return this.finishConnect(provider, purpose, generation)
   }
 
   cancelConnect(): Promise<CalendarStatus> {
@@ -227,13 +228,22 @@ export class CalendarService implements CalendarCore {
     return this.run(() => clearLinkedStop(this))
   }
 
+  accessToken(provider: 'google' | 'microsoft', force = false): Promise<string> {
+    return this.run(() => loadAccess(this.deps, this.memory, provider, force))
+  }
+
+  setUpload(provider: 'google' | 'microsoft', enabled: boolean): Promise<CalendarStatus> {
+    return this.run(() => saveUploadPreference(this, provider, enabled))
+  }
+
   private async finishConnect(
     provider: 'google' | 'microsoft',
+    purpose: 'calendar' | 'drive',
     generation: number
   ): Promise<CalendarStatus> {
     await this.run(() => this.publish())
-    if (provider === 'microsoft') await runMicrosoftConnect(this, generation)
-    else await runGoogleConnect(this, generation)
+    if (provider === 'microsoft') await runMicrosoftConnect(this, generation, purpose)
+    else await runGoogleConnect(this, generation, purpose)
     return this.run(() => this.buildStatus())
   }
 
@@ -293,7 +303,7 @@ export class CalendarService implements CalendarCore {
     })
   }
 
-  private async buildStatus(): Promise<CalendarStatus> {
+  async buildStatus(): Promise<CalendarStatus> {
     const bag = await this.deps.secrets.readBag()
     const now = this.deps.now()
     const fresh = freshEvents(this.memory, now)
