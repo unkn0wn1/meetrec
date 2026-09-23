@@ -9,6 +9,7 @@ describe('google events', () => {
           id: 'evt-1',
           status: 'confirmed',
           summary: 'Standup',
+          recurringEventId: 'series-1',
           start: { dateTime: '2026-09-23T15:00:00-07:00' },
           end: { dateTime: '2026-09-23T15:30:00-07:00' },
           attendees: [
@@ -38,12 +39,14 @@ describe('google events', () => {
       title: 'Standup',
       occurrenceKey: 'google:evt-1:2026-09-23T22:00:00.000Z',
       startsAt: '2026-09-23T22:00:00.000Z',
-      endsAt: '2026-09-23T22:30:00.000Z'
+      endsAt: '2026-09-23T22:30:00.000Z',
+      seriesId: 'series-1'
     })
     expect(parsed.events[0]?.attendees).toEqual([
       { name: 'Ada', email: 'ada@example.com' },
       { name: 'Me', email: 'me@example.com' }
     ])
     expect(parsed.events[1]?.title).toBe('Busy')
+    expect(parsed.events[1]?.seriesId).toBeNull()
   })
 })

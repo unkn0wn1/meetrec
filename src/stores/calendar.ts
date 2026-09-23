@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { CalendarStatus } from '../../electron/shared/calendar-contract'
+import type { CalendarRecordInput, CalendarStatus } from '../../electron/shared/calendar-contract'
 import { useMeetrec } from '@/composables/useMeetrec'
 
 export const useCalendarStore = defineStore('calendar', () => {
@@ -70,6 +70,14 @@ export const useCalendarStore = defineStore('calendar', () => {
     return run(() => useMeetrec().calendar.start({ occurrenceKey }))
   }
 
+  async function setRecord(
+    occurrenceKey: string,
+    enabled: boolean,
+    scope: CalendarRecordInput['scope']
+  ): Promise<boolean> {
+    return run(() => useMeetrec().calendar.setRecord({ occurrenceKey, enabled, scope }))
+  }
+
   if (typeof window !== 'undefined' && window.meetrec) {
     window.meetrec.calendar.onChanged(apply)
     void refresh()
@@ -89,6 +97,7 @@ export const useCalendarStore = defineStore('calendar', () => {
     setUpload,
     dismiss,
     arm,
-    start
+    start,
+    setRecord
   }
 })

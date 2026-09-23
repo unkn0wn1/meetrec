@@ -2,7 +2,13 @@ import { mkdtemp } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { normalizeState, readState, writeState, type CalendarRuntimeState } from './state-file'
+import {
+  normalizeState,
+  parseRuntimeState,
+  readState,
+  writeState,
+  type CalendarRuntimeState
+} from './state-file'
 
 const NOW = Date.parse('2026-09-23T18:00:00.000Z')
 
@@ -17,11 +23,14 @@ describe('calendar runtime state', () => {
     const state: CalendarRuntimeState = {
       dismissed: [keyAt(startsAt, 'dismissed')],
       notified: [],
+      disabledOccurrences: [keyAt(startsAt, 'skip')],
+      disabledSeries: ['series-1'],
       arm: {
         occurrenceKey: keyAt(startsAt, 'armed'),
         fireAt: new Date(NOW).toISOString(),
         title: 'Standup',
-        endsAt: new Date(NOW + 30 * 60_000).toISOString()
+        endsAt: new Date(NOW + 30 * 60_000).toISOString(),
+        seriesId: 'series-1'
       },
       linkedStop: {
         recordingId: 'rec-1',
@@ -41,12 +50,45 @@ describe('calendar runtime state', () => {
       keys.push(keyAt(new Date(NOW + (index + 1) * 60_000).toISOString(), `n${index}`))
     }
     const normalized = normalizeState(
-      { dismissed: keys, notified: keys, arm: null, linkedStop: null },
+      {
+        dismissed: keys,
+        notified: keys,
+        disabledOccurrences: [],
+        disabledSeries: [],
+        arm: null,
+        linkedStop: null
+      },
       NOW
     )
     expect(normalized.dismissed).toHaveLength(200)
     expect(normalized.dismissed).toContain(keyAt(recent, 'keep'))
     expect(normalized.dismissed).not.toContain(keyAt(old, 'drop'))
     expect(normalized.notified).toHaveLength(200)
+  })
+
+  it('keeps series ids that are not occurrence keys and still prunes occurrence opt-outs', () => {
+    const recent = new Date(NOW - 60 * 60 * 1000).toISOString()
+    const old = new Date(NOW - 7 * 60 * 60 * 1000).toISOString()
+    const normalized = normalizeState(
+      {
+        dismissed: [],
+        notified: [],
+        disabledOccurrences: [keyAt(old, 'drop'), keyAt(recent, 'keep')],
+        disabledSeries: ['master-1', keyAt(old, 'drop')],
+        arm: null,
+        linkedStop: null
+      },
+      NOW
+    )
+    expect(normalized.disabledOccurrences).toEqual([keyAt(recent, 'keep')])
+    expect(normalized.disabledSeries).toEqual(['master-1', keyAt(old, 'drop')])
+  })
+
+  it('reads older state files that have no opt-out lists', () => {
+    const parsed = parseRuntimeState(
+      JSON.stringify({ dismissed: [], notified: [], arm: null, linkedStop: null })
+    )
+    expect(parsed?.disabledOccurrences).toEqual([])
+    expect(parsed?.disabledSeries).toEqual([])
   })
 })

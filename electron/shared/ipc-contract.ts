@@ -1,10 +1,15 @@
 import type {
   CalendarConnectInput,
+  CalendarList,
   CalendarProviderInput,
+  CalendarRecordInput,
   CalendarStatus,
   OccurrenceInput
 } from './calendar-contract'
 import type { CloudSetUploadInput, CloudUploadInput, CloudUploadResult } from './cloud-contract'
+import type { RecordingDestination } from './destination'
+
+export type { RecordingDestination }
 
 export const IPC = {
   recordingStart: 'recording:start',
@@ -28,6 +33,8 @@ export const IPC = {
   settingsPollXaiOAuth: 'settings:pollXaiOAuth',
   settingsSignOutXaiOAuth: 'settings:signOutXaiOAuth',
   settingsValidate: 'settings:validate',
+  settingsSetDestination: 'settings:setDestination',
+  settingsSetAutoRecord: 'settings:setAutoRecord',
   recordingChanged: 'recording:changed',
   calendarStatus: 'calendar:status',
   calendarConnect: 'calendar:connect',
@@ -37,6 +44,8 @@ export const IPC = {
   calendarArm: 'calendar:arm',
   calendarCancelArm: 'calendar:cancelArm',
   calendarStart: 'calendar:start',
+  calendarList: 'calendar:list',
+  calendarSetRecord: 'calendar:setRecord',
   calendarChanged: 'calendar:changed',
   cloudSetUpload: 'cloud:setUpload',
   cloudUpload: 'cloud:upload'
@@ -95,6 +104,8 @@ export interface LibraryListItem {
   speakerCount: number
   hasTranscript: boolean
   hasSummary: boolean
+  hasGoogleDrive: boolean
+  hasOneDrive: boolean
 }
 
 export interface TranscriptSegmentView {
@@ -178,6 +189,8 @@ export interface SettingsStatus {
   verificationUrl: string | null
   oauthExpiresAt: number | null
   oauthIntervalSec: number | null
+  destination: RecordingDestination
+  autoRecord: boolean
 }
 
 export interface SetModelInput {
@@ -202,6 +215,8 @@ export interface MeetrecApi {
     arm: (input: OccurrenceInput) => Promise<CalendarStatus>
     cancelArm: () => Promise<CalendarStatus>
     start: (input: OccurrenceInput) => Promise<CalendarStatus>
+    list: () => Promise<CalendarList>
+    setRecord: (input: CalendarRecordInput) => Promise<CalendarStatus>
     onChanged: (listener: (status: CalendarStatus) => void) => () => void
   }
   cloud: {
@@ -229,5 +244,7 @@ export interface MeetrecApi {
     pollXaiOAuth: () => Promise<SettingsStatus>
     signOutXaiOAuth: () => Promise<SettingsStatus>
     validate: () => Promise<SettingsStatus>
+    setDestination: (destination: RecordingDestination) => Promise<SettingsStatus>
+    setAutoRecord: (enabled: boolean) => Promise<SettingsStatus>
   }
 }

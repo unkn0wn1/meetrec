@@ -106,6 +106,7 @@ function parseGoogleEvent(value: unknown): CalendarEvent | null {
     provider: 'google',
     eventId,
     occurrenceKey: occurrenceKey('google', eventId, startsAt),
+    seriesId: text(record.recurringEventId),
     title: summary ?? 'Busy',
     startsAt,
     endsAt: endRaw ? toUtcIso(endRaw) : null,

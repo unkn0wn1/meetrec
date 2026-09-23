@@ -2,7 +2,8 @@ import { CALENDAR_END_GRACE_MS } from './constants'
 import type { CalendarCore } from './deps'
 import { revokeGoogleRefresh } from './google-oauth'
 import { parseOccurrenceKey } from './occurrence'
-import { armFromEvent } from './schedule'
+import { clearSkippedArm } from './record-opt'
+import { armFromEvent, occurrenceSkipped } from './schedule'
 import { cachedEvents } from './snapshot'
 import type { CalendarEvent } from './source'
 import { rememberKey, type CalendarArm, type CalendarRuntimeState } from './state-file'
@@ -20,6 +21,7 @@ export async function dismissOccurrence(core: CalendarCore, key: unknown): Promi
 
 export async function armOccurrence(core: CalendarCore, key: unknown): Promise<void> {
   const event = requireEvent(cachedEvents(core.memory), key)
+  assertRecording(core, event)
   const arm = armFromEvent(event)
   if (Date.parse(arm.fireAt) <= core.deps.now()) {
     await startEvent(core, event)
@@ -32,6 +34,7 @@ export async function armOccurrence(core: CalendarCore, key: unknown): Promise<v
 
 export async function startOccurrence(core: CalendarCore, key: unknown): Promise<void> {
   const event = requireEvent(cachedEvents(core.memory), key)
+  assertRecording(core, event)
   await startEvent(core, event)
 }
 
@@ -69,6 +72,11 @@ export async function startEvent(core: CalendarCore, event: CalendarEvent): Prom
 }
 
 export async function fireArm(core: CalendarCore, arm: CalendarArm): Promise<void> {
+  if (clearSkippedArm(core)) {
+    await core.saveRuntime()
+    await core.publish()
+    return
+  }
   const live = cachedEvents(core.memory).find((event) => event.occurrenceKey === arm.occurrenceKey)
   if (live) {
     await startEvent(core, live)
@@ -84,11 +92,18 @@ export async function fireArm(core: CalendarCore, arm: CalendarArm): Promise<voi
     provider: parsed.provider,
     eventId: parsed.eventId,
     occurrenceKey: arm.occurrenceKey,
+    seriesId: arm.seriesId,
     title: arm.title,
     startsAt: parsed.startsAt,
     endsAt: arm.endsAt,
     attendees: []
   })
+}
+
+function assertRecording(core: CalendarCore, event: CalendarEvent): void {
+  if (occurrenceSkipped(event.occurrenceKey, event.seriesId, core.memory.runtime)) {
+    throw new Error('Recording is off for that event.')
+  }
 }
 
 export async function disconnectMicrosoft(core: CalendarCore): Promise<void> {
@@ -148,6 +163,8 @@ function withoutProvider(
   return {
     dismissed: state.dismissed.filter((key) => !key.startsWith(prefix)),
     notified: state.notified.filter((key) => !key.startsWith(prefix)),
+    disabledOccurrences: state.disabledOccurrences.filter((key) => !key.startsWith(prefix)),
+    disabledSeries: state.disabledSeries,
     arm: state.arm?.occurrenceKey.startsWith(prefix) ? null : state.arm,
     linkedStop: state.linkedStop?.occurrenceKey.startsWith(prefix) ? null : state.linkedStop
   }

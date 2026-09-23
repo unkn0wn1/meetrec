@@ -72,6 +72,20 @@ export function emptyMeta(input: {
   }
 }
 
+export function uploadFlags(uploads: RecordingUploads | undefined): {
+  hasGoogleDrive: boolean
+  hasOneDrive: boolean
+} {
+  return {
+    hasGoogleDrive: hasUploadId(uploads?.google?.files),
+    hasOneDrive: hasUploadId(uploads?.microsoft?.files)
+  }
+}
+
+function hasUploadId(files: UploadFileIds | undefined): boolean {
+  return Boolean(files?.audio || files?.transcript || files?.summary)
+}
+
 export function displayTitle(meta: Pick<RecordingMeta, 'id' | 'title' | 'startedAt'>): string {
   const title = meta.title?.trim()
   if (title) return title

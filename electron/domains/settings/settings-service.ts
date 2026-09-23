@@ -1,3 +1,4 @@
+import type { RecordingDestination } from '../../shared/destination'
 import type { ProviderId, ProviderRole, SettingsStatus } from '../../shared/ipc-contract'
 import {
   isProviderConfigured,
@@ -45,6 +46,7 @@ export class SettingsService {
   private readonly liveInflight = new Map<ProviderId, Promise<void>>()
   private migrated = false
   private migrating: Promise<void> | null = null
+  private afterAutoRecord: (() => void) | null = null
   private readonly session: OAuthSession
 
   constructor(private readonly deps: SettingsServiceDeps) {
@@ -201,6 +203,25 @@ export class SettingsService {
       new Date(this.now()).toISOString()
     )
     if (next !== settings) await writeAppSettings(this.deps.userDataDir(), next)
+    return this.snapshot()
+  }
+
+  watchAutoRecord(listener: () => void): void {
+    this.afterAutoRecord = listener
+  }
+
+  async setDestination(destination: RecordingDestination): Promise<SettingsStatus> {
+    const settings = await this.loadSettings()
+    if (settings.destination === destination) return this.snapshot()
+    await writeAppSettings(this.deps.userDataDir(), { ...settings, destination })
+    return this.snapshot()
+  }
+
+  async setAutoRecord(enabled: boolean): Promise<SettingsStatus> {
+    const settings = await this.loadSettings()
+    if (settings.autoRecord === enabled) return this.snapshot()
+    await writeAppSettings(this.deps.userDataDir(), { ...settings, autoRecord: enabled })
+    this.afterAutoRecord?.()
     return this.snapshot()
   }
 

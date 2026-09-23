@@ -18,7 +18,7 @@ New to the app? Read [Getting started](getting-started.md), then the root [READM
 | [coding-guidelines.md](coding-guidelines.md)     | Vue/TS style, KISS/DRY                   |
 | [quality-gates.md](quality-gates.md)             | Lint, typecheck, test, CI                |
 | [packaging.md](packaging.md)                     | Installers, ffmpeg, signing later        |
-| [recorder-ui.md](recorder-ui.md)                 | Library, Record, and recording detail    |
+| [recorder-ui.md](recorder-ui.md)                 | Library, Record, Calendar, Settings      |
 | [vue-ecosystem-notes.md](vue-ecosystem-notes.md) | Vue changes over the last six months     |
 | [open-decisions.md](open-decisions.md)           | Locked choices and remaining soft items  |
 

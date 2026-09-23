@@ -10,14 +10,14 @@ The person running the app on their own computer. They are responsible for telli
 
 ## What 0.1 does
 
-Manual Record, a local folder, Library, Transcribe, and Generate summary. Settings has one Voice default and one AI default. Google Calendar or Microsoft Calendar can prompt before a timed event and start or auto-arm a recording. Optional upload can copy the audio, transcript, and summary to a `meetrec` folder in Google Drive or to the OneDrive app folder. It stays off until you turn it on. Silence auto-stop stays out.
+Manual Record, a local folder, Library, Transcribe, and Generate summary. Settings has General, Providers, and Calendars. One Voice default and one AI default. The Calendar tab lists the next 14 days and can opt out of a meeting or a series. Google Calendar or Microsoft Calendar can prompt before a timed event, or auto-record selected meetings when that General switch is on. Optional upload can copy the audio, transcript, and summary to a `meetrec` folder in Google Drive or to the OneDrive app folder. Auto-upload follows the General destination and stays off until that provider’s upload checkbox is on. Silence auto-stop stays out.
 
 ## Happy path
 
-1. Google Calendar or Microsoft Calendar Connect (publisher-bundled OAuth) → upcoming timed events on the primary calendar.
+1. Google Calendar or Microsoft Calendar Connect (publisher-bundled OAuth) → the Calendar tab lists timed events for the next 14 days. **Record with meetrec** is on unless you opt out of an occurrence or a series.
 2. App lives in the **system tray**. Hiding the window does not stop calendar polling.
-3. **~10 minutes before** a timed event: notification and prompt with **Start recording**, **Dismiss**, or **Auto-arm**. The soonest event owns the prompt.
-4. If Auto-arm was chosen, recording starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). Inside that last minute it starts immediately.
+3. **~10 minutes before** a selected timed event: notification and prompt with **Start recording**, **Dismiss**, or **Auto-arm**. The soonest event owns the prompt. If **Enable auto-record for selected meetings** is on, this step is a notification only ("recording will start 1 minute before") and the prompt window stays closed.
+4. If Auto-arm was chosen, or auto-record is on, recording starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). Inside that last minute it starts immediately. Opted-out events do not start.
 5. While recording, tray **Stop recording** ends the capture when the main window is hidden. The always-on-top Stop popup stays deferred.
 6. Capture mic + system audio → one mixed **local** file.
 7. Stop on user Stop, or — only for a recording started from that event — at the event end plus 2 minutes. A manual Record with no calendar link keeps today’s stop behavior.

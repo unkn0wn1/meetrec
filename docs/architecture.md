@@ -32,7 +32,7 @@
 | `minutes`    | Summary prompt and `summary.md`                                                       |
 | `providers`  | xAI and OpenAI speech and chat (no UI widgets)                                        |
 | `settings`   | Voice default, AI default, secret bag, device-code session                            |
-| `calendar`   | Google and Microsoft OAuth, primary-calendar poll, prompt, arm, grace stop            |
+| `calendar`   | OAuth, 14-day poll, opt-out, prompt or auto-record, arm, grace stop                   |
 | `cloud`      | Optional upload of audio, transcript, and summary to Drive or the OneDrive app folder |
 
 One domain, one folder. Cross-domain calls go through small facades or IPC handlers.
@@ -45,8 +45,8 @@ One folder per recording (see [recorder-ui.md](recorder-ui.md)), under Electron 
 - `recordings/<id>/meta.json`
 - `recordings/<id>/transcript.json`
 - `recordings/<id>/summary.md`
-- `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md))
-- `calendar.json` (upload toggles) and `calendar-state.json` (dismiss, notify, arm, linked stop)
+- `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md)). `settings.json` also stores the default destination and the auto-record switch.
+- `calendar.json` (upload toggles) and `calendar-state.json` (dismiss, notify, occurrence and series opt-out, arm, linked stop)
 - `meta.json` `calendar` field: provider, occurrence, title, times, and invitee names and emails for a recording started from an event. Optional `uploads` records Drive file ids and OneDrive item ids.
 
 Playback loads audio through the `meetrec://` protocol. The renderer does not read those files itself.

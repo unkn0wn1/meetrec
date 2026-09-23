@@ -4,6 +4,7 @@ import type {
   ProviderCardStatus,
   ProviderId,
   ProviderRole,
+  RecordingDestination,
   SettingsStatus
 } from '../../electron/shared/ipc-contract'
 import { useMeetrec } from '@/composables/useMeetrec'
@@ -23,6 +24,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const verificationUrl = ref<string | null>(null)
   const oauthExpiresAt = ref<number | null>(null)
   const oauthIntervalSec = ref<number | null>(null)
+  const destination = ref<RecordingDestination>('local')
+  const autoRecord = ref(false)
   const loading = ref(false)
   const saving = ref(false)
   const testingProviderId = ref<ProviderId | null>(null)
@@ -43,6 +46,8 @@ export const useSettingsStore = defineStore('settings', () => {
     verificationUrl.value = status.verificationUrl
     oauthExpiresAt.value = status.oauthExpiresAt
     oauthIntervalSec.value = status.oauthIntervalSec
+    destination.value = status.destination
+    autoRecord.value = status.autoRecord
     error.value = null
   }
 
@@ -143,6 +148,16 @@ export const useSettingsStore = defineStore('settings', () => {
     await save(() => useMeetrec().settings.signOutXaiOAuth())
   }
 
+  async function setDestination(next: RecordingDestination): Promise<void> {
+    if (next === destination.value) return
+    await save(() => useMeetrec().settings.setDestination(next))
+  }
+
+  async function setAutoRecord(enabled: boolean): Promise<void> {
+    if (enabled === autoRecord.value) return
+    await save(() => useMeetrec().settings.setAutoRecord(enabled))
+  }
+
   async function save(call: () => Promise<SettingsStatus>): Promise<SettingsStatus | null> {
     saving.value = true
     try {
@@ -172,6 +187,8 @@ export const useSettingsStore = defineStore('settings', () => {
     verificationUrl,
     oauthExpiresAt,
     oauthIntervalSec,
+    destination,
+    autoRecord,
     loading,
     saving,
     testingProviderId,
@@ -188,7 +205,9 @@ export const useSettingsStore = defineStore('settings', () => {
     clearOpenAiKey,
     startXaiOAuth,
     pollXaiOAuth,
-    signOutXaiOAuth
+    signOutXaiOAuth,
+    setDestination,
+    setAutoRecord
   }
 })
 

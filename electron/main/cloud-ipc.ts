@@ -1,6 +1,8 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
 import type { CalendarService } from '../domains/calendar/service'
 import { uploadRecording } from '../domains/cloud/job'
+import { readAppSettings } from '../domains/settings/settings-file'
+import { effectiveDestination } from '../shared/destination'
 import { IPC } from '../shared/ipc-contract'
 import { recordingsDir } from './recording-controller'
 
@@ -37,24 +39,23 @@ export async function uploadIfEnabled(
   recordingId: string
 ): Promise<void> {
   const status = await calendar.status()
-  if (status.google.uploadEnabled && status.google.uploadScopeGranted) {
-    const result = await uploadRecording({
-      recordingsRoot: recordingsDir(),
-      recordingId,
-      provider: 'google',
-      getAccess: (force = false) => calendar.accessToken('google', force)
-    })
-    if (!result.ok) console.warn(result.message)
-  }
-  if (status.microsoft.uploadEnabled && status.microsoft.uploadScopeGranted) {
-    const result = await uploadRecording({
-      recordingsRoot: recordingsDir(),
-      recordingId,
-      provider: 'microsoft',
-      getAccess: (force = false) => calendar.accessToken('microsoft', force)
-    })
-    if (!result.ok) console.warn(result.message)
-  }
+  const stored = await readAppSettings(app.getPath('userData'))
+  const destination = effectiveDestination(stored.settings.destination, {
+    google:
+      status.google.connected && status.google.uploadEnabled && status.google.uploadScopeGranted,
+    microsoft:
+      status.microsoft.connected &&
+      status.microsoft.uploadEnabled &&
+      status.microsoft.uploadScopeGranted
+  })
+  if (destination === 'local') return
+  const result = await uploadRecording({
+    recordingsRoot: recordingsDir(),
+    recordingId,
+    provider: destination,
+    getAccess: (force = false) => calendar.accessToken(destination, force)
+  })
+  if (!result.ok) console.warn(result.message)
 }
 
 function objectInput(value: unknown): Record<string, unknown> {

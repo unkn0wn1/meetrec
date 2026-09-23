@@ -62,6 +62,20 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Model pickers show the cached catalog from Test. The registry seeds stay `grok-voice-transcribe-2.0`, `grok-4.5`, `gpt-4o-transcribe-diarize`, and `gpt-4.1-mini`.
 - A legacy `provider` value in `settings.json` becomes both defaults.
 
+### 11. Calendar tab — LOCKED (2026-09-23)
+
+- Mode nav **Calendar** sits between Record and Settings. It stays disabled until Google or Microsoft calendar is connected. Tooltip: "Connect a calendar in Settings".
+- The tab lists timed events for the next **14 days** (`LOOKAHEAD_MS`, up to 100 events). Each row shows title, time, and provider. **Record with meetrec** is checked by default.
+- Unchecking an occurrence skips the 10-minute prompt, auto-arm, and tray actions for that occurrence. A repeating event can skip this occurrence or the whole series (Google `recurringEventId`, Microsoft `seriesMasterId`).
+- Opt-outs live in `calendar-state.json` as `disabledOccurrences` and `disabledSeries`, separate from one-shot `dismissed`. Upload consent stays in `calendar.json`.
+
+### 12. General preferences and library copies — LOCKED (2026-09-23)
+
+- Settings sections: **General**, **Providers**, **Calendars**.
+- **Default destination** in `settings.json`: **Local only**, or Google Drive / OneDrive when that calendar is connected and its upload checkbox and scope are on. Local files stay the copy of record. Auto-upload after save follows that one destination.
+- **Enable auto-record for selected meetings** is off by default. Off keeps the 10-minute prompt (Start, Dismiss, Auto-arm). On, while the app is running, meetrec posts a notification about 10 minutes before and starts recording at **T−1 minute**. Opted-out occurrences and series are skipped. Manual Record is unchanged.
+- Library rows show a **Drive** and/or **OneDrive** badge when `meta.json` has an upload file id for that provider.
+
 ## Still soft / rename anytime
 
 - Silence auto-stop stays unwired. It is not a stop signal.
