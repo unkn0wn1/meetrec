@@ -16,6 +16,7 @@ Desktop meeting recorder. Linux capture plus a local library, transcript, and su
 - Renderer (`src/`) must not import `electron` or Node `fs`.
 - Capture (`electron/capture/`) must not import Vue or Pinia.
 - IPC names live in `electron/shared/ipc-contract.ts`. Do not invent ad-hoc channel strings.
+- Logic placement: main domains for product/IO; Pinia for shared UI session state; composables/`src/lib` for reusable view helpers; thin SFCs. See `docs/coding-guidelines.md`.
 
 ## Quality gates
 
