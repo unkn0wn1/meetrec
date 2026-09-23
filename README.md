@@ -2,7 +2,7 @@
 
 Desktop app that records your microphone and system audio into one local WAV, then transcribes and summarizes that file on your machine.
 
-It records what you already hear and say. It does not join the call. **0.1.0-alpha.2 is an early alpha, not a production release.**
+It records what you already hear and say. It does not join the call. **0.1.0-alpha.3 is an early alpha, not a production release.**
 
 ## Features
 
