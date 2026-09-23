@@ -2,23 +2,23 @@
 
 ## Locked
 
-| Layer             | Choice                                                   |
-| ----------------- | -------------------------------------------------------- |
-| Language          | TypeScript (strict)                                      |
-| UI framework      | **Vue 3.5.x** + `<script setup>`                         |
-| Component library | **shadcn-vue + Tailwind CSS**                            |
-| State             | Pinia (setup stores)                                     |
-| Provider HTTP     | Axios/fetch in **Electron main** only; renderer uses IPC |
-| Desktop shell     | Electron via **electron-vite**                           |
-| Package manager   | **npm**                                                  |
-| Packaging         | electron-builder (or electron-vite packaging)            |
-| Platform priority | **Linux first**; win/mac experimental until tested       |
-| Calendar          | Google OAuth (`calendar.readonly` first)                 |
-| Default STT       | xAI Grok Voice Transcribe 2.0 (`diarize` on)             |
-| Default LLM       | Grok via SuperGrok Heavy API access                      |
-| Other users       | Pluggable provider list + API keys                       |
-| Artifacts (v1)    | Local files only                                         |
-| Unit tests        | Vitest                                                   |
+| Layer             | Choice                                                             |
+| ----------------- | ------------------------------------------------------------------ |
+| Language          | TypeScript (strict)                                                |
+| UI framework      | **Vue 3.5.x** + `<script setup>`                                   |
+| Component library | **shadcn-vue + Tailwind CSS**                                      |
+| State             | Pinia (setup stores)                                               |
+| Provider HTTP     | `fetch` in **Electron main** only; renderer uses IPC               |
+| Desktop shell     | Electron via **electron-vite**                                     |
+| Package manager   | **npm**                                                            |
+| Packaging         | **electron-builder** (Win NSIS + portable, Linux AppImage)         |
+| Platform priority | **Linux first**. Windows capture is experimental. macOS is a stub. |
+| Calendar          | Planned: Google OAuth (`calendar.readonly` first). Not built.      |
+| Default STT       | xAI Grok Voice Transcribe 2.0 (`diarize` on)                       |
+| Default LLM       | Grok via SuperGrok Heavy API access                                |
+| Other users       | Pluggable provider list + API keys                                 |
+| Artifacts (v1)    | Local files only                                                   |
+| Unit tests        | Vitest                                                             |
 
 ## Vue baseline
 

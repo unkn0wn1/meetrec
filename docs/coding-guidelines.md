@@ -20,15 +20,14 @@
 - One store per UI concern (`recordingSession`, `speakerMap`, `providerSettings` UI mirrors).
 - Domain logic that needs secrets or filesystem stays in main; stores hold view-model state and call IPC.
 
-## Axios
+## Provider HTTP
 
-- Allowed for HTTP **from main** and for any renderer calls that hit **local** bridges if we expose HTTP locally.
-- Prefer a tiny `api` wrapper per provider in main (`providers/xaiStt.ts`) over scattered axios calls.
-- Do not put provider base URLs + keys into a global renderer axios instance.
+- `fetch` from Electron main only (`electron/domains/providers/`).
+- Do not put provider base URLs or keys in the renderer.
 
 ## IPC
 
-- Typed request/response map in one module (`ipc/contract.ts`) shared as types only.
+- Typed request/response map in `electron/shared/ipc-contract.ts`.
 - No ad-hoc `ipcRenderer.send` string soup.
 
 ## Naming

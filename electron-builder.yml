@@ -1,0 +1,29 @@
+appId: io.techglint.meetrec
+productName: meetrec
+asar: true
+directories:
+  output: dist
+files:
+  - package.json
+  - out/**/*
+linux:
+  target:
+    - AppImage
+  category: AudioVideo
+  syncDesktopName: true
+  artifactName: ${productName}-${version}.${ext}
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-setup.${ext}
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}

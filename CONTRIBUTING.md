@@ -33,8 +33,12 @@ Emergency override: `ALLOW_MAIN_COMMIT=1` or `ALLOW_MAIN_PUSH=1`. Use it only wh
 | `typecheck`                             | yes        |          |
 | `test`                                  |            | yes      |
 
-CI, when added, should run `typecheck`, `lint:check`, `format:check`, `guard:file-size`, and `test` on Linux. Do not disable a gate to get a green commit.
+## CI
+
+CI is present. [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on pull requests and on pushes to `main`. The Ubuntu job uses Node 22 and runs `npm ci`, `typecheck`, `lint:check`, `format:check`, `guard:file-size`, and `test`.
+
+Installer builds are manual only ([`.github/workflows/package.yml`](.github/workflows/package.yml), `workflow_dispatch`). Do not disable a gate to get a green commit.
 
 ## Capture notes
 
-Linux is the supported path (ffmpeg + Pulse / PipeWire). Windows and macOS throw from their stubs. A mic-only fallback must leave a TODO in the status note so system audio is not silently dropped.
+Linux (ffmpeg + Pulse / PipeWire) is the daily path. Windows records with ffmpeg (DirectShow, or WASAPI when that demuxer exists). macOS throws from its stub. A mic-only fallback must leave a TODO in the status note so system audio is not silently dropped.
