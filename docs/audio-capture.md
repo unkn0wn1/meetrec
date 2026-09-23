@@ -50,7 +50,7 @@ Stop writes `q` to ffmpeg's stdin so the WAV header is flushed.
 ## Stop helpers (recording domain, not capture)
 
 - Manual Stop (shipped)
-- Calendar end plus a grace period (not built)
+- Calendar end plus 2 minutes, only for a recording started from that event. Tray Stop or the Record Stop cancels it.
 - Near-silence for N seconds (not built; never the only stop)
 
 Capture backend only starts, stops, and reports capture mode plus a note. Policy lives in `recording`.

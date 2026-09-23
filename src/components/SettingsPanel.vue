@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onUnmounted, watch } from 'vue'
+import CalendarSettings from '@/components/CalendarSettings.vue'
 import ProviderCard from '@/components/ProviderCard.vue'
 import { useSettingsStore } from '@/stores/settings'
 
@@ -57,5 +58,6 @@ function clearPoll(): void {
     </p>
 
     <ProviderCard v-for="card in settings.cards" :key="card.id" :card="card" />
+    <CalendarSettings />
   </section>
 </template>
