@@ -30,7 +30,7 @@ Fix the failure. Do not disable Husky, raise the file-size limit, or skip typech
 | `format:check`, `lint:check`    | before you call the work done      |
 | CI (Ubuntu, Node 22)            | pull requests and pushes to `main` |
 
-`.github/workflows/ci.yml` runs `npm ci`, typecheck, `lint:check`, `format:check`, `guard:file-size`, and `test`. `.github/workflows/package.yml` is manual (`workflow_dispatch`) and builds unsigned installers.
+`.github/workflows/ci.yml` runs `npm ci`, typecheck, `lint:check`, `format:check`, `guard:file-size`, and `test`. Tag `v*` runs `.github/workflows/release.yml` (GitHub Release with installers). `.github/workflows/package.yml` is manual ad-hoc artifacts only.
 
 Direct commits and pushes to `main` are blocked. Override only for an emergency: `ALLOW_MAIN_COMMIT=1` / `ALLOW_MAIN_PUSH=1`.
 
@@ -44,7 +44,9 @@ A recording is not done until Start writes `recordings/<id>/audio.wav` and Stop 
 
 ## Docs
 
-Update `docs/` when architecture or gates change. Keep files short. Style follows the product docs already in this repo, not an Angular SPA.
+Before you start a branch, read the relevant files under `docs/` (and this file) so you match locked stack, capture, packaging, and gates.
+
+When you finish a branch — before you open or update the PR — check the docs again and update anything that drifted: architecture, capture, providers, packaging, quality gates, getting started, README, CONTRIBUTING, or this file. Do not leave “we’ll document it later.” Keep files short. Style follows the product docs already in this repo, not an Angular SPA.
 
 ## Linux Electron sandbox
 
