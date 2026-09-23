@@ -4,7 +4,7 @@
 
 - The app opens on **Library** (the list of past recordings).
 - Top-level modes: **Library**, **Record**, **Calendar**, and **Settings**. Calendar stays disabled until Google or Microsoft calendar is connected. The tooltip is "Connect a calendar in Settings".
-- Library, Record, Calendar, Settings, and Recording detail share one centered column, `max-w-3xl` (48rem), with horizontal padding `px-6`, through `AppShell`.
+- Library, Record, Calendar, Settings, and Recording detail share one centered column, `max-w-3xl` (48rem), with horizontal padding `px-6`, through `AppShell` (`min-w-0 overflow-x-hidden`; Library badge rows may wrap).
 - Record’s timer and Start / Stop stay in a left-aligned `max-w-md` block under that header. The header still spans the shell.
 - The main window opens at 960×720. Navigation does not resize it. There is no minimum width; below 48rem the column shrinks with the window.
 - The calendar prompt (`#/calendar-prompt`, 420×300) is not in this shell.

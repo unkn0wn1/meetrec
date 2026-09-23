@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <article class="flex items-center justify-between gap-4 px-4 py-3">
+  <article class="flex min-w-0 w-full flex-wrap items-center justify-between gap-4 px-4 py-3">
     <div class="min-w-0">
       <p class="truncate font-medium">{{ formatWhen(item.startedAt) }}</p>
       <p class="mt-1 truncate text-sm text-muted-foreground">
@@ -17,7 +17,7 @@ defineProps<{
         <span v-if="item.speakerCount"> · {{ item.speakerCount }} speakers</span>
       </p>
     </div>
-    <div class="flex shrink-0 items-center gap-2">
+    <div class="flex min-w-0 flex-wrap items-center justify-end gap-2">
       <span class="font-mono text-sm tabular-nums text-muted-foreground">{{
         formatClock(item.durationMs)
       }}</span>

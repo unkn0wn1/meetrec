@@ -7,7 +7,9 @@ defineProps<{
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-8">
+  <main
+    class="mx-auto flex min-h-screen w-full min-w-0 max-w-3xl flex-col gap-6 overflow-x-hidden px-6 py-8"
+  >
     <header class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <slot name="heading">
