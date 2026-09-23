@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
+import { useRecordingSessionStore } from '@/stores/recordingSession'
 import { useSettingsStore } from '@/stores/settings'
 
 const settings = useSettingsStore()
+useRecordingSessionStore()
 
 function onFocus(): void {
   void settings.refreshAndValidate()

@@ -24,8 +24,27 @@ export interface SecretStoreDeps {
 
 export class SecretStore {
   private warnedPlain = false
+  private chain: Promise<void> = Promise.resolve()
 
   constructor(private readonly deps: SecretStoreDeps) {}
+
+  /** Serialize read-modify-write so a token refresh cannot clobber a key save. */
+  async update(mutator: (bag: SecretBag) => void): Promise<{ encrypted: boolean }> {
+    return this.enqueue(async () => {
+      const bag = await this.readBag()
+      mutator(bag)
+      return this.writeBagUnlocked(bag)
+    })
+  }
+
+  private enqueue<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.chain.then(work, work)
+    this.chain = run.then(
+      () => undefined,
+      () => undefined
+    )
+    return run
+  }
 
   filePath(): string {
     return join(this.deps.userDataDir(), 'secrets.bin')
@@ -42,7 +61,11 @@ export class SecretStore {
   }
 
   async writeBag(bag: SecretBag): Promise<{ encrypted: boolean }> {
-    if (!bag.xaiApiKey && !bag.openaiApiKey && !bag.xaiOAuth) {
+    return this.enqueue(() => this.writeBagUnlocked(bag))
+  }
+
+  private async writeBagUnlocked(bag: SecretBag): Promise<{ encrypted: boolean }> {
+    if (!bagHasSecret(bag)) {
       await unlink(this.filePath()).catch(() => undefined)
       return { encrypted: this.deps.safeStorage.isEncryptionAvailable() }
     }
@@ -56,15 +79,15 @@ export class SecretStore {
   async writeXaiApiKey(key: string): Promise<{ encrypted: boolean }> {
     const trimmed = key.trim()
     if (!trimmed) throw new Error('Enter an xAI API key before saving.')
-    const bag = await this.readBag()
-    bag.xaiApiKey = trimmed
-    return this.writeBag(bag)
+    return this.update((bag) => {
+      bag.xaiApiKey = trimmed
+    })
   }
 
   async clearXaiApiKey(): Promise<void> {
-    const bag = await this.readBag()
-    bag.xaiApiKey = null
-    await this.writeBag(bag)
+    await this.update((bag) => {
+      bag.xaiApiKey = null
+    })
   }
 
   async readOpenAiApiKey(): Promise<string | null> {
@@ -74,15 +97,15 @@ export class SecretStore {
   async writeOpenAiApiKey(key: string): Promise<{ encrypted: boolean }> {
     const trimmed = key.trim()
     if (!trimmed) throw new Error('Enter an OpenAI API key before saving.')
-    const bag = await this.readBag()
-    bag.openaiApiKey = trimmed
-    return this.writeBag(bag)
+    return this.update((bag) => {
+      bag.openaiApiKey = trimmed
+    })
   }
 
   async clearOpenAiApiKey(): Promise<void> {
-    const bag = await this.readBag()
-    bag.openaiApiKey = null
-    await this.writeBag(bag)
+    await this.update((bag) => {
+      bag.openaiApiKey = null
+    })
   }
 
   async readXaiOAuth(): Promise<OAuthTokenSet | null> {
@@ -93,15 +116,15 @@ export class SecretStore {
     if (!tokens.accessToken.trim() || !tokens.refreshToken.trim()) {
       throw new Error('xAI sign-in did not return tokens.')
     }
-    const bag = await this.readBag()
-    bag.xaiOAuth = tokens
-    return this.writeBag(bag)
+    return this.update((bag) => {
+      bag.xaiOAuth = tokens
+    })
   }
 
   async clearXaiOAuth(): Promise<void> {
-    const bag = await this.readBag()
-    bag.xaiOAuth = null
-    await this.writeBag(bag)
+    await this.update((bag) => {
+      bag.xaiOAuth = null
+    })
   }
 
   private async writeRaw(payload: string): Promise<{ encrypted: boolean }> {
@@ -144,4 +167,15 @@ export class SecretStore {
       'OS encryption is unavailable. Provider secrets are stored in the user-data folder without safeStorage. They are still kept out of the renderer.'
     )
   }
+}
+
+function bagHasSecret(bag: SecretBag): boolean {
+  return Boolean(
+    bag.xaiApiKey ||
+    bag.openaiApiKey ||
+    bag.xaiOAuth ||
+    bag.googleClientSecret ||
+    bag.googleOAuth ||
+    bag.microsoftOAuth
+  )
 }

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { app } from 'electron'
 import { createCapture, type AudioCapture } from '../capture'
 import { buildRecordingFolder } from '../capture/paths'
-import { emptyMeta } from '../domains/recording/meta'
+import { emptyMeta, type RecordingCalendarLink } from '../domains/recording/meta'
 import { statusFromSession, type ActiveSession } from '../domains/recording/session'
 import { readMeta, writeMeta } from '../domains/recording/store'
 import type {
@@ -15,12 +15,24 @@ import type {
 export class RecordingController {
   private session: ActiveSession | null = null
   private capture: AudioCapture | null = null
+  private onChange: ((status: RecordingStatus) => void) | null = null
+
+  setOnChange(listener: (status: RecordingStatus) => void): void {
+    this.onChange = listener
+  }
 
   status(): RecordingStatus {
     return statusFromSession(this.session)
   }
 
-  async start(): Promise<RecordingStartResult> {
+  recordingId(): string | null {
+    return this.session?.id ?? null
+  }
+
+  async start(input?: {
+    title?: string | null
+    calendar?: RecordingCalendarLink | null
+  }): Promise<RecordingStartResult> {
     if (this.session) {
       throw new Error('Already recording.')
     }
@@ -34,7 +46,9 @@ export class RecordingController {
         id: folder.id,
         startedAt,
         captureMode: started.captureMode,
-        note: started.note
+        note: started.note,
+        title: input?.title ?? null,
+        calendar: input?.calendar ?? null
       })
     )
     this.capture = capture
@@ -45,11 +59,13 @@ export class RecordingController {
       captureMode: started.captureMode,
       note: started.note
     }
-    return {
+    const result = {
       outPath: folder.audioPath,
       captureMode: started.captureMode,
       note: started.note
     }
+    this.emit()
+    return result
   }
 
   async stop(): Promise<RecordingStopResult> {
@@ -60,32 +76,40 @@ export class RecordingController {
     const capture = this.capture
     this.session = null
     this.capture = null
-    const stopped = await capture.stop()
-    const info = await stat(stopped.outPath)
-    const endedAt = new Date().toISOString()
-    const prior = await readMeta(recordingsDir(), session.id)
-    const base =
-      prior ??
-      emptyMeta({
-        id: session.id,
-        startedAt: new Date(session.startedAtMs).toISOString(),
+    try {
+      const stopped = await capture.stop()
+      const info = await stat(stopped.outPath)
+      const endedAt = new Date().toISOString()
+      const prior = await readMeta(recordingsDir(), session.id)
+      const base =
+        prior ??
+        emptyMeta({
+          id: session.id,
+          startedAt: new Date(session.startedAtMs).toISOString(),
+          captureMode: session.captureMode,
+          note: session.note
+        })
+      await writeMeta(recordingsDir(), {
+        ...base,
+        endedAt,
+        durationMs: stopped.durationMs,
         captureMode: session.captureMode,
         note: session.note
       })
-    await writeMeta(recordingsDir(), {
-      ...base,
-      endedAt,
-      durationMs: stopped.durationMs,
-      captureMode: session.captureMode,
-      note: session.note
-    })
-    return {
-      outPath: stopped.outPath,
-      id: session.id,
-      durationMs: stopped.durationMs,
-      bytes: info.size,
-      captureMode: session.captureMode
+      return {
+        outPath: stopped.outPath,
+        id: session.id,
+        durationMs: stopped.durationMs,
+        bytes: info.size,
+        captureMode: session.captureMode
+      }
+    } finally {
+      this.emit()
     }
+  }
+
+  private emit(): void {
+    this.onChange?.(this.status())
   }
 }
 

@@ -19,7 +19,7 @@
 
 - **Renderer:** UI only. Pinia holds view state and calls `window.meetrec`. Provider HTTP stays in main.
 - **Preload:** `contextBridge` exposes a narrow typed API (`window.meetrec.*`).
-- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP. Main will also own the calendar poll, the prompt window, and cloud upload. That behavior is not in the app yet.
+- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP, Google and Microsoft calendar polls, the pre-meeting prompt, and optional Drive / OneDrive upload.
 - **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation throws.
 
 ## Domains (keep separate)
@@ -47,6 +47,6 @@ One folder per recording (see [recorder-ui.md](recorder-ui.md)), under Electron 
 - `recordings/<id>/summary.md`
 - `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md))
 - `calendar.json` (client ids and upload toggles) and `calendar-state.json` (dismiss, notify, arm, linked stop)
-- `meta.json` `calendar` field: provider, occurrence, title, times, and invitee names and emails for a recording started from an event
+- `meta.json` `calendar` field: provider, occurrence, title, times, and invitee names and emails for a recording started from an event. Optional `uploads` records Drive file ids and OneDrive item ids.
 
 Playback loads audio through the `meetrec://` protocol. The renderer does not read those files itself.

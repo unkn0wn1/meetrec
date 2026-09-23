@@ -1,15 +1,15 @@
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
 import { app, BrowserWindow, protocol, safeStorage, shell } from 'electron'
-import { optimizer, is } from '@electron-toolkit/utils'
+import { optimizer } from '@electron-toolkit/utils'
 import { LibraryService } from '../domains/recording/library'
 import { SecretStore } from '../domains/settings/secret-store'
 import { SettingsService } from '../domains/settings/settings-service'
-import { registerAppIpc } from './ipc'
+import { attachHideToTray, markAppQuitting } from './app-lifecycle'
+import { attachCalendar } from './calendar-runtime'
+import { uploadIfEnabled } from './cloud-ipc'
+import { registerAppIpc, type RecordingHooks } from './ipc'
 import { registerLibraryProtocol } from './library-protocol'
 import { RecordingController, recordingsDir } from './recording-controller'
-import { attachHideToTray, markAppQuitting } from './app-lifecycle'
-import { createTray } from './tray'
+import { loadRenderer, preloadPath } from './renderer-window'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -25,12 +25,7 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 let mainWindow: BrowserWindow | null = null
-
-function preloadPath(): string {
-  const js = join(__dirname, '../preload/index.js')
-  if (existsSync(js)) return js
-  return join(__dirname, '../preload/index.mjs')
-}
+let stopCalendar: (() => void) | null = null
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -58,11 +53,7 @@ function createWindow(): BrowserWindow {
     return { action: 'deny' }
   })
 
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    void window.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    void window.loadFile(join(__dirname, '../renderer/index.html'))
-  }
+  loadRenderer(window)
 
   return window
 }
@@ -74,22 +65,33 @@ app.whenReady().then(() => {
 
   registerLibraryProtocol(recordingsDir)
   const userDataDir = (): string => app.getPath('userData')
+  const secrets = new SecretStore({
+    userDataDir,
+    safeStorage,
+    warn: (message) => console.warn(message)
+  })
   const settings = new SettingsService({
-    secrets: new SecretStore({
-      userDataDir,
-      safeStorage,
-      warn: (message) => console.warn(message)
-    }),
+    secrets,
     userDataDir,
     openExternal: (url) => shell.openExternal(url)
   })
+  const controller = new RecordingController()
+  const hooks: RecordingHooks = {}
   registerAppIpc(
-    new RecordingController(),
+    controller,
     new LibraryService(recordingsDir, (role) => settings.readAuth(role)),
-    settings
+    settings,
+    hooks
   )
   mainWindow = createWindow()
-  createTray(mainWindow)
+  const calendar = attachCalendar({
+    mainWindow,
+    secrets,
+    controller,
+    userDataDir
+  })
+  hooks.afterSaved = (id) => uploadIfEnabled(calendar.service, id)
+  stopCalendar = calendar.stop
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -100,6 +102,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   markAppQuitting()
+  stopCalendar?.()
 })
 
 app.on('window-all-closed', () => {
