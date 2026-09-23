@@ -7,6 +7,25 @@ const api: MeetrecApi = {
     start: () => ipcRenderer.invoke(IPC.recordingStart),
     stop: () => ipcRenderer.invoke(IPC.recordingStop),
     status: () => ipcRenderer.invoke(IPC.recordingStatus)
+  },
+  library: {
+    list: () => ipcRenderer.invoke(IPC.libraryList),
+    detail: (id) => ipcRenderer.invoke(IPC.libraryDetail, id),
+    updateSpeakers: (id, names) => ipcRenderer.invoke(IPC.librarySpeakers, id, names),
+    transcribe: (id) => ipcRenderer.invoke(IPC.libraryTranscribe, id),
+    summarize: (id) => ipcRenderer.invoke(IPC.librarySummarize, id)
+  },
+  settings: {
+    get: () => ipcRenderer.invoke(IPC.settingsGet),
+    setProvider: (provider) => ipcRenderer.invoke(IPC.settingsSetProvider, provider),
+    setXaiKey: (key) => ipcRenderer.invoke(IPC.settingsSetXaiKey, key),
+    clearXaiKey: () => ipcRenderer.invoke(IPC.settingsClearXaiKey),
+    setOpenAiKey: (key) => ipcRenderer.invoke(IPC.settingsSetOpenAiKey, key),
+    clearOpenAiKey: () => ipcRenderer.invoke(IPC.settingsClearOpenAiKey),
+    startXaiOAuth: () => ipcRenderer.invoke(IPC.settingsStartXaiOAuth),
+    pollXaiOAuth: () => ipcRenderer.invoke(IPC.settingsPollXaiOAuth),
+    signOutXaiOAuth: () => ipcRenderer.invoke(IPC.settingsSignOutXaiOAuth),
+    validate: () => ipcRenderer.invoke(IPC.settingsValidate)
   }
 }
 

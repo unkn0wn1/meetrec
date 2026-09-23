@@ -1,6 +1,7 @@
 import type { CaptureMode, RecordingStatus } from '../../shared/ipc-contract'
 
 export interface ActiveSession {
+  id: string
   outPath: string
   startedAtMs: number
   captureMode: CaptureMode

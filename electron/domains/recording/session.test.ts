@@ -15,6 +15,7 @@ describe('recording session status', () => {
 
   it('reports recording while a session is active', () => {
     const status = statusFromSession({
+      id: '2026-09-22T12-00-00-000Z-abc123',
       outPath: '/tmp/meetrec/a.wav',
       startedAtMs: Date.parse('2026-09-22T12:00:00.000Z'),
       captureMode: 'mix',
