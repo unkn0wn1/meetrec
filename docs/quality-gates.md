@@ -28,7 +28,7 @@ CI is present. `.github/workflows/ci.yml` runs on pull requests and on pushes to
 5. `npm run guard:file-size`
 6. `npm run test`
 
-Installer builds stay a separate manual workflow: `.github/workflows/package.yml` (`workflow_dispatch` only). `ubuntu-latest` runs `npm run dist:linux`. `windows-latest` runs `npm run dist:win`. Artifacts are uploaded. That workflow has no signing secrets and does not publish a release.
+Installer **releases** are tag-only (`.github/workflows/release.yml` on `v*` tags): GitHub runners build AppImage + Windows exe and attach them to a GitHub Release. Ad-hoc artifacts without a release: `.github/workflows/package.yml` (`workflow_dispatch`). Neither path signs builds. See [packaging.md](packaging.md).
 
 `npm run dist:linux` is optional local smoke. It is not a merge gate.
 

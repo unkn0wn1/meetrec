@@ -42,3 +42,13 @@ Installer builds are manual only ([`.github/workflows/package.yml`](.github/work
 ## Capture notes
 
 Linux (ffmpeg + Pulse / PipeWire) is the daily path. Windows records with ffmpeg (DirectShow, or WASAPI when that demuxer exists). macOS throws from its stub. A mic-only fallback must leave a TODO in the status note so system audio is not silently dropped.
+
+## Releases
+
+Do not publish installers from every merge to `main`.
+
+1. Open a PR that bumps `package.json` `version` (for example `0.1.0-alpha.1`).
+2. After merge, tag that commit `v` + the same version and push the tag.
+3. `.github/workflows/release.yml` builds on GitHub runners and attaches AppImage + Windows exe files to a GitHub Release (prerelease when the tag contains a hyphen).
+
+Protect `main` on GitHub so only PRs land there (required status checks from `ci`).
