@@ -30,14 +30,6 @@ export const useCalendarStore = defineStore('calendar', () => {
     await run(() => useMeetrec().calendar.status())
   }
 
-  async function saveGoogle(clientId: string, clientSecret: string): Promise<boolean> {
-    return run(() => useMeetrec().calendar.saveGoogleClient({ clientId, clientSecret }))
-  }
-
-  async function clearGoogleSecret(): Promise<boolean> {
-    return run(() => useMeetrec().calendar.clearGoogleSecret())
-  }
-
   async function connectGoogle(): Promise<boolean> {
     return run(() => useMeetrec().calendar.connect({ provider: 'google', purpose: 'calendar' }))
   }
@@ -48,10 +40,6 @@ export const useCalendarStore = defineStore('calendar', () => {
 
   async function disconnectGoogle(): Promise<boolean> {
     return run(() => useMeetrec().calendar.disconnect({ provider: 'google' }))
-  }
-
-  async function saveMicrosoft(clientId: string): Promise<boolean> {
-    return run(() => useMeetrec().calendar.saveMicrosoftClient({ clientId }))
   }
 
   async function connectMicrosoft(): Promise<boolean> {
@@ -92,12 +80,9 @@ export const useCalendarStore = defineStore('calendar', () => {
     error,
     busy,
     refresh,
-    saveGoogle,
-    clearGoogleSecret,
     connectGoogle,
     cancelConnect,
     disconnectGoogle,
-    saveMicrosoft,
     connectMicrosoft,
     disconnectMicrosoft,
     connectDrive,

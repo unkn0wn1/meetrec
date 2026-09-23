@@ -19,8 +19,7 @@ import {
 import { runGoogleConnect } from './connect'
 import { runMicrosoftConnect } from './microsoft-connect'
 import { emptyMemory, type CalendarCore, type CalendarDeps, type CalendarMemory } from './deps'
-import { effectiveGoogleClientId, effectiveGoogleSecret, effectiveMicrosoftClientId } from './env'
-import { emptyPreferences, readPreferences, writePreferences } from './preferences'
+import { emptyPreferences, readPreferences } from './preferences'
 import { saveUploadPreference } from './upload-pref'
 import { decideSchedule } from './schedule'
 import { cachedEvents, fetchGoogleSnapshot, fetchMicrosoftSnapshot, freshEvents } from './snapshot'
@@ -28,7 +27,7 @@ import type { CalendarEvent } from './source'
 import { emptyRuntimeState, readState, rememberKey, writeState } from './state-file'
 import { scopeIncludes } from './tokens'
 import { buildTrayModel } from './tray-model'
-import { cleanClientId, cleanClientSecret, cleanProvider, cleanPurpose } from './validate'
+import { cleanProvider, cleanPurpose } from './validate'
 
 export class CalendarService implements CalendarCore {
   readonly memory: CalendarMemory
@@ -126,41 +125,6 @@ export class CalendarService implements CalendarCore {
 
   status(): Promise<CalendarStatus> {
     return this.run(() => this.buildStatus())
-  }
-
-  saveGoogleClient(input: { clientId: unknown; clientSecret?: unknown }): Promise<CalendarStatus> {
-    return this.run(async () => {
-      const clientId = cleanClientId(input.clientId)
-      this.memory.prefs = { ...this.memory.prefs, googleClientId: clientId }
-      await writePreferences(this.deps.userDataDir(), this.memory.prefs)
-      if (typeof input.clientSecret === 'string' && input.clientSecret.trim()) {
-        const secret = cleanClientSecret(input.clientSecret)
-        await this.deps.secrets.update((bag) => {
-          bag.googleClientSecret = secret
-        })
-      }
-      await this.publish()
-      return this.buildStatus()
-    })
-  }
-
-  clearGoogleSecret(): Promise<CalendarStatus> {
-    return this.run(async () => {
-      await this.deps.secrets.update((bag) => {
-        bag.googleClientSecret = null
-      })
-      await this.publish()
-      return this.buildStatus()
-    })
-  }
-
-  saveMicrosoftClient(input: { clientId: unknown }): Promise<CalendarStatus> {
-    return this.run(async () => {
-      this.memory.prefs = { ...this.memory.prefs, microsoftClientId: cleanClientId(input.clientId) }
-      await writePreferences(this.deps.userDataDir(), this.memory.prefs)
-      await this.publish()
-      return this.buildStatus()
-    })
   }
 
   connect(input: { provider: unknown; purpose: unknown }): Promise<CalendarStatus> {
@@ -319,8 +283,6 @@ export class CalendarService implements CalendarCore {
     return {
       connectPending: this.memory.connectPending,
       google: {
-        clientId: effectiveGoogleClientId(this.memory.prefs),
-        secretSet: Boolean(effectiveGoogleSecret(bag.googleClientSecret)),
         connected: Boolean(google?.refreshToken),
         accountEmail: google?.accountEmail ?? null,
         uploadEnabled: this.memory.prefs.uploadGoogle,
@@ -328,8 +290,6 @@ export class CalendarService implements CalendarCore {
         error: this.memory.errors.google
       },
       microsoft: {
-        clientId: effectiveMicrosoftClientId(this.memory.prefs),
-        secretSet: false,
         connected: Boolean(microsoft?.refreshToken),
         accountEmail: microsoft?.accountEmail ?? null,
         uploadEnabled: this.memory.prefs.uploadMicrosoft,

@@ -1,6 +1,6 @@
 import { GOOGLE_CALENDAR_SCOPE, GOOGLE_DRIVE_SCOPE, OAUTH_TIMEOUT_MS } from './constants'
 import type { CalendarCore } from './deps'
-import { effectiveGoogleClientId, effectiveGoogleSecret } from './env'
+import { OAUTH_CLIENT_MISSING, effectiveGoogleClientId, effectiveGoogleSecret } from './env'
 import { exchangeGoogleCode, fetchGoogleEmail } from './google-oauth'
 import { openLoopback } from './loopback'
 import { authorizeUrl } from './oauth-request'
@@ -11,10 +11,10 @@ export async function runGoogleConnect(
   generation: number,
   purpose: 'calendar' | 'drive' = 'calendar'
 ): Promise<void> {
-  const clientId = effectiveGoogleClientId(core.memory.prefs)
+  const clientId = effectiveGoogleClientId()
   if (generation !== core.memory.connectGeneration) return
   try {
-    if (!clientId) throw new Error('Add a Google client id first.')
+    if (!clientId) throw new Error(OAUTH_CLIENT_MISSING)
     const verifier = codeVerifier()
     const state = oauthState()
     const session = await openLoopback({
@@ -46,13 +46,12 @@ export async function runGoogleConnect(
     const code = await session.result
     await core.run(async () => {
       if (generation !== core.memory.connectGeneration) return
-      const bag = await core.deps.secrets.readBag()
       const tokens = await exchangeGoogleCode({
         code,
         redirectUri: session.redirectUri,
         clientId,
         codeVerifier: verifier,
-        clientSecret: effectiveGoogleSecret(bag.googleClientSecret),
+        clientSecret: effectiveGoogleSecret(),
         fetchImpl: core.deps.fetchImpl,
         now: core.deps.now()
       })

@@ -48,7 +48,14 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Unsigned. Authenticode later via `CSC_LINK` and `CSC_KEY_PASSWORD` (`WIN_CSC_LINK` is the Windows alias). No auto-update yet.
 - Linux and Windows installers ship a pinned BtbN LGPL-static ffmpeg under `resources/ffmpeg/`. `npm run dev` uses ffmpeg on `PATH`. See [packaging.md](packaging.md).
 
-### 9. Settings Voice and AI defaults — LOCKED 2026-09-23
+### 9. Calendar / Drive OAuth clients — LOCKED 2026-09-23
+
+- Publisher registers Google Desktop and Microsoft public clients once.
+- Client ids (and optional Google client secret) come only from `MEETREC_GOOGLE_CLIENT_ID`, `MEETREC_GOOGLE_CLIENT_SECRET`, `MEETREC_MICROSOFT_CLIENT_ID` at build/env. Settings is Connect / Disconnect only.
+- Missing client → “This build has no OAuth client configured”. No end-user paste form.
+- See [oauth-clients.md](oauth-clients.md).
+
+### 10. Settings Voice and AI defaults — LOCKED 2026-09-23
 
 - Exactly one Voice default and one AI default. They may be the same provider.
 - Providers in this build: xAI sign-in, xAI API key, OpenAI. OpenRouter and Anthropic are not registered.

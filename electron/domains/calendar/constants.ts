@@ -12,8 +12,6 @@ export const MAX_EVENTS = 20
 export const SNAPSHOT_MAX_AGE_MS = 15 * 60 * 1000
 export const STATE_PRUNE_MS = 6 * 60 * 60 * 1000
 export const STATE_CAP = 200
-export const CLIENT_ID_MAX = 200
-
 export const GOOGLE_CALENDAR_SCOPE = [
   'openid',
   'email',

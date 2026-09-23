@@ -4,18 +4,6 @@ import { IPC } from '../shared/ipc-contract'
 
 export function registerCalendarIpc(calendar: CalendarService): void {
   ipcMain.handle(IPC.calendarStatus, () => calendar.status())
-  ipcMain.handle(IPC.calendarSaveGoogleClient, (_event, input: unknown) => {
-    const record = objectInput(input)
-    return calendar.saveGoogleClient({
-      clientId: record.clientId,
-      clientSecret: record.clientSecret
-    })
-  })
-  ipcMain.handle(IPC.calendarClearGoogleSecret, () => calendar.clearGoogleSecret())
-  ipcMain.handle(IPC.calendarSaveMicrosoftClient, (_event, input: unknown) => {
-    const record = objectInput(input)
-    return calendar.saveMicrosoftClient({ clientId: record.clientId })
-  })
   ipcMain.handle(IPC.calendarConnect, (_event, input: unknown) => {
     const record = objectInput(input)
     return calendar.connect({ provider: record.provider, purpose: record.purpose })
