@@ -42,6 +42,9 @@ function arm(): void {
       <p class="text-sm text-muted-foreground">
         {{ formatWhen(prompt.startsAt) }} · starts in {{ prompt.minutesUntil }} min
       </p>
+      <p v-if="prompt.hint" class="text-sm text-muted-foreground">
+        {{ prompt.provider === 'google' ? 'Google' : 'Microsoft' }} · {{ prompt.hint }}
+      </p>
       <p v-if="calendar.error" class="text-sm text-destructive" role="alert">
         {{ calendar.error }}
       </p>

@@ -4,23 +4,34 @@ import { readJson, shortTokenError } from './redact'
 import type { CalendarAttendee, CalendarEvent, CalendarSource } from './source'
 import { CalendarHttpError } from './google-events'
 
-const VIEW_URL = 'https://graph.microsoft.com/v1.0/me/calendarView'
+export interface MicrosoftEventContext {
+  calendarId: string
+  accountEmail: string | null
+  calendarLabel: string | null
+  calendarPrimary: boolean
+}
 
-export function microsoftEventsUrl(from: Date, to: Date): string {
-  const url = new URL(VIEW_URL)
+export function microsoftEventsUrl(from: Date, to: Date, calendarId?: string): string {
+  const path = calendarId
+    ? `https://graph.microsoft.com/v1.0/me/calendars/${encodeURIComponent(calendarId)}/calendarView`
+    : 'https://graph.microsoft.com/v1.0/me/calendarView'
+  const url = new URL(path)
   url.searchParams.set('startDateTime', from.toISOString())
   url.searchParams.set('endDateTime', to.toISOString())
   url.searchParams.set('$top', String(MAX_EVENTS))
   return url.toString()
 }
 
-export function parseMicrosoftEvents(payload: unknown): CalendarEvent[] {
+export function parseMicrosoftEvents(
+  payload: unknown,
+  context?: MicrosoftEventContext
+): CalendarEvent[] {
   if (!payload || typeof payload !== 'object') return []
   const items = (payload as Record<string, unknown>).value
   if (!Array.isArray(items)) return []
   const events: CalendarEvent[] = []
   for (const item of items) {
-    const parsed = parseMicrosoftEvent(item)
+    const parsed = parseMicrosoftEvent(item, context)
     if (parsed) events.push(parsed)
   }
   return events
@@ -32,9 +43,10 @@ export async function listMicrosoftEvents(
   accessToken: string,
   from: Date,
   to: Date,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = fetch,
+  context?: MicrosoftEventContext
 ): Promise<CalendarEvent[]> {
-  const response = await fetchImpl(microsoftEventsUrl(from, to), {
+  const response = await fetchImpl(microsoftEventsUrl(from, to, context?.calendarId), {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Prefer: 'outlook.timezone="UTC"'
@@ -47,7 +59,7 @@ export async function listMicrosoftEvents(
       shortTokenError(payload, `Microsoft Calendar returned ${response.status}.`)
     )
   }
-  return parseMicrosoftEvents(payload)
+  return parseMicrosoftEvents(payload, context)
 }
 
 export const microsoftCalendarSource: CalendarSource = {
@@ -55,7 +67,10 @@ export const microsoftCalendarSource: CalendarSource = {
   listEvents: listMicrosoftEvents
 }
 
-function parseMicrosoftEvent(value: unknown): CalendarEvent | null {
+function parseMicrosoftEvent(
+  value: unknown,
+  context?: MicrosoftEventContext
+): CalendarEvent | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
   if (record.isAllDay === true || record.isCancelled === true || isDeclined(record)) return null
@@ -67,7 +82,17 @@ function parseMicrosoftEvent(value: unknown): CalendarEvent | null {
   return {
     provider: 'microsoft',
     eventId,
-    occurrenceKey: occurrenceKey('microsoft', eventId, start),
+    occurrenceKey: occurrenceKey({
+      provider: 'microsoft',
+      eventId,
+      startsAt: start,
+      calendarId: context?.calendarId
+    }),
+    connectionId: null,
+    calendarId: context?.calendarId ?? null,
+    accountEmail: context?.accountEmail ?? null,
+    calendarLabel: context?.calendarLabel ?? null,
+    calendarPrimary: context?.calendarPrimary ?? true,
     seriesId: text(record.seriesMasterId),
     title: subject ?? 'Busy',
     startsAt: start,

@@ -6,12 +6,16 @@ export function registerCalendarIpc(calendar: CalendarService): void {
   ipcMain.handle(IPC.calendarStatus, () => calendar.status())
   ipcMain.handle(IPC.calendarConnect, (_event, input: unknown) => {
     const record = objectInput(input)
-    return calendar.connect({ provider: record.provider, purpose: record.purpose })
+    return calendar.connect({
+      provider: record.provider,
+      purpose: record.purpose,
+      connectionId: record.connectionId
+    })
   })
   ipcMain.handle(IPC.calendarCancelConnect, () => calendar.cancelConnect())
   ipcMain.handle(IPC.calendarDisconnect, (_event, input: unknown) => {
     const record = objectInput(input)
-    return calendar.disconnect({ provider: record.provider })
+    return calendar.disconnect({ provider: record.provider, connectionId: record.connectionId })
   })
   ipcMain.handle(IPC.calendarDismiss, (_event, input: unknown) => {
     const record = objectInput(input)
@@ -33,6 +37,14 @@ export function registerCalendarIpc(calendar: CalendarService): void {
       occurrenceKey: record.occurrenceKey,
       enabled: record.enabled,
       scope: record.scope
+    })
+  })
+  ipcMain.handle(IPC.calendarSetCalendars, (_event, input: unknown) => {
+    const record = objectInput(input)
+    return calendar.setCalendars({
+      provider: record.provider,
+      connectionId: record.connectionId,
+      calendarIds: record.calendarIds
     })
   })
 }

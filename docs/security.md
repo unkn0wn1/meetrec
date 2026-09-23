@@ -42,11 +42,13 @@ Publisher client ids (and the optional Google client secret) come only from buil
 
 Where secrets live:
 
-- `userData/secrets.bin` (safeStorage): Google and Microsoft refresh and access tokens.
-- `userData/calendar.json` (not a secret): upload toggles only.
+- `userData/secrets.bin` (safeStorage): Microsoft refresh and access tokens, and one token set per connected Google account (`googleConnections`). An older file with a single `googleOAuth` object is read as one connection.
+- `userData/calendar.json` (not a secret): upload toggles and the calendar ids the user checked. Calendar ids and account emails are not secrets. The renderer still never receives tokens.
 - `userData/settings.json` (not a secret): Voice and AI defaults, default destination, and the auto-record switch. `userData/calendar-state.json` stores dismissals and record opt-outs. Neither file holds tokens.
 
-The renderer never receives tokens or the Google client secret. Status IPC returns account email, connect errors, and upload flags. Token responses are redacted before they reach logs or thrown errors (`access_token`, `refresh_token`, `id_token`, `code`, `client_secret`).
+The renderer never receives tokens or the Google client secret. Status IPC returns account emails, connect errors, calendar ids and names, and upload flags. Token responses are redacted before they reach logs or thrown errors (`access_token`, `refresh_token`, `id_token`, `code`, `client_secret`).
+
+Google Drive upload uses the first connected Google account whose token includes `drive.file`. OneDrive stays on the single Microsoft account. A second Microsoft account is not supported.
 
 While Google’s consent screen is in Testing, refresh tokens expire after about 7 days. This app does not submit that screen for verification.
 

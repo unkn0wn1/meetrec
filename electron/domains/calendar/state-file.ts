@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { STATE_CAP, STATE_PRUNE_MS } from './constants'
-import { startMsFromKey } from './occurrence'
+import { parseOccurrenceKey, startMsFromKey } from './occurrence'
 
 const FILE_NAME = 'calendar-state.json'
 
@@ -53,6 +53,40 @@ export function normalizeState(state: CalendarRuntimeState, now: number): Calend
 
 export function rememberKey(keys: string[], key: string): string[] {
   return [key, ...keys.filter((item) => item !== key)]
+}
+
+export function dropProviderKeys(
+  state: CalendarRuntimeState,
+  provider: 'google' | 'microsoft'
+): CalendarRuntimeState {
+  const prefix = `${provider}:`
+  return {
+    ...state,
+    dismissed: state.dismissed.filter((key) => !key.startsWith(prefix)),
+    notified: state.notified.filter((key) => !key.startsWith(prefix)),
+    disabledOccurrences: state.disabledOccurrences.filter((key) => !key.startsWith(prefix)),
+    arm: state.arm?.occurrenceKey.startsWith(prefix) ? null : state.arm,
+    linkedStop: state.linkedStop?.occurrenceKey.startsWith(prefix) ? null : state.linkedStop
+  }
+}
+
+/** Drop dismissals and arms whose occurrence key belongs to one Google connection. */
+export function dropGoogleConnectionKeys(
+  state: CalendarRuntimeState,
+  connectionId: string
+): CalendarRuntimeState {
+  const drop = (key: string): boolean => {
+    const parsed = parseOccurrenceKey(key)
+    return parsed?.provider === 'google' && parsed.connectionId === connectionId
+  }
+  return {
+    ...state,
+    dismissed: state.dismissed.filter((key) => !drop(key)),
+    notified: state.notified.filter((key) => !drop(key)),
+    disabledOccurrences: state.disabledOccurrences.filter((key) => !drop(key)),
+    arm: state.arm && drop(state.arm.occurrenceKey) ? null : state.arm,
+    linkedStop: state.linkedStop && drop(state.linkedStop.occurrenceKey) ? null : state.linkedStop
+  }
 }
 
 export function parseRuntimeState(raw: string): CalendarRuntimeState | null {

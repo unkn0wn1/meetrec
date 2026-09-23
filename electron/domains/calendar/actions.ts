@@ -1,12 +1,14 @@
 import { CALENDAR_END_GRACE_MS } from './constants'
 import type { CalendarCore } from './deps'
+import { removeGoogleConnection } from './google-fetch'
 import { revokeGoogleRefresh } from './google-oauth'
 import { parseOccurrenceKey } from './occurrence'
+import { writePreferences } from './preferences'
 import { clearSkippedArm } from './record-opt'
 import { armFromEvent, occurrenceSkipped } from './schedule'
 import { cachedEvents } from './snapshot'
 import type { CalendarEvent } from './source'
-import { rememberKey, type CalendarArm, type CalendarRuntimeState } from './state-file'
+import { dropProviderKeys, rememberKey, type CalendarArm } from './state-file'
 import { requireEvent } from './validate'
 
 export async function dismissOccurrence(core: CalendarCore, key: unknown): Promise<void> {
@@ -112,23 +114,34 @@ export async function disconnectMicrosoft(core: CalendarCore): Promise<void> {
   })
   core.memory.events.microsoft = []
   core.memory.fetchedAt.microsoft = null
+  core.memory.lists.microsoft = []
   core.memory.errors.microsoft = null
-  core.memory.runtime = withoutProvider(core.memory.runtime, 'microsoft')
+  core.memory.prefs = { ...core.memory.prefs, microsoftCalendarIds: null }
+  core.memory.runtime = dropProviderKeys(core.memory.runtime, 'microsoft')
+  await writePreferences(core.deps.userDataDir(), core.memory.prefs)
   await core.saveRuntime()
   await core.publish()
 }
 
-export async function disconnectGoogle(core: CalendarCore): Promise<void> {
+export async function disconnectGoogle(
+  core: CalendarCore,
+  connectionId?: string | null
+): Promise<void> {
   const bag = await core.deps.secrets.readBag()
-  const refresh = bag.googleOAuth?.refreshToken
-  if (refresh) await revokeGoogleRefresh(refresh, core.deps.fetchImpl)
-  await core.deps.secrets.update((draft) => {
-    draft.googleOAuth = null
-  })
-  core.memory.events.google = []
-  core.memory.fetchedAt.google = null
+  const targets = connectionId
+    ? bag.googleConnections.filter((item) => item.id === connectionId)
+    : bag.googleConnections
+  for (const target of targets) {
+    if (target.refreshToken) await revokeGoogleRefresh(target.refreshToken, core.deps.fetchImpl)
+  }
+  if (!connectionId) {
+    for (const target of targets) {
+      await removeGoogleConnection(core.deps, core.memory, target.id, null)
+    }
+  } else if (targets.length > 0) {
+    await removeGoogleConnection(core.deps, core.memory, connectionId, null)
+  }
   core.memory.errors.google = null
-  core.memory.runtime = withoutProvider(core.memory.runtime, 'google')
   await core.saveRuntime()
   await core.publish()
 }
@@ -152,20 +165,5 @@ export async function runGraceStop(core: CalendarCore): Promise<void> {
     await core.deps.recording.stop()
   } catch {
     // The link is already cleared, so the tick does not retry the stop.
-  }
-}
-
-function withoutProvider(
-  state: CalendarRuntimeState,
-  provider: 'google' | 'microsoft'
-): CalendarRuntimeState {
-  const prefix = `${provider}:`
-  return {
-    dismissed: state.dismissed.filter((key) => !key.startsWith(prefix)),
-    notified: state.notified.filter((key) => !key.startsWith(prefix)),
-    disabledOccurrences: state.disabledOccurrences.filter((key) => !key.startsWith(prefix)),
-    disabledSeries: state.disabledSeries,
-    arm: state.arm?.occurrenceKey.startsWith(prefix) ? null : state.arm,
-    linkedStop: state.linkedStop?.occurrenceKey.startsWith(prefix) ? null : state.linkedStop
   }
 }

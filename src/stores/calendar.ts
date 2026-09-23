@@ -30,24 +30,49 @@ export const useCalendarStore = defineStore('calendar', () => {
     await run(() => useMeetrec().calendar.status())
   }
 
-  async function connectGoogle(): Promise<boolean> {
-    return run(() => useMeetrec().calendar.connect({ provider: 'google', purpose: 'calendar' }))
+  async function connectGoogle(connectionId?: string | null): Promise<boolean> {
+    return run(() =>
+      useMeetrec().calendar.connect({
+        provider: 'google',
+        purpose: 'calendar',
+        connectionId: connectionId ?? null
+      })
+    )
   }
 
   async function cancelConnect(): Promise<boolean> {
     return run(() => useMeetrec().calendar.cancelConnect())
   }
 
-  async function disconnectGoogle(): Promise<boolean> {
-    return run(() => useMeetrec().calendar.disconnect({ provider: 'google' }))
+  async function disconnectGoogle(connectionId?: string | null): Promise<boolean> {
+    return run(() =>
+      useMeetrec().calendar.disconnect({ provider: 'google', connectionId: connectionId ?? null })
+    )
   }
 
   async function connectMicrosoft(): Promise<boolean> {
     return run(() => useMeetrec().calendar.connect({ provider: 'microsoft', purpose: 'calendar' }))
   }
 
-  async function connectDrive(provider: 'google' | 'microsoft'): Promise<boolean> {
-    return run(() => useMeetrec().calendar.connect({ provider, purpose: 'drive' }))
+  async function connectDrive(
+    provider: 'google' | 'microsoft',
+    connectionId?: string | null
+  ): Promise<boolean> {
+    return run(() =>
+      useMeetrec().calendar.connect({
+        provider,
+        purpose: 'drive',
+        connectionId: connectionId ?? null
+      })
+    )
+  }
+
+  async function setCalendars(
+    provider: 'google' | 'microsoft',
+    connectionId: string | null,
+    calendarIds: string[]
+  ): Promise<boolean> {
+    return run(() => useMeetrec().calendar.setCalendars({ provider, connectionId, calendarIds }))
   }
 
   async function setUpload(provider: 'google' | 'microsoft', enabled: boolean): Promise<boolean> {
@@ -94,6 +119,7 @@ export const useCalendarStore = defineStore('calendar', () => {
     connectMicrosoft,
     disconnectMicrosoft,
     connectDrive,
+    setCalendars,
     setUpload,
     dismiss,
     arm,

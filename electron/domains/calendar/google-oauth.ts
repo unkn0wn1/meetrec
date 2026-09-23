@@ -47,18 +47,29 @@ export async function refreshGoogleTokens(input: {
   return mergeCalendarRefresh(input.tokens, next)
 }
 
-export async function fetchGoogleEmail(
+export async function fetchGoogleProfile(
   accessToken: string,
   fetchImpl: typeof fetch = fetch
-): Promise<string | null> {
+): Promise<{ id: string | null; email: string | null }> {
   const response = await fetchImpl(USERINFO_URL, {
     headers: { Authorization: `Bearer ${accessToken}` }
   })
   const payload = await readJson(response)
-  if (!response.ok || !payload || typeof payload !== 'object') return null
-  const email = (payload as Record<string, unknown>).email
-  if (typeof email !== 'string') return null
-  const trimmed = email.trim()
+  if (!response.ok || !payload || typeof payload !== 'object') return { id: null, email: null }
+  const record = payload as Record<string, unknown>
+  return { id: text(record.id), email: text(record.email) }
+}
+
+export async function fetchGoogleEmail(
+  accessToken: string,
+  fetchImpl: typeof fetch = fetch
+): Promise<string | null> {
+  return (await fetchGoogleProfile(accessToken, fetchImpl)).email
+}
+
+function text(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
   return trimmed || null
 }
 

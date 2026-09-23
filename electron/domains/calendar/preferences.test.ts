@@ -2,15 +2,14 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { readPreferences, writePreferences } from './preferences'
+import { emptyPreferences, readPreferences, writePreferences } from './preferences'
+
+const EMPTY = emptyPreferences()
 
 describe('calendar preferences', () => {
   it('returns defaults when the file is missing', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'meetrec-cal-'))
-    expect(await readPreferences(dir)).toEqual({
-      uploadGoogle: false,
-      uploadMicrosoft: false
-    })
+    expect(await readPreferences(dir)).toEqual(EMPTY)
   })
 
   it('round-trips upload toggles and ignores legacy client ids', async () => {
@@ -26,10 +25,10 @@ describe('calendar preferences', () => {
       'utf8'
     )
     expect(await readPreferences(dir)).toEqual({
-      uploadGoogle: true,
-      uploadMicrosoft: false
+      ...EMPTY,
+      uploadGoogle: true
     })
-    const prefs = { uploadGoogle: false, uploadMicrosoft: true }
+    const prefs = { ...EMPTY, uploadMicrosoft: true }
     await writePreferences(dir, prefs)
     expect(await readPreferences(dir)).toEqual(prefs)
     expect(JSON.parse(await readFile(join(dir, 'calendar.json'), 'utf8'))).toEqual(prefs)
@@ -38,13 +37,18 @@ describe('calendar preferences', () => {
   it('resets garbage JSON', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'meetrec-cal-'))
     await writeFile(join(dir, 'calendar.json'), 'not-json', 'utf8')
-    expect(await readPreferences(dir)).toEqual({
-      uploadGoogle: false,
-      uploadMicrosoft: false
-    })
-    expect(JSON.parse(await readFile(join(dir, 'calendar.json'), 'utf8'))).toEqual({
-      uploadGoogle: false,
-      uploadMicrosoft: false
-    })
+    expect(await readPreferences(dir)).toEqual(EMPTY)
+    expect(JSON.parse(await readFile(join(dir, 'calendar.json'), 'utf8'))).toEqual(EMPTY)
+  })
+
+  it('keeps an explicit empty selection distinct from an old file', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'meetrec-cal-'))
+    const prefs = {
+      ...EMPTY,
+      googleCalendars: { acct: [] },
+      microsoftCalendarIds: ['cal-1']
+    }
+    await writePreferences(dir, prefs)
+    expect(await readPreferences(dir)).toEqual(prefs)
   })
 })

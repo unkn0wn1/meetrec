@@ -25,7 +25,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 ### 6. Calendar / arm UX — LOCKED (2026-09-23)
 
 - System **tray / toolbar** presence while the app runs. Hiding the window keeps calendar polling running.
-- **Google Calendar** (readonly) and **Microsoft Calendar** (Graph) on the primary calendar. Cancelled, all-day, and declined events are skipped.
+- **Google Calendar** (readonly) and **Microsoft Calendar** (Graph). Google can be more than one signed-in account (up to five). Each account, and the single Microsoft account, can watch one or more calendars. The primary calendar starts checked. Cancelled, all-day, and declined events are skipped. A second Microsoft account is a follow-up. Drive upload uses the first Google connection whose token includes `drive.file`.
 - **~10 minutes before** a timed event (`PROMPT_LEAD_MS`): a prompt and a desktop notification. Actions:
   - **Start recording**
   - **Dismiss**
@@ -65,7 +65,8 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 ### 11. Calendar tab — LOCKED (2026-09-23)
 
 - Mode nav **Calendar** sits between Record and Settings. It stays disabled until Google or Microsoft calendar is connected. Tooltip: "Connect a calendar in Settings".
-- The tab lists timed events for the next **14 days** (`LOOKAHEAD_MS`, up to 100 events). Each row shows title, time, and provider. **Record with meetrec** is checked by default.
+- The tab lists timed events for the next **14 days** (`LOOKAHEAD_MS`, up to 100 events) merged from every checked calendar. Each row shows title, time, provider, and the account email when one is known. **Record with meetrec** is checked by default.
+- Newly fetched occurrence keys are `google:v2:<account>:<calendar>:<event>:<start>` and `microsoft:v2:<calendar>:<event>:<start>`. Keys already stored in `calendar-state.json` are not rewritten, so an opt-out from an older build does not follow the event. Those keys age out with the existing prune.
 - Unchecking an occurrence skips the 10-minute prompt, auto-arm, and tray actions for that occurrence. A repeating event can skip this occurrence or the whole series (Google `recurringEventId`, Microsoft `seriesMasterId`).
 - Opt-outs live in `calendar-state.json` as `disabledOccurrences` and `disabledSeries`, separate from one-shot `dismissed`. Upload consent stays in `calendar.json`.
 

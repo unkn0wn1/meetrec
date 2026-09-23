@@ -24,16 +24,16 @@
 
 ## Domains (keep separate)
 
-| Domain       | Owns                                                                                  |
-| ------------ | ------------------------------------------------------------------------------------- |
-| `recording`  | Folder layout, library scan, manual start/stop                                        |
-| `capture`    | OS audio backends only                                                                |
-| `transcript` | STT document, diarization labels, speaker rename                                      |
-| `minutes`    | Summary prompt and `summary.md`                                                       |
-| `providers`  | xAI and OpenAI speech and chat (no UI widgets)                                        |
-| `settings`   | Voice default, AI default, secret bag, device-code session                            |
-| `calendar`   | OAuth, 14-day poll, opt-out, prompt or auto-record, arm, grace stop                   |
-| `cloud`      | Optional upload of audio, transcript, and summary to Drive or the OneDrive app folder |
+| Domain       | Owns                                                                                      |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| `recording`  | Folder layout, library scan, manual start/stop                                            |
+| `capture`    | OS audio backends only                                                                    |
+| `transcript` | STT document, diarization labels, speaker rename                                          |
+| `minutes`    | Summary prompt and `summary.md`                                                           |
+| `providers`  | xAI and OpenAI speech and chat (no UI widgets)                                            |
+| `settings`   | Voice default, AI default, secret bag, device-code session                                |
+| `calendar`   | OAuth, 14-day poll of selected calendars, opt-out, prompt or auto-record, arm, grace stop |
+| `cloud`      | Optional upload of audio, transcript, and summary to Drive or the OneDrive app folder     |
 
 One domain, one folder. Cross-domain calls go through small facades or IPC handlers.
 
@@ -46,7 +46,8 @@ One folder per recording (see [recorder-ui.md](recorder-ui.md)), under Electron 
 - `recordings/<id>/transcript.json`
 - `recordings/<id>/summary.md`
 - `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md)). `settings.json` also stores the default destination and the auto-record switch.
-- `calendar.json` (upload toggles) and `calendar-state.json` (dismiss, notify, occurrence and series opt-out, arm, linked stop)
+- `calendar.json` (upload toggles and selected calendar ids) and `calendar-state.json` (dismiss, notify, occurrence and series opt-out, arm, linked stop). `secrets.bin` stores one Microsoft token and a list of Google connections (`googleConnections`). A file that still has a single `googleOAuth` token is read as one connection.
+- Occurrence keys for newly fetched events include the account and calendar (`google:v2:…` or `microsoft:v2:…`). Older keys in `calendar-state.json` are left as they are and will not match those events. The existing time prune drops them once the event is in the past.
 - `meta.json` `calendar` field: provider, occurrence, title, times, and invitee names and emails for a recording started from an event. Optional `uploads` records Drive file ids and OneDrive item ids.
 
 Playback loads audio through the `meetrec://` protocol. The renderer does not read those files itself.

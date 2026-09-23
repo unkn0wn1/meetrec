@@ -77,6 +77,7 @@ export async function runMicrosoftConnect(
       await core.run(async () => {
         if (generation !== core.memory.connectGeneration) return
         core.memory.connectPending = null
+        core.memory.connectTargetId = null
         core.memory.connectCancel = null
         await core.publish()
       })

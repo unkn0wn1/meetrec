@@ -1,8 +1,22 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
+import CalendarChecklist from '@/components/CalendarChecklist.vue'
+import GoogleAccountCard from '@/components/GoogleAccountCard.vue'
 import { useCalendarStore } from '@/stores/calendar'
 
 const calendar = useCalendarStore()
+const accounts = computed(() => calendar.status?.googleAccounts ?? [])
+const googlePending = computed(() => calendar.status?.connectPending === 'google')
+const addingGoogle = computed(() => googlePending.value && !calendar.status?.connectTargetId)
+const driveEmail = computed(
+  () => accounts.value.find((account) => account.uploadScopeGranted)?.accountEmail ?? null
+)
+const uploadLabel = computed(() =>
+  driveEmail.value
+    ? `Upload to Google Drive as ${driveEmail.value} (folder meetrec in My Drive)`
+    : 'Upload to Google Drive (folder meetrec in My Drive)'
+)
 
 function onUpload(provider: 'google' | 'microsoft', event: Event): void {
   const checked = event.target instanceof HTMLInputElement && event.target.checked
@@ -15,8 +29,8 @@ function onUpload(provider: 'google' | 'microsoft', event: Event): void {
     <div>
       <h2 class="text-lg font-semibold tracking-tight">Calendars</h2>
       <p class="mt-1 text-sm text-muted-foreground">
-        Connect Google or Microsoft. Upload stays off until you turn it on. Timed events are listed
-        on the Calendar tab.
+        Connect Google or Microsoft. Choose which calendars to watch. Upload stays off until you
+        turn it on.
       </p>
     </div>
 
@@ -25,38 +39,28 @@ function onUpload(provider: 'google' | 'microsoft', event: Event): void {
     <div class="flex flex-col gap-3">
       <h3 class="text-sm font-semibold">Google</h3>
       <div class="flex flex-wrap gap-2">
-        <Button
-          :disabled="calendar.busy || calendar.status?.connectPending === 'google'"
-          @click="calendar.connectGoogle()"
-        >
-          Connect
+        <Button :disabled="calendar.busy || googlePending" @click="calendar.connectGoogle()">
+          {{ accounts.length > 0 ? 'Connect another Google account' : 'Connect Google' }}
         </Button>
-        <Button
-          v-if="calendar.status?.google.connected"
-          variant="outline"
-          :disabled="calendar.busy"
-          @click="calendar.disconnectGoogle()"
-        >
-          Disconnect
-        </Button>
-        <Button
-          v-if="calendar.status?.connectPending === 'google'"
-          variant="outline"
-          @click="calendar.cancelConnect()"
-        >
+        <Button v-if="googlePending" variant="outline" @click="calendar.cancelConnect()">
           Cancel
         </Button>
       </div>
-
-      <p v-if="calendar.status?.connectPending === 'google'" class="text-sm text-muted-foreground">
-        Waiting for the browser…
-      </p>
-      <p v-if="calendar.status?.google.connected" class="text-sm">
-        Connected as {{ calendar.status.google.accountEmail || 'Google account' }}
-      </p>
+      <p v-if="addingGoogle" class="text-sm text-muted-foreground">Waiting for the browser…</p>
       <p v-if="calendar.status?.google.error" class="text-sm text-destructive" role="alert">
         {{ calendar.status.google.error }}
       </p>
+      <GoogleAccountCard
+        v-for="account in accounts"
+        :key="account.id"
+        :account="account"
+        :busy="calendar.busy"
+        :pending="googlePending && calendar.status?.connectTargetId === account.id"
+        @reconnect="calendar.connectGoogle(account.id)"
+        @disconnect="calendar.disconnectGoogle(account.id)"
+        @drive="calendar.connectDrive('google', account.id)"
+        @calendars="calendar.setCalendars('google', account.id, $event)"
+      />
       <label class="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -64,16 +68,8 @@ function onUpload(provider: 'google' | 'microsoft', event: Event): void {
           :disabled="calendar.busy || calendar.status?.google.uploadScopeGranted !== true"
           @change="onUpload('google', $event)"
         />
-        Upload to Google Drive (folder meetrec in My Drive)
+        {{ uploadLabel }}
       </label>
-      <Button
-        v-if="calendar.status?.google.uploadScopeGranted !== true"
-        variant="outline"
-        :disabled="calendar.busy || calendar.status?.connectPending === 'google'"
-        @click="calendar.connectDrive('google')"
-      >
-        Connect Google Drive
-      </Button>
     </div>
 
     <div class="flex flex-col gap-3 border-t pt-4">
@@ -113,6 +109,12 @@ function onUpload(provider: 'google' | 'microsoft', event: Event): void {
       <p v-if="calendar.status?.microsoft.error" class="text-sm text-destructive" role="alert">
         {{ calendar.status.microsoft.error }}
       </p>
+      <CalendarChecklist
+        v-if="calendar.status?.microsoft.calendars.length"
+        :calendars="calendar.status.microsoft.calendars"
+        :busy="calendar.busy"
+        @change="calendar.setCalendars('microsoft', null, $event)"
+      />
       <label class="flex items-center gap-2 text-sm">
         <input
           type="checkbox"

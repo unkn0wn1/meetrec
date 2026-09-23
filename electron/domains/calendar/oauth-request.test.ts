@@ -20,7 +20,23 @@ describe('oauth requests', () => {
     expect(url.searchParams.get('access_type')).toBe('offline')
     expect(url.searchParams.get('prompt')).toBe('consent')
     expect(url.searchParams.get('include_granted_scopes')).toBe('true')
+    expect(url.searchParams.get('login_hint')).toBeNull()
     expect(url.searchParams.get('state')).toBe('state-1')
+  })
+
+  it('asks Google to pick an account and can hint a Drive reconnect', () => {
+    const picked = new URL(authorizeUrl({ ...shared, provider: 'google', selectAccount: true }))
+    expect(picked.searchParams.get('prompt')).toBe('consent select_account')
+    const drive = new URL(
+      authorizeUrl({
+        ...shared,
+        provider: 'google',
+        selectAccount: false,
+        loginHint: 'ada@example.com'
+      })
+    )
+    expect(drive.searchParams.get('prompt')).toBe('consent')
+    expect(drive.searchParams.get('login_hint')).toBe('ada@example.com')
   })
 
   it('builds a Microsoft authorize URL with account selection', () => {

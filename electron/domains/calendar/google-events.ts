@@ -3,10 +3,31 @@ import { occurrenceKey, toUtcIso } from './occurrence'
 import { readJson, shortTokenError } from './redact'
 import type { CalendarAttendee, CalendarEvent, CalendarSource } from './source'
 
-const EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
+export interface GoogleEventContext {
+  connectionId: string
+  calendarId: string
+  accountEmail: string | null
+  calendarLabel: string | null
+  calendarPrimary: boolean
+}
 
-export function googleEventsUrl(from: Date, to: Date, pageToken?: string): string {
-  const url = new URL(EVENTS_URL)
+const PRIMARY_CONTEXT: GoogleEventContext = {
+  connectionId: 'legacy',
+  calendarId: 'primary',
+  accountEmail: null,
+  calendarLabel: null,
+  calendarPrimary: true
+}
+
+export function googleEventsUrl(
+  calendarId: string,
+  from: Date,
+  to: Date,
+  pageToken?: string
+): string {
+  const url = new URL(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`
+  )
   url.searchParams.set('singleEvents', 'true')
   url.searchParams.set('orderBy', 'startTime')
   url.searchParams.set('showDeleted', 'false')
@@ -17,7 +38,10 @@ export function googleEventsUrl(from: Date, to: Date, pageToken?: string): strin
   return url.toString()
 }
 
-export function parseGoogleEventList(payload: unknown): {
+export function parseGoogleEventList(
+  payload: unknown,
+  context: GoogleEventContext = PRIMARY_CONTEXT
+): {
   events: CalendarEvent[]
   nextPageToken: string | null
 } {
@@ -26,7 +50,7 @@ export function parseGoogleEventList(payload: unknown): {
   const items = Array.isArray(record.items) ? record.items : []
   const events: CalendarEvent[] = []
   for (const item of items) {
-    const parsed = parseGoogleEvent(item)
+    const parsed = parseGoogleEvent(item, context)
     if (parsed) events.push(parsed)
   }
   const token = record.nextPageToken
@@ -37,15 +61,22 @@ export async function listGoogleEvents(
   accessToken: string,
   from: Date,
   to: Date,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = fetch,
+  context: GoogleEventContext = PRIMARY_CONTEXT
 ): Promise<CalendarEvent[]> {
   const first = parseGoogleEventList(
-    await getJson(googleEventsUrl(from, to), accessToken, fetchImpl)
+    await getJson(googleEventsUrl(context.calendarId, from, to), accessToken, fetchImpl),
+    context
   )
   let events = first.events
   if (first.nextPageToken) {
     const second = parseGoogleEventList(
-      await getJson(googleEventsUrl(from, to, first.nextPageToken), accessToken, fetchImpl)
+      await getJson(
+        googleEventsUrl(context.calendarId, from, to, first.nextPageToken),
+        accessToken,
+        fetchImpl
+      ),
+      context
     )
     events = events.concat(second.events)
   }
@@ -54,7 +85,8 @@ export async function listGoogleEvents(
 
 export const googleCalendarSource: CalendarSource = {
   id: 'google',
-  listEvents: listGoogleEvents
+  listEvents: (accessToken, from, to, fetchImpl) =>
+    listGoogleEvents(accessToken, from, to, fetchImpl, PRIMARY_CONTEXT)
 }
 
 export class CalendarHttpError extends Error {
@@ -85,7 +117,7 @@ async function getJson(
   return payload
 }
 
-function parseGoogleEvent(value: unknown): CalendarEvent | null {
+function parseGoogleEvent(value: unknown, context: GoogleEventContext): CalendarEvent | null {
   if (!value || typeof value !== 'object') return null
   const record = value as Record<string, unknown>
   if (record.status === 'cancelled') return null
@@ -105,12 +137,23 @@ function parseGoogleEvent(value: unknown): CalendarEvent | null {
   return {
     provider: 'google',
     eventId,
-    occurrenceKey: occurrenceKey('google', eventId, startsAt),
+    occurrenceKey: occurrenceKey({
+      provider: 'google',
+      eventId,
+      startsAt,
+      connectionId: context.connectionId,
+      calendarId: context.calendarId
+    }),
     seriesId: text(record.recurringEventId),
     title: summary ?? 'Busy',
     startsAt,
     endsAt: endRaw ? toUtcIso(endRaw) : null,
-    attendees: readAttendees(record.attendees)
+    attendees: readAttendees(record.attendees),
+    connectionId: context.connectionId,
+    calendarId: context.calendarId,
+    accountEmail: context.accountEmail,
+    calendarLabel: context.calendarLabel,
+    calendarPrimary: context.calendarPrimary
   }
 }
 
