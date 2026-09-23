@@ -22,7 +22,7 @@ function event(seriesId: string | null = 'series-1', id = 'evt'): CalendarEvent 
 
 function harness(item: CalendarEvent, runtime: Partial<CalendarRuntimeState> = {}) {
   const memory = emptyMemory(emptyPreferences(), { ...emptyRuntimeState(), ...runtime })
-  memory.events.google = [item]
+  memory.events.googleByConnection = { acct: [item] }
   let saves = 0
   const core = {
     memory,

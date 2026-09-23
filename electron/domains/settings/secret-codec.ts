@@ -17,12 +17,17 @@ export interface CalendarTokenSet {
   accountEmail: string | null
 }
 
+/** One signed-in Google account. `id` is the Google user id when known. */
+export interface GoogleConnection extends CalendarTokenSet {
+  id: string
+}
+
 export interface SecretBag {
   xaiApiKey: string | null
   openaiApiKey: string | null
   xaiOAuth: OAuthTokenSet | null
   googleClientSecret: string | null
-  googleOAuth: CalendarTokenSet | null
+  googleConnections: GoogleConnection[]
   microsoftOAuth: CalendarTokenSet | null
 }
 
@@ -32,7 +37,7 @@ export function emptySecretBag(): SecretBag {
     openaiApiKey: null,
     xaiOAuth: null,
     googleClientSecret: null,
-    googleOAuth: null,
+    googleConnections: [],
     microsoftOAuth: null
   }
 }
@@ -43,7 +48,7 @@ export function encodeSecretBag(bag: SecretBag): string {
     openaiApiKey: bag.openaiApiKey,
     xaiOAuth: bag.xaiOAuth,
     googleClientSecret: bag.googleClientSecret,
-    googleOAuth: bag.googleOAuth,
+    googleConnections: bag.googleConnections,
     microsoftOAuth: bag.microsoftOAuth
   })
 }
@@ -63,9 +68,37 @@ export function decodeSecretBag(raw: string): SecretBag | null {
     openaiApiKey: trimOrNull(record.openaiApiKey),
     xaiOAuth: parseOAuth(record.xaiOAuth),
     googleClientSecret: trimOrNull(record.googleClientSecret),
-    googleOAuth: parseCalendarToken(record.googleOAuth),
+    googleConnections: parseGoogleConnections(record),
     microsoftOAuth: parseCalendarToken(record.microsoftOAuth)
   }
+}
+
+/** Legacy single-account files used `email:<address>` until userinfo returned an id. */
+export function legacyGoogleConnectionId(email: string | null): string {
+  if (!email) return 'legacy'
+  return `email:${email.toLowerCase()}`
+}
+
+function parseGoogleConnections(record: Record<string, unknown>): GoogleConnection[] {
+  if (Array.isArray(record.googleConnections)) {
+    const connections: GoogleConnection[] = []
+    for (const item of record.googleConnections) {
+      const parsed = parseGoogleConnection(item)
+      if (parsed) connections.push(parsed)
+    }
+    return connections
+  }
+  const legacy = parseCalendarToken(record.googleOAuth)
+  if (!legacy) return []
+  return [{ ...legacy, id: legacyGoogleConnectionId(legacy.accountEmail) }]
+}
+
+function parseGoogleConnection(value: unknown): GoogleConnection | null {
+  const token = parseCalendarToken(value)
+  if (!token || !value || typeof value !== 'object') return null
+  const id = trimOrNull((value as Record<string, unknown>).id)
+  if (!id) return null
+  return { ...token, id }
 }
 
 export function encodeSecretPayload(key: string): string {

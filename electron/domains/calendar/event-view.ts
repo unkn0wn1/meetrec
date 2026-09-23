@@ -1,5 +1,6 @@
 import type { CalendarEventView } from '../../shared/calendar-contract'
 import { LOOKAHEAD_MS } from './constants'
+import { eventHint } from './hint'
 import { occurrenceSkipped } from './schedule'
 import type { CalendarEvent } from './source'
 import type { CalendarRuntimeState } from './state-file'
@@ -48,6 +49,7 @@ function toView(event: CalendarEvent, state: CalendarRuntimeState): CalendarEven
     endsAt: event.endsAt,
     attendeeNames: names,
     seriesId: event.seriesId,
+    hint: eventHint(event),
     record: !occurrenceSkipped(event.occurrenceKey, event.seriesId, state),
     seriesSkipped: Boolean(event.seriesId && state.disabledSeries.includes(event.seriesId))
   }

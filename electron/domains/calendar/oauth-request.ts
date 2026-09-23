@@ -11,6 +11,9 @@ export function authorizeUrl(input: {
   scope: string
   state: string
   codeChallenge: string
+  /** Google only. Asks the browser to pick an account and still returns a refresh token. */
+  selectAccount?: boolean
+  loginHint?: string | null
 }): string {
   const url = new URL(input.provider === 'google' ? GOOGLE_AUTHORIZE_URL : MICROSOFT_AUTHORIZE_URL)
   url.searchParams.set('client_id', input.clientId)
@@ -22,8 +25,9 @@ export function authorizeUrl(input: {
   url.searchParams.set('code_challenge_method', 'S256')
   if (input.provider === 'google') {
     url.searchParams.set('access_type', 'offline')
-    url.searchParams.set('prompt', 'consent')
+    url.searchParams.set('prompt', input.selectAccount ? 'consent select_account' : 'consent')
     url.searchParams.set('include_granted_scopes', 'true')
+    if (input.loginHint) url.searchParams.set('login_hint', input.loginHint)
   } else {
     url.searchParams.set('prompt', 'select_account')
     url.searchParams.set('response_mode', 'query')

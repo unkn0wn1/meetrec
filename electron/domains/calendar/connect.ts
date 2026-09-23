@@ -1,7 +1,10 @@
 import { GOOGLE_CALENDAR_SCOPE, GOOGLE_DRIVE_SCOPE, OAUTH_TIMEOUT_MS } from './constants'
 import type { CalendarCore } from './deps'
 import { OAUTH_CLIENT_MISSING, effectiveGoogleClientId, effectiveGoogleSecret } from './env'
-import { exchangeGoogleCode, fetchGoogleEmail } from './google-oauth'
+import { applyGoogleSignIn } from './google-connections'
+import { exchangeGoogleCode, fetchGoogleProfile } from './google-oauth'
+import { dropGoogleCalendarSelection, writePreferences } from './preferences'
+import { dropGoogleConnectionKeys } from './state-file'
 import { openLoopback } from './loopback'
 import { authorizeUrl } from './oauth-request'
 import { codeChallenge, codeVerifier, oauthState } from './pkce'
@@ -30,6 +33,9 @@ export async function runGoogleConnect(
       session.cancel()
     }
     await core.run(() => core.publish())
+    const replaceId = core.memory.connectTargetId
+    const knownDrive = purpose === 'drive' && replaceId != null
+    const hint = knownDrive ? await loginHint(core, replaceId) : null
     await core.deps.openExternal(
       authorizeUrl({
         provider: 'google',
@@ -40,7 +46,9 @@ export async function runGoogleConnect(
             ? `${GOOGLE_CALENDAR_SCOPE} ${GOOGLE_DRIVE_SCOPE}`
             : GOOGLE_CALENDAR_SCOPE,
         state,
-        codeChallenge: codeChallenge(verifier)
+        codeChallenge: codeChallenge(verifier),
+        selectAccount: !knownDrive,
+        loginHint: hint
       })
     )
     const code = await session.result
@@ -56,14 +64,35 @@ export async function runGoogleConnect(
         now: core.deps.now()
       })
       if (generation !== core.memory.connectGeneration) return
-      try {
-        tokens.accountEmail = await fetchGoogleEmail(tokens.accessToken, core.deps.fetchImpl)
-      } catch {
-        tokens.accountEmail = null
-      }
+      const profile = await fetchGoogleProfile(tokens.accessToken, core.deps.fetchImpl).catch(
+        () => ({ id: null, email: null })
+      )
+      if (!profile.id) throw new Error('Google did not return an account id.')
+      const accountId = profile.id
+      const existing = (await core.deps.secrets.readBag()).googleConnections.find(
+        (item) => item.id === accountId
+      )
+      tokens.accountEmail = profile.email ?? existing?.accountEmail ?? null
+      let droppedId: string | null = null
       await core.deps.secrets.update((draft) => {
-        draft.googleOAuth = tokens
+        const applied = applyGoogleSignIn(
+          draft.googleConnections,
+          { ...tokens, id: accountId },
+          replaceId
+        )
+        draft.googleConnections = applied.connections
+        droppedId = applied.droppedId
       })
+      if (droppedId) {
+        core.memory.prefs = dropGoogleCalendarSelection(core.memory.prefs, droppedId)
+        core.memory.runtime = dropGoogleConnectionKeys(core.memory.runtime, droppedId)
+        delete core.memory.events.googleByConnection[droppedId]
+        delete core.memory.fetchedAt.googleByConnection[droppedId]
+        delete core.memory.lists.google[droppedId]
+        delete core.memory.accountErrors[droppedId]
+        await writePreferences(core.deps.userDataDir(), core.memory.prefs)
+        await core.saveRuntime()
+      }
       core.memory.errors.google = null
       await core.fetchGoogle()
     })
@@ -78,9 +107,15 @@ export async function runGoogleConnect(
       await core.run(async () => {
         if (generation !== core.memory.connectGeneration) return
         core.memory.connectPending = null
+        core.memory.connectTargetId = null
         core.memory.connectCancel = null
         await core.publish()
       })
     }
   }
+}
+
+async function loginHint(core: CalendarCore, connectionId: string): Promise<string | null> {
+  const bag = await core.deps.secrets.readBag()
+  return bag.googleConnections.find((item) => item.id === connectionId)?.accountEmail ?? null
 }

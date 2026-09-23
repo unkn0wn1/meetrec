@@ -8,7 +8,7 @@
 - Record’s timer and Start / Stop stay in a left-aligned `max-w-md` block under that header. The header still spans the shell.
 - The main window opens at 960×720. Navigation does not resize it. There is no minimum width; below 48rem the column shrinks with the window.
 - The calendar prompt (`#/calendar-prompt`, 420×300) is not in this shell.
-- **Calendar** (`#/calendar`) lists timed events for the next 14 days. Each row shows title, time, provider, and **Record with meetrec** (on by default). Unchecking a repeating event asks for this occurrence or the entire series.
+- **Calendar** (`#/calendar`) lists timed events for the next 14 days from every checked Google or Microsoft calendar. Each row shows title, time, provider, the account email when meetrec has one, and **Record with meetrec** (on by default). Unchecking a repeating event asks for this occurrence or the entire series.
 - A tray icon is available. Opening the app focuses Library.
 - About 10 minutes before a timed event that is still set to record, the tray adds **Start: {title}**, **Auto-arm (T−1 min)**, and **Dismiss**. While one is armed, it shows **Armed: {title}** and **Cancel auto-arm**. While recording, it shows **Stop recording**.
 - The same Start, Dismiss, and Auto-arm actions appear in a small always-on-top prompt window (`#/calendar-prompt`). Auto-arm’s label says it starts one minute before. That route is not in the mode nav.

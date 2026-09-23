@@ -1,3 +1,6 @@
+import { eventHint } from './hint'
+import type { CalendarEvent } from './source'
+
 export type TrayActionId =
   'show' | 'start' | 'arm' | 'armed' | 'dismiss' | 'cancel-arm' | 'stop' | 'quit'
 
@@ -11,12 +14,19 @@ export interface TrayModel {
   items: TrayItem[]
 }
 
+export function trayNext(
+  event: CalendarEvent | null
+): { title: string; startsAt: string; hint: string | null } | null {
+  if (!event) return null
+  return { title: event.title, startsAt: event.startsAt, hint: eventHint(event) }
+}
+
 export function buildTrayModel(input: {
   recording: boolean
   prompt: { title: string } | null
   arm: { title: string } | null
   startAllowed: boolean
-  next: { title: string; startsAt: string } | null
+  next: { title: string; startsAt: string; hint?: string | null } | null
 }): TrayModel {
   const items: TrayItem[] = [{ id: 'show', label: 'Show meetrec' }]
   if (input.prompt && input.startAllowed) {
@@ -35,15 +45,18 @@ export function buildTrayModel(input: {
   return { tooltip: tooltipFor(input.next), items }
 }
 
-function tooltipFor(next: { title: string; startsAt: string } | null): string {
+function tooltipFor(
+  next: { title: string; startsAt: string; hint?: string | null } | null
+): string {
   if (!next) return 'meetrec'
   const when = new Date(next.startsAt)
-  if (Number.isNaN(when.getTime())) return next.title
+  const hint = next.hint ? ` · ${next.hint}` : ''
+  if (Number.isNaN(when.getTime())) return `${next.title}${hint}`
   const label = when.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit'
   })
-  return `${next.title} · ${label}`
+  return `${next.title}${hint} · ${label}`
 }

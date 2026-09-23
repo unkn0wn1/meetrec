@@ -1,10 +1,5 @@
 import type { CalendarList, CalendarStatus } from '../../shared/calendar-contract'
-import {
-  FETCH_INTERVAL_MS,
-  GOOGLE_DRIVE_SCOPE,
-  MICROSOFT_APPFOLDER_SCOPE,
-  TICK_INTERVAL_MS
-} from './constants'
+import { FETCH_INTERVAL_MS, TICK_INTERVAL_MS } from './constants'
 import { loadAccess } from './access'
 import {
   armOccurrence,
@@ -19,17 +14,17 @@ import {
 import { runGoogleConnect } from './connect'
 import { runMicrosoftConnect } from './microsoft-connect'
 import { emptyMemory, type CalendarCore, type CalendarDeps, type CalendarMemory } from './deps'
-import { emptyPreferences, readPreferences } from './preferences'
+import { emptyPreferences, readPreferences, writePreferences } from './preferences'
 import { saveUploadPreference } from './upload-pref'
-import { nextRecordableEvent, upcomingEvents } from './event-view'
+import { nextRecordableEvent } from './event-view'
 import { clearSkippedArm, setRecordOptOut } from './record-opt'
-import { armSkipped, decideSchedule, noticeBody } from './schedule'
+import { decideSchedule, noticeBody } from './schedule'
 import { readAutoRecordFlag } from '../settings/settings-file'
 import { cachedEvents, fetchGoogleSnapshot, fetchMicrosoftSnapshot, freshEvents } from './snapshot'
 import { emptyRuntimeState, readState, rememberKey, writeState } from './state-file'
-import { scopeIncludes } from './tokens'
-import { buildTrayModel } from './tray-model'
-import { cleanProvider, cleanPurpose } from './validate'
+import { buildCalendarStatus, visibleArm } from './status-view'
+import { buildTrayModel, trayNext } from './tray-model'
+import { cleanCalendarIds, cleanConnectionId, cleanProvider, cleanPurpose } from './validate'
 
 export class CalendarService implements CalendarCore {
   readonly memory: CalendarMemory
@@ -66,6 +61,7 @@ export class CalendarService implements CalendarCore {
     this.memory.connectCancel?.()
     this.memory.connectCancel = null
     this.memory.connectPending = null
+    this.memory.connectTargetId = null
   }
 
   fetchGoogle(): Promise<void> {
@@ -94,7 +90,9 @@ export class CalendarService implements CalendarCore {
         prompt: status.prompt,
         arm: status.arm,
         startAllowed: Boolean(status.prompt) && this.deps.recording.status().phase !== 'recording',
-        next: nextRecordableEvent(cachedEvents(this.memory), this.memory.runtime, this.deps.now())
+        next: trayNext(
+          nextRecordableEvent(cachedEvents(this.memory), this.memory.runtime, this.deps.now())
+        )
       })
     )
     const key = status.prompt?.occurrenceKey ?? null
@@ -119,9 +117,9 @@ export class CalendarService implements CalendarCore {
       buildTrayModel({
         recording: this.deps.recording.status().phase === 'recording',
         prompt: decision.prompt,
-        arm: this.shownArm(),
+        arm: visibleArm(this),
         startAllowed: decision.startAllowed,
-        next: nextRecordableEvent(cachedEvents(this.memory), this.memory.runtime, now)
+        next: trayNext(nextRecordableEvent(cachedEvents(this.memory), this.memory.runtime, now))
       })
     )
   }
@@ -130,13 +128,19 @@ export class CalendarService implements CalendarCore {
     return this.run(() => this.buildStatus())
   }
 
-  connect(input: { provider: unknown; purpose: unknown }): Promise<CalendarStatus> {
+  connect(input: {
+    provider: unknown
+    purpose: unknown
+    connectionId?: unknown
+  }): Promise<CalendarStatus> {
     const provider = cleanProvider(input.provider)
     const purpose = cleanPurpose(input.purpose)
+    const connectionId = cleanConnectionId(input.connectionId)
     if (this.memory.connectPending) {
       return Promise.reject(new Error('Sign-in already in progress.'))
     }
     this.memory.connectPending = provider
+    this.memory.connectTargetId = provider === 'google' ? connectionId : null
     const generation = ++this.memory.connectGeneration
     return this.finishConnect(provider, purpose, generation)
   }
@@ -146,17 +150,18 @@ export class CalendarService implements CalendarCore {
     this.memory.connectCancel?.()
     this.memory.connectCancel = null
     this.memory.connectPending = null
+    this.memory.connectTargetId = null
     return this.run(async () => {
       await this.publish()
       return this.buildStatus()
     })
   }
 
-  disconnect(input: { provider: unknown }): Promise<CalendarStatus> {
+  disconnect(input: { provider: unknown; connectionId?: unknown }): Promise<CalendarStatus> {
     return this.run(async () => {
       const provider = cleanProvider(input.provider)
       if (provider === 'microsoft') await disconnectMicrosoft(this)
-      else await disconnectGoogle(this)
+      else await disconnectGoogle(this, cleanConnectionId(input.connectionId))
       return this.buildStatus()
     })
   }
@@ -219,6 +224,36 @@ export class CalendarService implements CalendarCore {
 
   accessToken(provider: 'google' | 'microsoft', force = false): Promise<string> {
     return this.run(() => loadAccess(this.deps, this.memory, provider, force))
+  }
+
+  setCalendars(input: {
+    provider: unknown
+    connectionId?: unknown
+    calendarIds: unknown
+  }): Promise<CalendarStatus> {
+    return this.run(async () => {
+      const provider = cleanProvider(input.provider)
+      const calendarIds = cleanCalendarIds(input.calendarIds)
+      if (provider === 'microsoft') {
+        this.memory.prefs = { ...this.memory.prefs, microsoftCalendarIds: calendarIds }
+      } else {
+        const connectionId = cleanConnectionId(input.connectionId)
+        if (!connectionId) throw new Error('Choose a Google account.')
+        const bag = await this.deps.secrets.readBag()
+        if (!bag.googleConnections.some((item) => item.id === connectionId)) {
+          throw new Error('That Google account is not connected.')
+        }
+        this.memory.prefs = {
+          ...this.memory.prefs,
+          googleCalendars: { ...this.memory.prefs.googleCalendars, [connectionId]: calendarIds }
+        }
+      }
+      await writePreferences(this.deps.userDataDir(), this.memory.prefs)
+      if (provider === 'microsoft') await this.fetchMicrosoft()
+      else await this.fetchGoogle()
+      await this.evaluate()
+      return this.buildStatus()
+    })
   }
 
   setUpload(provider: 'google' | 'microsoft', enabled: boolean): Promise<CalendarStatus> {
@@ -301,49 +336,8 @@ export class CalendarService implements CalendarCore {
     })
   }
 
-  async buildStatus(): Promise<CalendarStatus> {
-    const bag = await this.deps.secrets.readBag()
-    const now = this.deps.now()
-    const fresh = freshEvents(this.memory, now)
-    const decision = decideSchedule({
-      now,
-      events: fresh.events,
-      state: this.memory.runtime,
-      recording: this.deps.recording.status().phase === 'recording',
-      snapshotAt: fresh.snapshotAt,
-      autoRecord: readAutoRecordFlag(this.deps.userDataDir())
-    })
-    const google = bag.googleOAuth
-    const microsoft = bag.microsoftOAuth
-    const events = cachedEvents(this.memory)
-    const arm = this.shownArm()
-    return {
-      connectPending: this.memory.connectPending,
-      connected: Boolean(google?.refreshToken) || Boolean(microsoft?.refreshToken),
-      google: {
-        connected: Boolean(google?.refreshToken),
-        accountEmail: google?.accountEmail ?? null,
-        uploadEnabled: this.memory.prefs.uploadGoogle,
-        uploadScopeGranted: scopeIncludes(google?.scope ?? '', GOOGLE_DRIVE_SCOPE),
-        error: this.memory.errors.google
-      },
-      microsoft: {
-        connected: Boolean(microsoft?.refreshToken),
-        accountEmail: microsoft?.accountEmail ?? null,
-        uploadEnabled: this.memory.prefs.uploadMicrosoft,
-        uploadScopeGranted: scopeIncludes(microsoft?.scope ?? '', MICROSOFT_APPFOLDER_SCOPE),
-        error: this.memory.errors.microsoft
-      },
-      upcoming: upcomingEvents(events, this.memory.runtime, now),
-      prompt: decision.prompt,
-      arm: arm ? { occurrenceKey: arm.occurrenceKey, title: arm.title, fireAt: arm.fireAt } : null
-    }
-  }
-
-  private shownArm() {
-    const arm = this.memory.runtime.arm
-    if (!arm || armSkipped(arm, cachedEvents(this.memory), this.memory.runtime)) return null
-    return arm
+  buildStatus(): Promise<CalendarStatus> {
+    return buildCalendarStatus(this)
   }
 
   run<T>(work: () => Promise<T>): Promise<T> {

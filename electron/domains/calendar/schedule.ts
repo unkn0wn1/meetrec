@@ -1,4 +1,5 @@
 import { AUTO_ARM_LEAD_MS, PROMPT_LEAD_MS, SNAPSHOT_MAX_AGE_MS } from './constants'
+import { eventHint } from './hint'
 import type { CalendarEvent } from './source'
 import type { CalendarArm, CalendarRuntimeState } from './state-file'
 
@@ -29,6 +30,7 @@ export interface SchedulePrompt {
   startsAt: string
   endsAt: string | null
   minutesUntil: number
+  hint: string | null
 }
 
 export interface ScheduleDecision {
@@ -150,6 +152,7 @@ function soonestPrompt(
     title: soonest.title,
     startsAt: soonest.startsAt,
     endsAt: soonest.endsAt,
-    minutesUntil: Math.max(1, Math.ceil(delta / 60_000))
+    minutesUntil: Math.max(1, Math.ceil(delta / 60_000)),
+    hint: eventHint(soonest)
   }
 }

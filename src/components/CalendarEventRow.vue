@@ -28,9 +28,10 @@ function onChange(domEvent: Event): void {
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <p class="truncate font-medium">{{ event.title }}</p>
-        <p class="mt-1 text-sm text-muted-foreground">
+        <p class="mt-1 truncate text-sm text-muted-foreground">
           {{ formatEventWhen(event.startsAt) }} ·
           {{ event.provider === 'google' ? 'Google' : 'Microsoft' }}
+          <template v-if="event.hint"> · {{ event.hint }}</template>
         </p>
       </div>
       <label class="flex shrink-0 items-center gap-2 text-sm">

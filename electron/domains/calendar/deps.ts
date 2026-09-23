@@ -2,6 +2,7 @@ import type { CalendarStatus } from '../../shared/calendar-contract'
 import type { RecordingCalendarLink } from '../recording/meta'
 import type { SecretStore } from '../settings/secret-store'
 import type { CalendarPreferences } from './preferences'
+import type { ListedCalendar } from './selection'
 import type { CalendarEvent } from './source'
 import type { CalendarRuntimeState } from './state-file'
 import type { TrayModel } from './tray-model'
@@ -32,10 +33,24 @@ export interface CalendarDeps {
 export interface CalendarMemory {
   prefs: CalendarPreferences
   runtime: CalendarRuntimeState
-  events: { google: CalendarEvent[]; microsoft: CalendarEvent[] }
-  fetchedAt: { google: number | null; microsoft: number | null }
+  events: {
+    googleByConnection: Record<string, CalendarEvent[]>
+    microsoft: CalendarEvent[]
+  }
+  fetchedAt: {
+    googleByConnection: Record<string, number>
+    microsoft: number | null
+  }
+  /** Section-level connect error. Per-account fetch errors live in `accountErrors`. */
   errors: { google: string | null; microsoft: string | null }
+  accountErrors: Record<string, string | null>
+  lists: {
+    google: Record<string, ListedCalendar[]>
+    microsoft: ListedCalendar[]
+  }
   connectPending: 'google' | 'microsoft' | null
+  /** Google card a reconnect or Drive consent is updating. Null adds an account. */
+  connectTargetId: string | null
   connectCancel: (() => void) | null
   connectGeneration: number
 }
@@ -57,10 +72,13 @@ export function emptyMemory(
   return {
     prefs,
     runtime,
-    events: { google: [], microsoft: [] },
-    fetchedAt: { google: null, microsoft: null },
+    events: { googleByConnection: {}, microsoft: [] },
+    fetchedAt: { googleByConnection: {}, microsoft: null },
     errors: { google: null, microsoft: null },
+    accountErrors: {},
+    lists: { google: {}, microsoft: [] },
     connectPending: null,
+    connectTargetId: null,
     connectCancel: null,
     connectGeneration: 0
   }

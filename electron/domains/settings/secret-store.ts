@@ -175,7 +175,7 @@ function bagHasSecret(bag: SecretBag): boolean {
     bag.openaiApiKey ||
     bag.xaiOAuth ||
     bag.googleClientSecret ||
-    bag.googleOAuth ||
+    bag.googleConnections.length > 0 ||
     bag.microsoftOAuth
   )
 }

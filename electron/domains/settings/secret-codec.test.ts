@@ -8,7 +8,7 @@ describe('secret bag codec', () => {
       openaiApiKey: null,
       xaiOAuth: null,
       googleClientSecret: null,
-      googleOAuth: null,
+      googleConnections: [],
       microsoftOAuth: null
     })
   })
@@ -35,18 +35,21 @@ describe('secret bag codec', () => {
     ).toBeNull()
   })
 
-  it('round-trips a Google calendar token and drops one without a refresh token', () => {
+  it('round-trips Google connections and does not write the legacy field', () => {
     const bag = {
       ...emptySecretBag(),
       googleClientSecret: 'secret',
-      googleOAuth: {
-        accessToken: 'access',
-        refreshToken: 'refresh',
-        expiresAt: 80,
-        tokenType: 'Bearer',
-        scope: 'openid email',
-        accountEmail: 'ada@example.com'
-      },
+      googleConnections: [
+        {
+          id: 'gid',
+          accessToken: 'access',
+          refreshToken: 'refresh',
+          expiresAt: 80,
+          tokenType: 'Bearer',
+          scope: 'openid email',
+          accountEmail: 'ada@example.com'
+        }
+      ],
       microsoftOAuth: {
         accessToken: 'ms-access',
         refreshToken: 'ms-refresh',
@@ -56,10 +59,67 @@ describe('secret bag codec', () => {
         accountEmail: 'ada@contoso.com'
       }
     }
-    expect(decodeSecretBag(encodeSecretBag(bag))).toEqual(bag)
+    const encoded = encodeSecretBag(bag)
+    expect(encoded).not.toContain('googleOAuth')
+    expect(decodeSecretBag(encoded)).toEqual(bag)
+  })
+
+  it('migrates a legacy googleOAuth token into one connection', () => {
+    const decoded = decodeSecretBag(
+      JSON.stringify({
+        googleOAuth: {
+          accessToken: 'access',
+          refreshToken: 'refresh',
+          expiresAt: 80,
+          tokenType: 'Bearer',
+          scope: 'openid email',
+          accountEmail: 'Ada@Example.com'
+        }
+      })
+    )
+    expect(decoded?.googleConnections).toEqual([
+      {
+        id: 'email:ada@example.com',
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        expiresAt: 80,
+        tokenType: 'Bearer',
+        scope: 'openid email',
+        accountEmail: 'Ada@Example.com'
+      }
+    ])
     expect(
       decodeSecretBag(JSON.stringify({ googleOAuth: { accessToken: 'only', refreshToken: '  ' } }))
-        ?.googleOAuth
-    ).toBeNull()
+        ?.googleConnections
+    ).toEqual([])
+    expect(
+      decodeSecretBag(
+        JSON.stringify({
+          googleConnections: [
+            {
+              id: 'ok',
+              accessToken: 'a',
+              refreshToken: 'r',
+              expiresAt: 1,
+              tokenType: 'Bearer',
+              scope: '',
+              accountEmail: null
+            },
+            { id: '', accessToken: 'a', refreshToken: 'r' },
+            { id: 'nope', accessToken: 'a', refreshToken: ' ' }
+          ]
+        })
+      )?.googleConnections
+    ).toEqual([
+      {
+        id: 'ok',
+        accessToken: 'a',
+        refreshToken: 'r',
+        expiresAt: 1,
+        tokenType: 'Bearer',
+        scope: '',
+        accountEmail: null
+      }
+    ])
   })
 })

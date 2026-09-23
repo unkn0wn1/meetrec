@@ -13,6 +13,11 @@ export interface CalendarEvent {
   startsAt: string
   endsAt: string | null
   attendees: CalendarAttendee[]
+  connectionId?: string | null
+  calendarId?: string | null
+  accountEmail?: string | null
+  calendarLabel?: string | null
+  calendarPrimary?: boolean
 }
 
 export interface CalendarSource {

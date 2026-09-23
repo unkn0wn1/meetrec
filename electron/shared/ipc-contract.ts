@@ -3,6 +3,7 @@ import type {
   CalendarList,
   CalendarProviderInput,
   CalendarRecordInput,
+  CalendarSelectionInput,
   CalendarStatus,
   OccurrenceInput
 } from './calendar-contract'
@@ -46,6 +47,7 @@ export const IPC = {
   calendarStart: 'calendar:start',
   calendarList: 'calendar:list',
   calendarSetRecord: 'calendar:setRecord',
+  calendarSetCalendars: 'calendar:setCalendars',
   calendarChanged: 'calendar:changed',
   cloudSetUpload: 'cloud:setUpload',
   cloudUpload: 'cloud:upload'
@@ -217,6 +219,7 @@ export interface MeetrecApi {
     start: (input: OccurrenceInput) => Promise<CalendarStatus>
     list: () => Promise<CalendarList>
     setRecord: (input: CalendarRecordInput) => Promise<CalendarStatus>
+    setCalendars: (input: CalendarSelectionInput) => Promise<CalendarStatus>
     onChanged: (listener: (status: CalendarStatus) => void) => () => void
   }
   cloud: {

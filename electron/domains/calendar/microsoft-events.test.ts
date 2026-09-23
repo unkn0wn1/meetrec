@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseMicrosoftEvents } from './microsoft-events'
+import { microsoftEventsUrl, parseMicrosoftEvents } from './microsoft-events'
 
 describe('microsoft events', () => {
   it('maps a UTC dateTime and drops all-day, cancelled, and declined', () => {
@@ -62,5 +62,32 @@ describe('microsoft events', () => {
     })
     expect(events[2]?.title).toBe('Busy')
     expect(events[2]?.seriesId).toBeNull()
+  })
+
+  it('uses calendarView for one calendar and a v2 occurrence key', () => {
+    const from = new Date('2026-09-23T00:00:00.000Z')
+    const to = new Date('2026-09-24T00:00:00.000Z')
+    expect(microsoftEventsUrl(from, to)).toContain('/me/calendarView')
+    expect(microsoftEventsUrl(from, to, 'cal/id')).toContain('/me/calendars/cal%2Fid/calendarView')
+    const events = parseMicrosoftEvents(
+      {
+        value: [
+          {
+            id: 'evt:1',
+            subject: 'Standup',
+            start: { dateTime: '2026-09-23T15:00:00.0000000', timeZone: 'UTC' }
+          }
+        ]
+      },
+      {
+        calendarId: 'cal/id',
+        accountEmail: 'ada@contoso.com',
+        calendarLabel: 'Team',
+        calendarPrimary: false
+      }
+    )
+    expect(events[0]?.occurrenceKey).toBe('microsoft:v2:cal%2Fid:evt%3A1:2026-09-23T15:00:00.000Z')
+    expect(events[0]?.calendarId).toBe('cal/id')
+    expect(events[0]?.accountEmail).toBe('ada@contoso.com')
   })
 })
