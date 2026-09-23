@@ -59,9 +59,19 @@ Auto-update is not included. A follow-up can add `electron-updater` and a publis
 
 ## GitHub Actions
 
-Checks live in `.github/workflows/ci.yml` (pull requests and pushes to `main`, Ubuntu, Node 22). See [quality-gates.md](quality-gates.md).
+**CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes to `main`: typecheck, lint, format, file-size guard, tests. See [quality-gates.md](quality-gates.md). Merging to `main` does **not** publish installers.
 
-`.github/workflows/package.yml` runs only on **workflow_dispatch**. `ubuntu-latest` runs `dist:linux`. `windows-latest` runs `dist:win`. Both upload `dist/*.AppImage` and `dist/*.exe` as artifacts. Node is pinned to major 22. The workflow has no `GH_TOKEN` publish step and no `CSC_*` secrets.
+**Releases** (`.github/workflows/release.yml`) run only when you push a `v*` tag. GitHub-hosted runners build Linux (`ubuntu-latest` → AppImage) and Windows (`windows-latest` → NSIS + portable exe), then attach those files to a GitHub Release. Tags with a hyphen (`v0.1.0-alpha.1`, `v0.2.0-beta.1`, `v1.0.0-rc.1`) are marked **prerelease**. Plain tags like `v1.0.0` are a full release.
+
+Cut an alpha after the version bump is on `main`:
+
+```bash
+# package.json "version" should already match, e.g. 0.1.0-alpha.1
+git tag v0.1.0-alpha.1
+git push origin v0.1.0-alpha.1
+```
+
+**Ad-hoc package** (`.github/workflows/package.yml`) is **workflow_dispatch** only: same builders, upload artifacts, no GitHub Release. Use it to smoke-test packaging without tagging.
 
 ## Local installer smoke
 

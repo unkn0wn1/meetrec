@@ -1,5 +1,8 @@
 name: package
 
+# Ad-hoc installer artifacts only (no GitHub Release).
+# Public downloads: push a v* tag — see release.yml.
+
 on:
   workflow_dispatch:
 

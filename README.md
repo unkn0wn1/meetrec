@@ -81,7 +81,9 @@ npm run dist:linux
 npm run dist:win
 ```
 
-`dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. Builds are unsigned. `ffmpeg` must still be on `PATH`. The app id stays `io.techglint.meetrec`. Details: [docs/packaging.md](docs/packaging.md).
+`dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. Builds are unsigned. `ffmpeg` must still be on `PATH`. The app id stays `io.techglint.meetrec`.
+
+Public alphas come from a **`v*` tag** (GitHub runners build Linux + Windows and attach files to a Release). Merging to `main` does not publish installers. Details: [docs/packaging.md](docs/packaging.md).
 
 ## Contributing
 

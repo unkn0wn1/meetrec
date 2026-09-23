@@ -1,0 +1,89 @@
+name: release
+
+# Publishes a GitHub Release with Linux AppImage + Windows NSIS/portable exe.
+# Trigger: push a version tag only (not every merge to main).
+#
+#   1. PR that bumps package.json "version" (e.g. 0.1.0-alpha.1)
+#   2. Merge the PR
+#   3. git tag v0.1.0-alpha.1 && git push origin v0.1.0-alpha.1
+#
+# Tags with a hyphen (alpha / beta / rc) are marked prerelease.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            script: dist:linux
+          - os: windows-latest
+            script: dist:win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build installer
+        run: npm run ${{ matrix.script }}
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meetrec-${{ matrix.os }}
+          path: |
+            dist/*.AppImage
+            dist/*.exe
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: meetrec-*
+          path: artifacts
+          merge-multiple: true
+      - name: Stage release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f \( -name '*.AppImage' -o -name '*.exe' \) -print -exec cp -v {} release-assets/ \;
+          ls -la release-assets
+          test -n "$(ls -A release-assets)"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          name: meetrec ${{ github.ref_name }}
+          body: |
+            Desktop builds for **meetrec** `${{ github.ref_name }}`.
+
+            | Asset | Platform |
+            | --- | --- |
+            | `*-setup.exe` | Windows NSIS installer (x64) |
+            | `*-portable.exe` | Windows portable (x64) |
+            | `*.AppImage` | Linux |
+
+            **Notes**
+            - Built on GitHub-hosted runners (`ubuntu-latest` + `windows-latest`).
+            - Windows builds are unsigned — SmartScreen may warn.
+            - `ffmpeg` must be on `PATH` (not bundled yet).
+            - Linux is the daily path; Windows capture is experimental; macOS is stubbed.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
