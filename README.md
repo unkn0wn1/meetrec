@@ -14,14 +14,15 @@ It records what you already hear and say. It does not join the call. **0.1.0-alp
 
 ## Status
 
-| Area                                      | Today                                                                                                       |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Linux capture                             | Daily path. ffmpeg and Pulse (PipeWire).                                                                    |
-| Windows capture                           | Experimental. ffmpeg DirectShow, or WASAPI when that demuxer exists. Verify on a Windows machine.           |
-| macOS capture                             | Stub. Starting a recording throws.                                                                          |
-| Transcript and summary                    | Available once the Voice default and the AI default pass a Live check and the machine can reach those APIs. |
-| Calendar, silence auto-stop, cloud upload | Not built.                                                                                                  |
-| Signing and auto-update                   | Not set up. Installers are unsigned. Linux and Windows builds include ffmpeg.                               |
+| Area                      | Today                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Linux capture             | Daily path. ffmpeg and Pulse (PipeWire).                                                                                                                |
+| Windows capture           | Experimental. ffmpeg DirectShow, or WASAPI when that demuxer exists. Verify on a Windows machine.                                                       |
+| macOS capture             | Stub. Starting a recording throws.                                                                                                                      |
+| Transcript and summary    | Available once the Voice default and the AI default pass a Live check and the machine can reach those APIs.                                             |
+| Calendar and cloud upload | Decision locked (Google Calendar, Microsoft Calendar, optional Drive and OneDrive). Lands in follow-up PRs. See [oauth clients](docs/oauth-clients.md). |
+| Silence auto-stop         | Not built.                                                                                                                                              |
+| Signing and auto-update   | Not set up. Installers are unsigned. Linux and Windows builds include ffmpeg.                                                                           |
 
 ## Requirements
 
