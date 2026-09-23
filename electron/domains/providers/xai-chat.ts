@@ -1,12 +1,12 @@
 import { minutesToMarkdown, parseMinutesJson, type MinutesDraft } from '../minutes/markdown'
-import { XAI_CHAT_MODEL, XAI_CHAT_URL } from './models'
+import { XAI_CHAT_URL } from './models'
 
-export const CHAT_MODEL = XAI_CHAT_MODEL
 export const CHAT_URL = XAI_CHAT_URL
 
 export async function completeMinutes(input: {
   apiKey: string
   prompt: string
+  model: string
   fetchImpl?: typeof fetch
 }): Promise<{ draft: MinutesDraft; markdown: string }> {
   const fetchImpl = input.fetchImpl ?? fetch
@@ -17,7 +17,7 @@ export async function completeMinutes(input: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: CHAT_MODEL,
+      model: input.model,
       temperature: 0.2,
       messages: [
         {

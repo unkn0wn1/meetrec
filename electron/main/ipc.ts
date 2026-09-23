@@ -5,7 +5,9 @@ import {
   IPC,
   type LibraryDetail,
   type ProviderId,
+  type ProviderRole,
   type RecordingMetaView,
+  type SetModelInput,
   type SettingsStatus
 } from '../shared/ipc-contract'
 import type { RecordingController } from './recording-controller'
@@ -30,8 +32,25 @@ export function registerAppIpc(
     library.summarize(id).then(toDetailView)
   )
   ipcMain.handle(IPC.settingsGet, (): Promise<SettingsStatus> => settings.status())
-  ipcMain.handle(IPC.settingsSetProvider, (_event, provider: ProviderId) =>
-    settings.setProvider(provider)
+  ipcMain.handle(IPC.settingsSetVoiceDefault, (_event, provider: ProviderId) =>
+    settings.setVoiceDefault(provider)
+  )
+  ipcMain.handle(IPC.settingsSetAiDefault, (_event, provider: ProviderId) =>
+    settings.setAiDefault(provider)
+  )
+  ipcMain.handle(IPC.settingsSetModel, (_event, input: SetModelInput) => {
+    if (
+      !input ||
+      (input.role !== 'voice' && input.role !== 'ai') ||
+      typeof input.modelId !== 'string'
+    ) {
+      return Promise.reject(new Error('Choose a model.'))
+    }
+    const role: ProviderRole = input.role
+    return settings.setModel(input.providerId, role, input.modelId)
+  })
+  ipcMain.handle(IPC.settingsTestProvider, (_event, provider: ProviderId) =>
+    settings.testProvider(provider)
   )
   ipcMain.handle(IPC.settingsSetXaiKey, (_event, key: string): Promise<SettingsStatus> => {
     if (typeof key !== 'string') {

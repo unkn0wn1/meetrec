@@ -12,11 +12,12 @@ import { OPENAI_STT_MODEL, OPENAI_STT_URL } from './models'
 export async function transcribeWavOpenAi(input: {
   apiKey: string
   audioPath: string
+  model: string
   fetchImpl?: typeof fetch
 }): Promise<TranscriptDocument> {
   const bytes = await readFile(input.audioPath)
   const form = new FormData()
-  form.append('model', OPENAI_STT_MODEL)
+  form.append('model', input.model)
   form.append('response_format', 'diarized_json')
   form.append('chunking_strategy', 'auto')
   form.append('file', new Blob([bytes], { type: 'audio/wav' }), basename(input.audioPath))
@@ -37,11 +38,15 @@ export async function transcribeWavOpenAi(input: {
   } catch {
     throw new Error('Speech-to-text returned a response that was not JSON.')
   }
-  return documentFromOpenAi(payload, new Date().toISOString())
+  return documentFromOpenAi(payload, new Date().toISOString(), input.model)
 }
 
-export function documentFromOpenAi(payload: unknown, createdAt: string): TranscriptDocument {
-  const base = documentFromStt(payload, OPENAI_STT_MODEL, createdAt)
+export function documentFromOpenAi(
+  payload: unknown,
+  createdAt: string,
+  model = OPENAI_STT_MODEL
+): TranscriptDocument {
+  const base = documentFromStt(payload, model, createdAt)
   const segments = segmentsFromDiarized(payload)
   if (segments.length === 0) return base
   const text = segments

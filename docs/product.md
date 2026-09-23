@@ -10,7 +10,7 @@ The person running the app on their own computer. They are responsible for telli
 
 ## What 0.1 does
 
-Manual Record, a local folder, Library, Transcribe, and Generate summary, with one provider chosen in Settings. The calendar notification, silence auto-stop, and cloud upload in the loop below are not built yet.
+Manual Record, a local folder, Library, Transcribe, and Generate summary. Settings has one Voice default and one AI default. The calendar notification, silence auto-stop, and cloud upload in the loop below are not built yet.
 
 ## Happy path
 

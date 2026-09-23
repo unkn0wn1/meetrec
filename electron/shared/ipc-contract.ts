@@ -8,7 +8,10 @@ export const IPC = {
   libraryTranscribe: 'library:transcribe',
   librarySummarize: 'library:summarize',
   settingsGet: 'settings:get',
-  settingsSetProvider: 'settings:setProvider',
+  settingsSetVoiceDefault: 'settings:setVoiceDefault',
+  settingsSetAiDefault: 'settings:setAiDefault',
+  settingsSetModel: 'settings:setModel',
+  settingsTestProvider: 'settings:testProvider',
   settingsSetXaiKey: 'settings:setXaiKey',
   settingsClearXaiKey: 'settings:clearXaiKey',
   settingsSetOpenAiKey: 'settings:setOpenAiKey',
@@ -100,13 +103,54 @@ export interface LibraryDetail {
 
 export type ProviderId = 'xai-oauth' | 'xai-key' | 'openai'
 
+export type ProviderRole = 'voice' | 'ai'
+
 export type KeySource = 'settings' | 'env' | 'none'
 
-export interface SettingsStatus {
-  provider: ProviderId
-  configured: boolean
-  validated: boolean
+export type LiveState = 'unknown' | 'ok' | 'bad'
+
+export type ProbeState = 'idle' | 'pass' | 'fail' | 'na'
+
+export type CredentialKind = 'xai-oauth' | 'xai-key' | 'openai-key'
+
+export interface RoleProbe {
+  state: ProbeState
   message: string
+}
+
+export interface ModelOption {
+  id: string
+  label: string
+}
+
+export interface ProviderCardStatus {
+  id: ProviderId
+  label: string
+  credential: CredentialKind
+  configured: boolean
+  statusLabel: string
+  supportsVoice: boolean
+  supportsAi: boolean
+  voiceModels: ModelOption[]
+  aiModels: ModelOption[]
+  voiceModel: string
+  aiModel: string
+  isVoiceDefault: boolean
+  isAiDefault: boolean
+  live: LiveState
+  liveMessage: string
+  voiceProbe: RoleProbe
+  aiProbe: RoleProbe
+}
+
+export interface SettingsStatus {
+  voiceProviderId: ProviderId
+  aiProviderId: ProviderId
+  cards: ProviderCardStatus[]
+  canTranscribe: boolean
+  canSummarize: boolean
+  voiceGate: string | null
+  aiGate: string | null
   xaiKeySource: KeySource
   openaiKeySource: KeySource
   oauthPending: boolean
@@ -114,6 +158,12 @@ export interface SettingsStatus {
   verificationUrl: string | null
   oauthExpiresAt: number | null
   oauthIntervalSec: number | null
+}
+
+export interface SetModelInput {
+  providerId: ProviderId
+  role: ProviderRole
+  modelId: string
 }
 
 export interface MeetrecApi {
@@ -131,7 +181,10 @@ export interface MeetrecApi {
   }
   settings: {
     get: () => Promise<SettingsStatus>
-    setProvider: (provider: ProviderId) => Promise<SettingsStatus>
+    setVoiceDefault: (provider: ProviderId) => Promise<SettingsStatus>
+    setAiDefault: (provider: ProviderId) => Promise<SettingsStatus>
+    setModel: (input: SetModelInput) => Promise<SettingsStatus>
+    testProvider: (provider: ProviderId) => Promise<SettingsStatus>
     setXaiKey: (key: string) => Promise<SettingsStatus>
     clearXaiKey: () => Promise<SettingsStatus>
     setOpenAiKey: (key: string) => Promise<SettingsStatus>

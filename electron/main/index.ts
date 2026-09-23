@@ -85,7 +85,7 @@ app.whenReady().then(() => {
   })
   registerAppIpc(
     new RecordingController(),
-    new LibraryService(recordingsDir, () => settings.readAuthForActiveProvider()),
+    new LibraryService(recordingsDir, (role) => settings.readAuth(role)),
     settings
   )
   mainWindow = createWindow()

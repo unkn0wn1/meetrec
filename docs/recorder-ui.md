@@ -44,9 +44,11 @@ Older flat `*.wav` files are moved into folders on the first library scan when t
 
 ## Providers (main process only)
 
-Exactly one active provider (see [providers.md](providers.md)):
+One Voice default and one AI default (see [providers.md](providers.md)):
 
+- **Transcribe** uses the Voice default and its speech model, after that card’s Live check.
+- **Generate summary** uses the AI default and its chat model, after that card’s Live check.
 - **xAI sign-in** or **xAI API key** — speech: xAI Voice Transcribe 2.0 (`diarize=true`). Summary: Grok chat.
 - **OpenAI API key** — speech: `gpt-4o-transcribe-diarize`. Summary: `gpt-4.1-mini`.
 
-Keys and OAuth tokens come from Settings (`safeStorage` in userData). `XAI_API_KEY` and `OPENAI_API_KEY` apply only to the matching active choice, and only when Settings has no saved key. The renderer never holds them.
+Keys and OAuth tokens come from Settings (`safeStorage` in userData). `XAI_API_KEY` and `OPENAI_API_KEY` apply to that provider when Settings has no saved key. The renderer never holds them.

@@ -3,8 +3,8 @@
 ## Secrets
 
 - Store API keys and xAI OAuth refresh and access tokens with Electron `safeStorage` in `userData/secrets.bin`. If OS encryption is unavailable, the same file holds a marked plaintext fallback and main logs a warning. Still never `localStorage`.
-- The active provider id lives in `userData/settings.json`. It is not a secret.
-- The renderer never receives long-lived provider API keys or OAuth tokens. Settings IPC returns the provider id, whether credentials exist, validation, and — only during device sign-in — the user code and verification URL.
+- `userData/settings.json` holds the Voice default, the AI default, and each provider’s model ids. Those are not secrets.
+- The renderer never receives long-lived provider API keys or OAuth tokens. Settings IPC returns provider ids, model ids, whether credentials exist, Live and Test results, and — only during device sign-in — the user code and verification URL. Credential checks and role probes run in the main process.
 - Redact secrets in logs.
 
 ## xAI device-code client

@@ -44,6 +44,13 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Unsigned. Authenticode later via `CSC_LINK` and `CSC_KEY_PASSWORD` (`WIN_CSC_LINK` is the Windows alias). No auto-update yet.
 - Linux and Windows installers ship a pinned BtbN LGPL-static ffmpeg under `resources/ffmpeg/`. `npm run dev` uses ffmpeg on `PATH`. See [packaging.md](packaging.md).
 
+### 9. Settings Voice and AI defaults — LOCKED 2026-09-23
+
+- Exactly one Voice default and one AI default. They may be the same provider.
+- Providers in this build: xAI sign-in, xAI API key, OpenAI. OpenRouter and Anthropic are not registered.
+- Model pickers use the current allowlist: `grok-voice-transcribe-2.0`, `grok-4.5`, `gpt-4o-transcribe-diarize`, and `gpt-4.1-mini`.
+- A legacy `provider` value in `settings.json` becomes both defaults.
+
 ## Still soft / rename anytime
 
 - Exact auto-arm clock (T−1 min vs meeting start) — default proposal is **T−1 minute** when Auto-arm was chosen. Calendar arm is not built yet.

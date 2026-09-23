@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  canUseProvider,
-  providerAuthStatus,
+  canUseRole,
+  isProviderConfigured,
   providerGateHint,
   resolveActiveAuth,
   resolveOpenAiApiKey
@@ -17,16 +17,14 @@ describe('provider selection', () => {
     expect(parseProviderId(null)).toBe('xai-key')
   })
 
-  it('marks only the active provider as configured', () => {
+  it('marks a provider configured only from its own credentials', () => {
     const secrets = { xaiApiKey: 'xai', openaiApiKey: 'openai', xaiOAuth: true }
-    expect(providerAuthStatus({ provider: 'xai-key', secrets }).configured).toBe(true)
-    expect(providerAuthStatus({ provider: 'openai', secrets }).configured).toBe(true)
-    expect(providerAuthStatus({ provider: 'xai-oauth', secrets }).configured).toBe(true)
-    expect(providerAuthStatus({ provider: 'openai', secrets: empty }).configured).toBe(false)
-    expect(
-      providerAuthStatus({ provider: 'xai-oauth', secrets: { ...empty, xaiApiKey: 'xai' } })
-        .configured
-    ).toBe(false)
+    expect(isProviderConfigured('xai-key', secrets)).toBe(true)
+    expect(isProviderConfigured('openai', secrets)).toBe(true)
+    expect(isProviderConfigured('xai-oauth', secrets)).toBe(true)
+    expect(isProviderConfigured('openai', empty)).toBe(false)
+    expect(isProviderConfigured('xai-oauth', { ...empty, xaiApiKey: 'xai' })).toBe(false)
+    expect(isProviderConfigured('xai-key', { ...empty, xaiOAuth: true })).toBe(false)
   })
 
   it('does not fall across providers when resolving a bearer', () => {
@@ -50,19 +48,14 @@ describe('provider selection', () => {
     expect(resolveOpenAiApiKey(' saved ', 'env')).toBe('saved')
     expect(resolveOpenAiApiKey(null, ' env ')).toBe('env')
     expect(resolveOpenAiApiKey('  ', '  ')).toBeNull()
-    const status = providerAuthStatus({
-      provider: 'openai',
-      secrets: empty,
-      env: { OPENAI_API_KEY: 'from-env' }
-    })
-    expect(status.configured).toBe(true)
-    expect(status.openaiKeySource).toBe('env')
+    expect(isProviderConfigured('openai', empty, { OPENAI_API_KEY: 'from-env' })).toBe(true)
+    expect(isProviderConfigured('openai', empty, {})).toBe(false)
   })
 
-  it('gates actions on the active provider being configured and validated', () => {
-    expect(canUseProvider(true, true)).toBe(true)
-    expect(canUseProvider(true, false)).toBe(false)
-    expect(canUseProvider(false, true)).toBe(false)
+  it('gates a role on that provider being configured and live', () => {
+    expect(canUseRole(true, true)).toBe(true)
+    expect(canUseRole(true, false)).toBe(false)
+    expect(canUseRole(false, true)).toBe(false)
     expect(providerGateHint('xai-oauth')).toContain('Sign in')
     expect(providerGateHint('openai')).toContain('OpenAI')
   })

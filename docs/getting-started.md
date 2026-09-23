@@ -23,15 +23,15 @@ npm run dev
 
 `npm run dev` starts electron-vite and passes `--no-sandbox`. That is the usual local setup. The sandbox alternative is in the root [README](../README.md).
 
-## Choose a provider in Settings
+## Choose Voice and AI defaults in Settings
 
-Open **Settings** before you transcribe. Pick one:
+Open **Settings** before you transcribe. Each provider has its own card. Pick one **Default for Voice** and one **Default for AI**. They can be the same card.
 
 - **xAI sign-in** (device code in the browser)
 - **xAI API key**
 - **OpenAI** API key
 
-Save the key, or finish sign-in, and wait until the check succeeds. Transcribe and Generate summary stay disabled until then.
+Save the key, or finish sign-in, and wait until that card shows Live. Transcribe stays off until the Voice default is Live. Generate summary stays off until the AI default is Live.
 
 The xAI sign-in client id `b1a00492-073a-47ea-816f-4c329264a828` is a public device-code client id. It has no client secret. Optional environment fallbacks are listed in [`.env.example`](../.env.example). Prefer Settings.
 

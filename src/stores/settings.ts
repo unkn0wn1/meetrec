@@ -1,19 +1,21 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import type { ProviderId, SettingsStatus } from '../../electron/shared/ipc-contract'
+import { ref } from 'vue'
+import type {
+  ProviderCardStatus,
+  ProviderId,
+  ProviderRole,
+  SettingsStatus
+} from '../../electron/shared/ipc-contract'
 import { useMeetrec } from '@/composables/useMeetrec'
 
-const GATE: Record<ProviderId, string> = {
-  'xai-oauth': 'Sign in with xAI in Settings',
-  'xai-key': 'Add a working xAI API key in Settings',
-  openai: 'Add a working OpenAI API key in Settings'
-}
-
 export const useSettingsStore = defineStore('settings', () => {
-  const provider = ref<ProviderId>('xai-key')
-  const configured = ref(false)
-  const validated = ref(false)
-  const message = ref<string | null>(null)
+  const voiceProviderId = ref<ProviderId>('xai-key')
+  const aiProviderId = ref<ProviderId>('xai-key')
+  const cards = ref<ProviderCardStatus[]>([])
+  const canTranscribe = ref(false)
+  const canSummarize = ref(false)
+  const voiceGate = ref<string | null>(null)
+  const aiGate = ref<string | null>(null)
   const xaiKeySource = ref<SettingsStatus['xaiKeySource']>('none')
   const openaiKeySource = ref<SettingsStatus['openaiKeySource']>('none')
   const oauthPending = ref(false)
@@ -23,18 +25,17 @@ export const useSettingsStore = defineStore('settings', () => {
   const oauthIntervalSec = ref<number | null>(null)
   const loading = ref(false)
   const saving = ref(false)
-
-  const canUseProvider = computed(() => configured.value && validated.value)
-  const gateHint = computed(() => (canUseProvider.value ? null : GATE[provider.value]))
-  const statusLabel = computed(() =>
-    describeStatus(provider.value, configured.value, xaiKeySource.value, openaiKeySource.value)
-  )
+  const testingProviderId = ref<ProviderId | null>(null)
+  const error = ref<string | null>(null)
 
   function applyStatus(status: SettingsStatus): void {
-    provider.value = status.provider
-    configured.value = status.configured
-    validated.value = status.validated
-    message.value = status.message || null
+    voiceProviderId.value = status.voiceProviderId
+    aiProviderId.value = status.aiProviderId
+    cards.value = status.cards
+    canTranscribe.value = status.canTranscribe
+    canSummarize.value = status.canSummarize
+    voiceGate.value = status.voiceGate
+    aiGate.value = status.aiGate
     xaiKeySource.value = status.xaiKeySource
     openaiKeySource.value = status.openaiKeySource
     oauthPending.value = status.oauthPending
@@ -42,55 +43,73 @@ export const useSettingsStore = defineStore('settings', () => {
     verificationUrl.value = status.verificationUrl
     oauthExpiresAt.value = status.oauthExpiresAt
     oauthIntervalSec.value = status.oauthIntervalSec
+    error.value = null
+  }
+
+  function busy(): boolean {
+    return saving.value || testingProviderId.value !== null
   }
 
   async function refresh(): Promise<void> {
+    if (busy()) return
     loading.value = true
     try {
       applyStatus(await useMeetrec().settings.get())
     } catch (caught) {
-      message.value = messageFrom(caught)
-      configured.value = false
-      validated.value = false
+      error.value = messageFrom(caught)
     } finally {
       loading.value = false
     }
   }
 
-  async function validate(): Promise<boolean> {
-    if (!configured.value && provider.value !== 'xai-oauth') {
-      validated.value = false
-      return false
-    }
-    try {
-      applyStatus(await useMeetrec().settings.validate())
-      return validated.value
-    } catch (caught) {
-      validated.value = false
-      message.value = messageFrom(caught)
-      return false
-    }
-  }
-
   async function refreshAndValidate(): Promise<void> {
-    await refresh()
-    if (configured.value) await validate()
+    if (busy()) return
+    loading.value = true
+    try {
+      applyStatus(await useMeetrec().settings.get())
+      applyStatus(await useMeetrec().settings.validate())
+    } catch (caught) {
+      error.value = messageFrom(caught)
+    } finally {
+      loading.value = false
+    }
   }
 
-  async function chooseProvider(next: ProviderId): Promise<void> {
-    if (next === provider.value) return
+  async function setVoiceDefault(provider: ProviderId): Promise<void> {
+    if (provider === voiceProviderId.value) return
+    await save(() => useMeetrec().settings.setVoiceDefault(provider))
+  }
+
+  async function setAiDefault(provider: ProviderId): Promise<void> {
+    if (provider === aiProviderId.value) return
+    await save(() => useMeetrec().settings.setAiDefault(provider))
+  }
+
+  async function setModel(
+    provider: ProviderId,
+    role: ProviderRole,
+    modelId: string
+  ): Promise<void> {
+    await save(() => useMeetrec().settings.setModel({ providerId: provider, role, modelId }))
+  }
+
+  async function testProvider(provider: ProviderId): Promise<void> {
+    if (busy()) return
+    testingProviderId.value = provider
     saving.value = true
     try {
-      applyStatus(await useMeetrec().settings.setProvider(next))
+      applyStatus(await useMeetrec().settings.testProvider(provider))
     } catch (caught) {
-      message.value = messageFrom(caught)
+      error.value = messageFrom(caught)
     } finally {
+      testingProviderId.value = null
       saving.value = false
     }
   }
 
   async function saveXaiKey(key: string): Promise<boolean> {
-    return save(() => useMeetrec().settings.setXaiKey(key))
+    const status = await save(() => useMeetrec().settings.setXaiKey(key))
+    return status?.cards.find((card) => card.id === 'xai-key')?.live === 'ok'
   }
 
   async function clearXaiKey(): Promise<void> {
@@ -98,7 +117,8 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   async function saveOpenAiKey(key: string): Promise<boolean> {
-    return save(() => useMeetrec().settings.setOpenAiKey(key))
+    const status = await save(() => useMeetrec().settings.setOpenAiKey(key))
+    return status?.cards.find((card) => card.id === 'openai')?.live === 'ok'
   }
 
   async function clearOpenAiKey(): Promise<void> {
@@ -110,10 +130,11 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   async function pollXaiOAuth(): Promise<void> {
+    if (testingProviderId.value) return
     try {
       applyStatus(await useMeetrec().settings.pollXaiOAuth())
     } catch (caught) {
-      message.value = messageFrom(caught)
+      error.value = messageFrom(caught)
       oauthPending.value = false
     }
   }
@@ -122,24 +143,28 @@ export const useSettingsStore = defineStore('settings', () => {
     await save(() => useMeetrec().settings.signOutXaiOAuth())
   }
 
-  async function save(call: () => Promise<SettingsStatus>): Promise<boolean> {
+  async function save(call: () => Promise<SettingsStatus>): Promise<SettingsStatus | null> {
     saving.value = true
     try {
-      applyStatus(await call())
-      return validated.value
+      const status = await call()
+      applyStatus(status)
+      return status
     } catch (caught) {
-      message.value = messageFrom(caught)
-      return false
+      error.value = messageFrom(caught)
+      return null
     } finally {
       saving.value = false
     }
   }
 
   return {
-    provider,
-    configured,
-    validated,
-    message,
+    voiceProviderId,
+    aiProviderId,
+    cards,
+    canTranscribe,
+    canSummarize,
+    voiceGate,
+    aiGate,
     xaiKeySource,
     openaiKeySource,
     oauthPending,
@@ -149,13 +174,14 @@ export const useSettingsStore = defineStore('settings', () => {
     oauthIntervalSec,
     loading,
     saving,
-    canUseProvider,
-    gateHint,
-    statusLabel,
+    testingProviderId,
+    error,
     refresh,
-    validate,
     refreshAndValidate,
-    chooseProvider,
+    setVoiceDefault,
+    setAiDefault,
+    setModel,
+    testProvider,
     saveXaiKey,
     clearXaiKey,
     saveOpenAiKey,
@@ -165,23 +191,6 @@ export const useSettingsStore = defineStore('settings', () => {
     signOutXaiOAuth
   }
 })
-
-function describeStatus(
-  provider: ProviderId,
-  configured: boolean,
-  xaiKeySource: SettingsStatus['xaiKeySource'],
-  openaiKeySource: SettingsStatus['openaiKeySource']
-): string {
-  if (provider === 'xai-oauth') return configured ? 'Signed in with xAI.' : 'Not signed in.'
-  if (provider === 'openai') {
-    if (openaiKeySource === 'settings') return 'OpenAI key saved.'
-    if (openaiKeySource === 'env') return 'Using OPENAI_API_KEY from the environment.'
-    return 'Not configured.'
-  }
-  if (xaiKeySource === 'settings') return 'xAI key saved.'
-  if (xaiKeySource === 'env') return 'Using XAI_API_KEY from the environment.'
-  return 'Not configured.'
-}
 
 function messageFrom(caught: unknown): string {
   if (caught instanceof Error) return caught.message

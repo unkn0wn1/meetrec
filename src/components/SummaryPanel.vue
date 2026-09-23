@@ -5,8 +5,8 @@ defineProps<{
   summary: string | null
   hasTranscript: boolean
   busy: boolean
-  canUseProvider: boolean
-  gateHint: string | null
+  canSummarize: boolean
+  aiGate: string | null
 }>()
 
 const emit = defineEmits<{
@@ -21,13 +21,13 @@ const emit = defineEmits<{
         Minutes include an overview, topic, decisions, and action items.
       </p>
       <Button
-        :disabled="busy || !hasTranscript || !canUseProvider"
-        :title="canUseProvider ? undefined : (gateHint ?? undefined)"
+        :disabled="busy || !hasTranscript || !canSummarize"
+        :title="canSummarize ? undefined : (aiGate ?? undefined)"
         @click="emit('summarize')"
       >
         {{ busy ? 'Writing summary…' : 'Generate summary' }}
       </Button>
-      <p v-if="!canUseProvider && gateHint" class="text-xs text-muted-foreground">{{ gateHint }}</p>
+      <p v-if="!canSummarize && aiGate" class="text-xs text-muted-foreground">{{ aiGate }}</p>
       <p v-else-if="!hasTranscript" class="text-xs text-muted-foreground">Transcribe first.</p>
     </div>
     <pre v-else class="whitespace-pre-wrap font-sans text-sm leading-6">{{ summary }}</pre>

@@ -1,17 +1,31 @@
-import type { ActiveAuth, ProviderAuthStatus } from '../providers/auth'
-import { providerAuthStatus, providerGateHint, resolveActiveAuth } from '../providers/auth'
-import { parseProviderId, type ProviderId } from '../providers/ids'
+import type { ProviderId, ProviderRole, SettingsStatus } from '../../shared/ipc-contract'
+import {
+  isProviderConfigured,
+  providerGateHint,
+  resolveActiveAuth,
+  type ActiveAuth,
+  type StoredSecretsView
+} from '../providers/auth'
+import { PROVIDER_IDS, isProviderId } from '../providers/ids'
 import { validateOpenAiApiKey } from '../providers/openai-ping'
-import { validateXaiApiKey, type XaiValidation } from '../providers/xai-ping'
+import { probeAi, probeVoice } from '../providers/probes'
+import { assertRole, isAllowedModel, providerDefinition } from '../providers/registry'
+import { validateXaiApiKey } from '../providers/xai-ping'
 import {
   accessNeedsRefresh,
   pollDeviceCode,
   refreshAccessToken,
   requestDeviceCode
 } from '../providers/xai-oauth'
-import { readAppSettings, writeAppSettings } from './settings-file'
+import {
+  buildSettingsSnapshot,
+  type LiveEntry,
+  type ProbePair,
+  type SnapshotOauth
+} from './card-snapshot'
 import { OAuthSession, type PublicOAuthPending } from './oauth-session'
 import type { SecretStore } from './secret-store'
+import { readAppSettings, writeAppSettings, type AppSettings } from './settings-file'
 
 export interface SettingsServiceDeps {
   secrets: SecretStore
@@ -23,110 +37,84 @@ export interface SettingsServiceDeps {
   session?: OAuthSession
 }
 
-export interface SettingsSnapshot extends ProviderAuthStatus {
-  validated: boolean
-  message: string
-  oauthUserCode: string | null
-  verificationUrl: string | null
-  oauthExpiresAt: number | null
-  oauthIntervalSec: number | null
-}
-
-const NOT_CHECKED = 'Not checked yet.'
-
 export class SettingsService {
-  private validatedProvider: ProviderId | null = null
-  private validatedOk = false
-  private lastMessage = NOT_CHECKED
+  private readonly live = new Map<ProviderId, LiveEntry>()
+  private readonly probes = new Map<ProviderId, ProbePair>()
+  private readonly liveInflight = new Map<ProviderId, Promise<void>>()
+  private migrated = false
+  private migrating: Promise<void> | null = null
   private readonly session: OAuthSession
 
   constructor(private readonly deps: SettingsServiceDeps) {
     this.session = deps.session ?? new OAuthSession()
   }
 
-  async status(): Promise<SettingsSnapshot> {
-    const auth = await this.authStatus()
-    const pending = this.session.current(this.now())
-    const validated = this.validatedOk && this.validatedProvider === auth.provider
-    return {
-      ...auth,
-      oauthPending: auth.provider === 'xai-oauth' && Boolean(pending),
-      validated,
-      message: this.lastMessage,
-      oauthUserCode: pending?.userCode ?? null,
-      verificationUrl: pending?.verificationUrl ?? null,
-      oauthExpiresAt: pending?.expiresAt ?? null,
-      oauthIntervalSec: pending?.intervalSec ?? null
-    }
+  async status(): Promise<SettingsStatus> {
+    return this.snapshot()
   }
 
-  async setProvider(provider: ProviderId): Promise<SettingsSnapshot> {
-    const next = parseProviderId(provider)
-    await writeAppSettings(this.deps.userDataDir(), { provider: next })
-    this.invalidate()
-    const snapshot = await this.status()
-    if (!snapshot.configured) {
-      this.lastMessage = ''
-      return this.status()
-    }
-    return this.validate()
+  async setVoiceDefault(provider: ProviderId): Promise<SettingsStatus> {
+    return this.setDefault(provider, 'voice')
   }
 
-  async setXaiKey(key: string): Promise<SettingsSnapshot> {
+  async setAiDefault(provider: ProviderId): Promise<SettingsStatus> {
+    return this.setDefault(provider, 'ai')
+  }
+
+  async setModel(
+    provider: ProviderId,
+    role: ProviderRole,
+    modelId: string
+  ): Promise<SettingsStatus> {
+    this.requireProvider(provider)
+    assertRole(provider, role)
+    if (!isAllowedModel(provider, role, modelId)) throw new Error('That model is not available.')
+    const settings = await this.loadSettings()
+    const models = {
+      ...settings.models,
+      [provider]: { ...settings.models[provider], [role]: modelId }
+    }
+    await writeAppSettings(this.deps.userDataDir(), { ...settings, models })
+    const pair = this.probes.get(provider)
+    if (pair) this.probes.set(provider, { ...pair, [role]: { state: 'idle', message: '' } })
+    return this.snapshot()
+  }
+
+  async setXaiKey(key: string): Promise<SettingsStatus> {
     await this.deps.secrets.writeXaiApiKey(key)
-    await this.activate('xai-key')
-    return this.validate()
+    return this.afterCredentialChange('xai-key')
   }
 
-  async clearXaiKey(): Promise<SettingsSnapshot> {
+  async clearXaiKey(): Promise<SettingsStatus> {
     await this.deps.secrets.clearXaiApiKey()
-    this.invalidate()
-    const snapshot = await this.status()
-    if (snapshot.provider === 'xai-key' && snapshot.xaiKeySource === 'none') {
-      this.lastMessage = 'xAI API key cleared.'
-      return this.status()
-    }
-    if (snapshot.provider === 'xai-key') return this.validate()
-    this.lastMessage = 'xAI API key cleared.'
-    return this.status()
+    return this.afterCredentialChange('xai-key')
   }
 
-  async setOpenAiKey(key: string): Promise<SettingsSnapshot> {
+  async setOpenAiKey(key: string): Promise<SettingsStatus> {
     await this.deps.secrets.writeOpenAiApiKey(key)
-    await this.activate('openai')
-    return this.validate()
+    return this.afterCredentialChange('openai')
   }
 
-  async clearOpenAiKey(): Promise<SettingsSnapshot> {
+  async clearOpenAiKey(): Promise<SettingsStatus> {
     await this.deps.secrets.clearOpenAiApiKey()
-    this.invalidate()
-    const snapshot = await this.status()
-    if (snapshot.provider === 'openai' && snapshot.openaiKeySource === 'none') {
-      this.lastMessage = 'OpenAI API key cleared.'
-      return this.status()
-    }
-    if (snapshot.provider === 'openai') return this.validate()
-    this.lastMessage = 'OpenAI API key cleared.'
-    return this.status()
+    return this.afterCredentialChange('openai')
   }
 
-  async startXaiOAuth(): Promise<SettingsSnapshot> {
-    await this.activate('xai-oauth')
-    this.invalidate()
+  async startXaiOAuth(): Promise<SettingsStatus> {
+    this.clearCard('xai-oauth')
     const flow = await requestDeviceCode({ fetchImpl: this.deps.fetchImpl, now: this.now() })
     const pending = this.session.start(flow)
-    this.lastMessage = `Enter ${pending.userCode} in the browser to finish sign-in.`
     if (this.deps.openExternal) {
       await this.deps.openExternal(pending.verificationUrl).catch(() => undefined)
     }
-    return this.status()
+    return this.snapshot()
   }
 
-  async pollXaiOAuth(): Promise<SettingsSnapshot> {
+  async pollXaiOAuth(): Promise<SettingsStatus> {
     const deviceCode = this.session.deviceCode()
     if (!deviceCode) {
-      this.lastMessage = 'Start xAI sign-in again.'
-      return this.status()
+      this.live.set('xai-oauth', { state: 'bad', message: 'Start xAI sign-in again.' })
+      return this.snapshot()
     }
     const result = await pollDeviceCode({
       deviceCode,
@@ -134,116 +122,199 @@ export class SettingsService {
       fetchImpl: this.deps.fetchImpl,
       now: this.now()
     })
-    if (result.kind === 'pending') return this.status()
+    if (result.kind === 'pending') return this.snapshot()
     if (result.kind === 'slow_down') {
       this.session.slowDown()
-      return this.status()
+      return this.snapshot()
     }
     if (result.kind === 'tokens') {
       await this.deps.secrets.writeXaiOAuth(result.tokens)
       this.session.clear()
-      await this.activate('xai-oauth')
-      return this.validate()
+      return this.afterCredentialChange('xai-oauth')
     }
     this.session.clear()
-    this.invalidate()
-    this.lastMessage = result.message
-    return this.status()
+    this.clearCard('xai-oauth')
+    this.live.set('xai-oauth', { state: 'bad', message: result.message })
+    return this.snapshot()
   }
 
-  async signOutXaiOAuth(): Promise<SettingsSnapshot> {
+  async signOutXaiOAuth(): Promise<SettingsStatus> {
     this.session.clear()
     await this.deps.secrets.clearXaiOAuth()
-    this.invalidate()
-    this.lastMessage = 'Signed out of xAI.'
-    return this.status()
+    this.clearCard('xai-oauth')
+    return this.snapshot()
   }
 
-  async validate(): Promise<SettingsSnapshot> {
-    const provider = await this.readProvider()
-    const result = await this.validateActive(provider)
-    this.validatedProvider = provider
-    this.validatedOk = result.ok
-    this.lastMessage = result.message
-    return this.status()
+  async validate(): Promise<SettingsStatus> {
+    await this.migrateIfNeeded()
+    const secrets = await this.secretView()
+    const configured = PROVIDER_IDS.filter((id) => isProviderConfigured(id, secrets, this.env()))
+    await Promise.all(configured.map((id) => this.checkLive(id)))
+    return this.snapshot()
   }
 
-  async readAuthForActiveProvider(): Promise<ActiveAuth> {
-    const provider = await this.readProvider()
-    if (provider !== 'xai-oauth') {
-      const auth = resolveActiveAuth({
-        provider,
-        secrets: await this.secretView(),
-        env: this.env()
-      })
-      if (!auth) throw new Error(providerGateHint(provider))
-      return auth
+  async testProvider(provider: ProviderId): Promise<SettingsStatus> {
+    this.requireProvider(provider)
+    const definition = providerDefinition(provider)
+    const settings = await this.loadSettings()
+    const token = await this.tokenFor(provider)
+    const missing = providerGateHint(provider)
+    const models = settings.models[provider]
+    if (!token) this.live.delete(provider)
+    const [voice, ai] = await Promise.all([
+      probeVoice({
+        family: definition.family,
+        model: models.voice,
+        token,
+        supported: definition.supportsVoice,
+        missingMessage: missing,
+        fetchImpl: this.deps.fetchImpl
+      }),
+      probeAi({
+        family: definition.family,
+        model: models.ai,
+        token,
+        supported: definition.supportsAi,
+        missingMessage: missing,
+        fetchImpl: this.deps.fetchImpl
+      }),
+      token ? this.checkLive(provider) : Promise.resolve()
+    ])
+    this.probes.set(provider, { voice, ai })
+    return this.snapshot()
+  }
+
+  async readAuth(role: ProviderRole): Promise<ActiveAuth> {
+    const settings = await this.loadSettings()
+    const provider = role === 'voice' ? settings.voiceProviderId : settings.aiProviderId
+    assertRole(provider, role)
+    const token = await this.tokenFor(provider)
+    if (!token) throw new Error(providerGateHint(provider))
+    return { provider, token, model: settings.models[provider][role] }
+  }
+
+  private async setDefault(provider: ProviderId, role: ProviderRole): Promise<SettingsStatus> {
+    this.requireProvider(provider)
+    assertRole(provider, role)
+    const settings = await this.loadSettings()
+    const next: AppSettings =
+      role === 'voice'
+        ? { ...settings, voiceProviderId: provider }
+        : { ...settings, aiProviderId: provider }
+    await writeAppSettings(this.deps.userDataDir(), next)
+    const configured = isProviderConfigured(provider, await this.secretView(), this.env())
+    if (configured && !this.live.has(provider)) await this.checkLive(provider)
+    return this.snapshot()
+  }
+
+  private async afterCredentialChange(provider: ProviderId): Promise<SettingsStatus> {
+    this.clearCard(provider)
+    if (isProviderConfigured(provider, await this.secretView(), this.env())) {
+      await this.checkLive(provider)
     }
-    const tokens = await this.deps.secrets.readXaiOAuth()
-    if (!tokens) throw new Error(providerGateHint('xai-oauth'))
-    if (!accessNeedsRefresh(tokens, this.now())) {
-      return { provider: 'xai-oauth', token: tokens.accessToken }
-    }
-    const refreshed = await refreshAccessToken({
-      tokens,
-      fetchImpl: this.deps.fetchImpl,
-      now: this.now()
+    return this.snapshot()
+  }
+
+  private requireProvider(provider: string): asserts provider is ProviderId {
+    if (!isProviderId(provider)) throw new Error('Unknown provider.')
+  }
+
+  private clearCard(provider: ProviderId): void {
+    this.live.delete(provider)
+    this.probes.delete(provider)
+  }
+
+  private checkLive(provider: ProviderId): Promise<void> {
+    const existing = this.liveInflight.get(provider)
+    if (existing) return existing
+    const job = this.runLive(provider).finally(() => {
+      this.liveInflight.delete(provider)
     })
-    await this.deps.secrets.writeXaiOAuth(refreshed)
-    return { provider: 'xai-oauth', token: refreshed.accessToken }
+    this.liveInflight.set(provider, job)
+    return job
   }
 
-  private async validateActive(provider: ProviderId): Promise<XaiValidation> {
-    try {
-      const auth = await this.readAuthForActiveProvider()
-      if (provider === 'openai') {
-        return validateOpenAiApiKey({ apiKey: auth.token, fetchImpl: this.deps.fetchImpl })
-      }
-      return validateXaiApiKey({ apiKey: auth.token, fetchImpl: this.deps.fetchImpl })
-    } catch (caught) {
-      const message = caught instanceof Error ? caught.message : 'Credential check failed.'
-      return { ok: false, message }
+  private async runLive(provider: ProviderId): Promise<void> {
+    const token = await this.tokenFor(provider)
+    if (!token) {
+      this.live.delete(provider)
+      return
     }
+    const result =
+      provider === 'openai'
+        ? await validateOpenAiApiKey({ apiKey: token, fetchImpl: this.deps.fetchImpl })
+        : await validateXaiApiKey({ apiKey: token, fetchImpl: this.deps.fetchImpl })
+    this.live.set(provider, { state: result.ok ? 'ok' : 'bad', message: result.message })
   }
 
-  private async authStatus(): Promise<ProviderAuthStatus> {
+  private async tokenFor(provider: ProviderId): Promise<string | null> {
+    if (provider === 'xai-oauth') {
+      const tokens = await this.deps.secrets.readXaiOAuth()
+      if (!tokens) return null
+      if (!accessNeedsRefresh(tokens, this.now())) return tokens.accessToken
+      const refreshed = await refreshAccessToken({
+        tokens,
+        fetchImpl: this.deps.fetchImpl,
+        now: this.now()
+      })
+      await this.deps.secrets.writeXaiOAuth(refreshed)
+      return refreshed.accessToken
+    }
+    const auth = resolveActiveAuth({
+      provider,
+      secrets: await this.secretView(),
+      env: this.env()
+    })
+    return auth?.token ?? null
+  }
+
+  private async snapshot(): Promise<SettingsStatus> {
+    await this.migrateIfNeeded()
+    const settings = (await readAppSettings(this.deps.userDataDir())).settings
     const bag = await this.deps.secrets.readBag()
-    return providerAuthStatus({
-      provider: await this.readProvider(),
+    const pending = this.session.current(this.now())
+    return buildSettingsSnapshot({
+      settings,
       secrets: {
         xaiApiKey: bag.xaiApiKey,
         openaiApiKey: bag.openaiApiKey,
         xaiOAuth: Boolean(bag.xaiOAuth)
       },
       env: this.env(),
-      oauthPending: Boolean(this.session.current(this.now()))
+      live: Object.fromEntries(this.live) as Partial<Record<ProviderId, LiveEntry>>,
+      probes: Object.fromEntries(this.probes) as Partial<Record<ProviderId, ProbePair>>,
+      oauth: oauthView(pending)
     })
   }
 
-  private async secretView(): Promise<{
-    xaiApiKey: string | null
-    openaiApiKey: string | null
-    xaiOAuth: boolean
-  }> {
+  private migrateIfNeeded(): Promise<void> {
+    if (this.migrated) return Promise.resolve()
+    if (!this.migrating) {
+      this.migrating = this.runMigration().finally(() => {
+        this.migrating = null
+      })
+    }
+    return this.migrating
+  }
+
+  private async runMigration(): Promise<void> {
+    const parsed = await readAppSettings(this.deps.userDataDir())
+    if (parsed.legacy) await writeAppSettings(this.deps.userDataDir(), parsed.settings)
+    this.migrated = true
+  }
+
+  private async loadSettings(): Promise<AppSettings> {
+    await this.migrateIfNeeded()
+    return (await readAppSettings(this.deps.userDataDir())).settings
+  }
+
+  private async secretView(): Promise<StoredSecretsView> {
     const bag = await this.deps.secrets.readBag()
     return {
       xaiApiKey: bag.xaiApiKey,
       openaiApiKey: bag.openaiApiKey,
       xaiOAuth: Boolean(bag.xaiOAuth)
     }
-  }
-
-  private async readProvider(): Promise<ProviderId> {
-    return (await readAppSettings(this.deps.userDataDir())).provider
-  }
-
-  private async activate(provider: ProviderId): Promise<void> {
-    await writeAppSettings(this.deps.userDataDir(), { provider })
-  }
-
-  private invalidate(): void {
-    this.validatedOk = false
-    this.validatedProvider = null
   }
 
   private env(): NodeJS.ProcessEnv {
@@ -255,4 +326,12 @@ export class SettingsService {
   }
 }
 
-export type { PublicOAuthPending }
+function oauthView(pending: PublicOAuthPending | null): SnapshotOauth {
+  return {
+    pending: Boolean(pending),
+    userCode: pending?.userCode ?? null,
+    verificationUrl: pending?.verificationUrl ?? null,
+    expiresAt: pending?.expiresAt ?? null,
+    intervalSec: pending?.intervalSec ?? null
+  }
+}
