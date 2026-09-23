@@ -48,7 +48,7 @@ One Voice default and one AI default (see [providers.md](providers.md)):
 
 - **Transcribe** uses the Voice default and its speech model, after that card’s Live check.
 - **Generate summary** uses the AI default and its chat model, after that card’s Live check.
-- **xAI sign-in** or **xAI API key** — speech: xAI Voice Transcribe 2.0 (`diarize=true`). Summary: Grok chat.
-- **OpenAI API key** — speech: `gpt-4o-transcribe-diarize`. Summary: `gpt-4.1-mini`.
+- **xAI sign-in** or **xAI API key** — before a catalog is stored, speech uses xAI Voice Transcribe 2.0 (`diarize=true`) and summary uses Grok chat. Settings pickers fill after Test (see [providers.md](providers.md)).
+- **OpenAI API key** — before a catalog is stored, speech uses `gpt-4o-transcribe-diarize` and summary uses `gpt-4.1-mini`.
 
 Keys and OAuth tokens come from Settings (`safeStorage` in userData). `XAI_API_KEY` and `OPENAI_API_KEY` apply to that provider when Settings has no saved key. The renderer never holds them.

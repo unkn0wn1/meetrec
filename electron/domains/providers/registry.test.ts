@@ -3,6 +3,7 @@ import { PROVIDER_IDS } from './ids'
 import { OPENAI_CHAT_MODEL, OPENAI_STT_MODEL, XAI_CHAT_MODEL, XAI_STT_MODEL } from './models'
 import {
   PROVIDER_REGISTRY,
+  coerceModel,
   defaultModel,
   isAllowedModel,
   registryMatchesIds,
@@ -35,5 +36,15 @@ describe('provider registry', () => {
     expect(isAllowedModel('openai', 'voice', XAI_STT_MODEL)).toBe(false)
     expect(isAllowedModel('xai-key', 'ai', OPENAI_CHAT_MODEL)).toBe(false)
     expect(isAllowedModel('openai', 'ai', 'claude-3')).toBe(false)
+  })
+
+  it('keeps a listed id, then a seed that appears, then the first listed id', () => {
+    expect(coerceModel('openai', 'ai', 'gpt-4.1', ['gpt-4.1', 'gpt-4o'])).toBe('gpt-4.1')
+    expect(coerceModel('openai', 'ai', 'missing', ['gpt-4o', OPENAI_CHAT_MODEL])).toBe(
+      OPENAI_CHAT_MODEL
+    )
+    expect(coerceModel('openai', 'ai', OPENAI_CHAT_MODEL, ['gpt-4.1', 'gpt-4o'])).toBe('gpt-4.1')
+    expect(coerceModel('openai', 'ai', 'whisper-1', [])).toBe(OPENAI_CHAT_MODEL)
+    expect(coerceModel('openai', 'ai', undefined)).toBe(OPENAI_CHAT_MODEL)
   })
 })

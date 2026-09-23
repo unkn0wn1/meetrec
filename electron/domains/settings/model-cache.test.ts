@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest'
+import { OPENAI_CHAT_MODEL, XAI_CHAT_MODEL, XAI_STT_MODEL } from '../providers/models'
+import { applyRoleList, mergeListedModels } from './model-cache'
+import { defaultAppSettings } from './settings-file'
+
+const fetchedAt = '2026-09-23T18:00:00.000Z'
+
+describe('applyRoleList', () => {
+  it('updates Voice without changing AI', () => {
+    const base = defaultAppSettings()
+    const next = applyRoleList(base, 'xai-key', 'voice', ['grok-voice-transcribe-1.0'], fetchedAt)
+    expect(next.modelCache['xai-key'].voice).toEqual({
+      ids: ['grok-voice-transcribe-1.0'],
+      fetchedAt
+    })
+    expect(next.models['xai-key'].voice).toBe('grok-voice-transcribe-1.0')
+    expect(next.modelCache['xai-key'].ai).toEqual(base.modelCache['xai-key'].ai)
+    expect(next.models['xai-key'].ai).toBe(XAI_CHAT_MODEL)
+    expect(next.modelCache.openai).toEqual(base.modelCache.openai)
+  })
+
+  it('leaves settings alone for an empty list or a missing list', () => {
+    const base = defaultAppSettings()
+    expect(applyRoleList(base, 'openai', 'ai', [], fetchedAt)).toBe(base)
+    expect(applyRoleList(base, 'openai', 'ai', null, fetchedAt)).toBe(base)
+  })
+
+  it('keeps the current id, else the seed in the list, else the first id', () => {
+    const base = defaultAppSettings()
+    const kept = applyRoleList(base, 'openai', 'ai', ['gpt-4.1', OPENAI_CHAT_MODEL], fetchedAt)
+    expect(kept.models.openai.ai).toBe(OPENAI_CHAT_MODEL)
+
+    const stored = defaultAppSettings()
+    stored.models = {
+      ...stored.models,
+      openai: { ...stored.models.openai, ai: 'gpt-4o' }
+    }
+    const seeded = applyRoleList(stored, 'openai', 'ai', ['gpt-4.1', OPENAI_CHAT_MODEL], fetchedAt)
+    expect(seeded.models.openai.ai).toBe(OPENAI_CHAT_MODEL)
+
+    const first = applyRoleList(base, 'openai', 'ai', ['gpt-4.1', 'gpt-4o'], fetchedAt)
+    expect(first.models.openai.ai).toBe('gpt-4.1')
+    expect(first.models.openai.voice).toBe(base.models.openai.voice)
+  })
+})
+
+describe('mergeListedModels', () => {
+  it('skips a role whose probe did not pass', () => {
+    const base = defaultAppSettings()
+    const next = mergeListedModels(
+      base,
+      'openai',
+      {
+        voice: { state: 'fail', message: 'Voice check failed (401).' },
+        ai: { state: 'pass', message: 'AI check passed.' }
+      },
+      { voice: ['whisper-1'], ai: ['gpt-4.1'] },
+      fetchedAt
+    )
+    expect(next.modelCache.openai.voice.ids).toEqual([])
+    expect(next.models.openai.voice).toBe(base.models.openai.voice)
+    expect(next.modelCache.openai.ai.ids).toEqual(['gpt-4.1'])
+    expect(next.models.openai.ai).toBe('gpt-4.1')
+  })
+
+  it('does not write a catalog when the list request failed', () => {
+    const base = defaultAppSettings()
+    const probes = {
+      voice: { state: 'pass' as const, message: 'Voice check passed.' },
+      ai: { state: 'pass' as const, message: 'AI check passed.' }
+    }
+    expect(mergeListedModels(base, 'xai-key', probes, null, fetchedAt)).toBe(base)
+    expect(base.models['xai-key'].voice).toBe(XAI_STT_MODEL)
+  })
+
+  it('does not apply a role that is not available', () => {
+    const base = defaultAppSettings()
+    const next = mergeListedModels(
+      base,
+      'xai-oauth',
+      {
+        voice: { state: 'na', message: 'This provider does not transcribe.' },
+        ai: { state: 'pass', message: 'AI check passed.' }
+      },
+      { voice: ['grok-voice-transcribe-2.0'], ai: ['grok-4.5', 'grok-4.7'] },
+      fetchedAt
+    )
+    expect(next.modelCache['xai-oauth'].voice.ids).toEqual([])
+    expect(next.modelCache['xai-oauth'].ai.ids).toEqual(['grok-4.5', 'grok-4.7'])
+  })
+})

@@ -81,7 +81,17 @@ export function isAllowedModel(id: ProviderId, role: ProviderRole, modelId: stri
   return modelOptions(id, role).some((item) => item.id === modelId)
 }
 
-export function coerceModel(id: ProviderId, role: ProviderRole, modelId: unknown): string {
+export function coerceModel(
+  id: ProviderId,
+  role: ProviderRole,
+  modelId: unknown,
+  listed?: readonly string[]
+): string {
+  if (listed && listed.length > 0) {
+    if (typeof modelId === 'string' && listed.includes(modelId)) return modelId
+    const seed = modelOptions(id, role).find((item) => listed.includes(item.id))
+    return seed?.id ?? listed[0] ?? defaultModel(id, role)
+  }
   if (typeof modelId === 'string' && isAllowedModel(id, role, modelId)) return modelId
   return defaultModel(id, role)
 }

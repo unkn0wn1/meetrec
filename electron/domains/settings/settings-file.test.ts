@@ -68,4 +68,90 @@ describe('app settings', () => {
     expect(badRole.settings.aiProviderId).toBe('openai')
     expect(badRole.legacy).toBe(true)
   })
+
+  it('treats a missing model cache as empty without marking the file legacy', () => {
+    const parsed = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'openai',
+        aiProviderId: 'xai-key',
+        models: defaultAppSettings().models
+      })
+    )
+    expect(parsed.legacy).toBe(false)
+    expect(parsed.settings.modelCache['xai-key'].voice).toEqual({ ids: [], fetchedAt: null })
+    expect(parsed.settings.modelCache.openai.ai).toEqual({ ids: [], fetchedAt: null })
+  })
+
+  it('keeps a cached catalog and its fetchedAt', () => {
+    const settings = defaultAppSettings()
+    settings.modelCache.openai.voice = {
+      ids: ['whisper-1'],
+      fetchedAt: '2026-09-23T18:00:00.000Z'
+    }
+    settings.models.openai.voice = 'whisper-1'
+    const parsed = parseAppSettings(JSON.stringify(settings))
+    expect(parsed.legacy).toBe(false)
+    expect(parsed.settings.modelCache.openai.voice).toEqual({
+      ids: ['whisper-1'],
+      fetchedAt: '2026-09-23T18:00:00.000Z'
+    })
+    expect(parsed.settings.models.openai.voice).toBe('whisper-1')
+  })
+
+  it('drops blank, duplicate, and non-string cache ids', () => {
+    const parsed = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'xai-key',
+        aiProviderId: 'xai-key',
+        models: defaultAppSettings().models,
+        modelCache: {
+          ...defaultAppSettings().modelCache,
+          openai: {
+            voice: {
+              ids: ['whisper-1', '', 'whisper-1', 3, '  gpt-4o-transcribe '],
+              fetchedAt: '  '
+            },
+            ai: { ids: 'nope', fetchedAt: 5 }
+          }
+        }
+      })
+    )
+    expect(parsed.settings.modelCache.openai.voice.ids).toEqual(['whisper-1', 'gpt-4o-transcribe'])
+    expect(parsed.settings.modelCache.openai.voice.fetchedAt).toBeNull()
+    expect(parsed.settings.modelCache.openai.ai).toEqual({ ids: [], fetchedAt: null })
+    expect(parsed.legacy).toBe(true)
+  })
+
+  it('coerces a stored id against the cached catalog', () => {
+    const models = defaultAppSettings().models
+    const cache = defaultAppSettings().modelCache
+    models.openai.ai = 'gpt-4o'
+    cache.openai.ai = {
+      ids: ['gpt-4.1', OPENAI_CHAT_MODEL],
+      fetchedAt: '2026-09-23T18:00:00.000Z'
+    }
+    const seeded = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'openai',
+        aiProviderId: 'openai',
+        models,
+        modelCache: cache
+      })
+    )
+    expect(seeded.settings.models.openai.ai).toBe(OPENAI_CHAT_MODEL)
+    expect(seeded.legacy).toBe(true)
+
+    models.openai.ai = OPENAI_CHAT_MODEL
+    cache.openai.ai = { ids: ['gpt-4.1', 'gpt-4o'], fetchedAt: '2026-09-23T18:00:00.000Z' }
+    const first = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'openai',
+        aiProviderId: 'openai',
+        models,
+        modelCache: cache
+      })
+    )
+    expect(first.settings.models.openai.ai).toBe('gpt-4.1')
+    expect(first.legacy).toBe(true)
+  })
 })
