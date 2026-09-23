@@ -1,0 +1,74 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, it } from 'vitest'
+import { recordingLayout } from './layout'
+import { migrateFlatWavs, scanRecordings, wavDurationMs } from './store'
+
+describe('flat wav migration', () => {
+  const dirs: string[] = []
+
+  afterEach(() => {
+    for (const dir of dirs) rmSync(dir, { recursive: true, force: true })
+    dirs.length = 0
+  })
+
+  it('moves a flat wav into a folder and writes meta', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-lib-'))
+    dirs.push(root)
+    const id = '2026-09-22T13-58-02-629Z-ec02af'
+    writeFileSync(join(root, `${id}.wav`), wavBytes(48000, 1, 16, 9600))
+
+    const moved = await migrateFlatWavs(root)
+    expect(moved).toEqual([id])
+
+    const layout = recordingLayout(root, id)
+    expect(readFileSync(layout.audioPath).length).toBeGreaterThan(44)
+    const listed = await scanRecordings(root)
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.meta.id).toBe(id)
+    expect(listed[0]?.meta.startedAt).toBe('2026-09-22T13:58:02.629Z')
+    expect(listed[0]?.meta.durationMs).toBe(100)
+    expect(listed[0]?.flags.hasTranscript).toBe(false)
+  })
+
+  it('leaves a folder recording in place when scanning again', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-lib-'))
+    dirs.push(root)
+    const id = '2026-09-22T15-12-54-630Z-816c7b'
+    writeFileSync(join(root, `${id}.wav`), wavBytes(16000, 1, 16, 1600))
+    await migrateFlatWavs(root)
+    const second = await migrateFlatWavs(root)
+    expect(second).toEqual([])
+    const listed = await scanRecordings(root)
+    expect(listed.map((item) => item.meta.id)).toEqual([id])
+  })
+})
+
+describe('wavDurationMs', () => {
+  it('reads duration from a PCM wav header', () => {
+    expect(wavDurationMs(wavBytes(48000, 2, 16, 96000))).toBe(500)
+  })
+
+  it('returns 0 for a short buffer', () => {
+    expect(wavDurationMs(Buffer.from('RIFF'))).toBe(0)
+  })
+})
+
+function wavBytes(sampleRate: number, channels: number, bits: number, dataBytes: number): Buffer {
+  const buffer = Buffer.alloc(44 + 8)
+  buffer.write('RIFF', 0)
+  buffer.writeUInt32LE(36 + dataBytes, 4)
+  buffer.write('WAVE', 8)
+  buffer.write('fmt ', 12)
+  buffer.writeUInt32LE(16, 16)
+  buffer.writeUInt16LE(1, 20)
+  buffer.writeUInt16LE(channels, 22)
+  buffer.writeUInt32LE(sampleRate, 24)
+  buffer.writeUInt32LE(sampleRate * channels * (bits / 8), 28)
+  buffer.writeUInt16LE(channels * (bits / 8), 32)
+  buffer.writeUInt16LE(bits, 34)
+  buffer.write('data', 36)
+  buffer.writeUInt32LE(dataBytes, 40)
+  return buffer
+}

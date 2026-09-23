@@ -24,6 +24,20 @@ export function buildRecordingPath(recordingsDir: string, now: Date = new Date()
   return join(ensureRecordingsDir(recordingsDir), recordingFileName(id))
 }
 
+export function buildRecordingFolder(
+  recordingsDir: string,
+  now: Date = new Date()
+): {
+  id: string
+  dir: string
+  audioPath: string
+} {
+  const id = createRecordingId(now)
+  const dir = join(ensureRecordingsDir(recordingsDir), id)
+  mkdirSync(dir, { recursive: true })
+  return { id, dir, audioPath: join(dir, 'audio.wav') }
+}
+
 export function isSafeRecordingId(id: string): boolean {
   if (id.length < 8 || id.length > 80) return false
   for (const ch of id) {

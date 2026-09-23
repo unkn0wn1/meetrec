@@ -2,7 +2,12 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { buildRecordingPath, createRecordingId, recordingFileName } from './paths'
+import {
+  buildRecordingFolder,
+  buildRecordingPath,
+  createRecordingId,
+  recordingFileName
+} from './paths'
 
 describe('recording paths', () => {
   const dirs: string[] = []
@@ -19,6 +24,17 @@ describe('recording paths', () => {
     const file = buildRecordingPath(join(root, 'recordings'), when)
     expect(file.endsWith('.wav')).toBe(true)
     expect(file).toContain('2026-09-22T12-00-00-000Z')
+  })
+
+  it('builds a folder with audio.wav for a new recording', () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-'))
+    dirs.push(root)
+    const folder = buildRecordingFolder(
+      join(root, 'recordings'),
+      new Date('2026-09-22T12:00:00.000Z')
+    )
+    expect(folder.audioPath).toBe(join(folder.dir, 'audio.wav'))
+    expect(folder.id.startsWith('2026-09-22T12-00-00-000Z')).toBe(true)
   })
 
   it('keeps the id in the file name', () => {

@@ -8,13 +8,15 @@ interface Props extends PrimitiveProps {
   variant?: ButtonVariants['variant']
   size?: ButtonVariants['size']
   class?: HTMLAttributes['class']
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   as: 'button',
   variant: 'default',
   size: 'default',
-  class: undefined
+  class: undefined,
+  disabled: false
 })
 </script>
 
@@ -23,6 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
     data-slot="button"
     :as="as"
     :as-child="asChild"
+    :disabled="disabled"
     :class="cn(buttonVariants({ variant, size }), props.class)"
   >
     <slot />

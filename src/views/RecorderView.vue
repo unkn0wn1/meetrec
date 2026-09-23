@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import ModeNav from '@/components/ModeNav.vue'
 import { Button } from '@/components/ui/button'
 import { useRecordingSessionStore } from '@/stores/recordingSession'
 
@@ -15,8 +16,11 @@ onMounted(() => {
     <header class="flex items-start justify-between gap-4">
       <div>
         <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">meetrec</p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight">Recorder</h1>
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight">Record</h1>
       </div>
+      <ModeNav />
+    </header>
+    <div class="flex justify-end">
       <p
         class="rounded-full border px-3 py-1 text-xs font-medium"
         :class="
@@ -28,7 +32,7 @@ onMounted(() => {
       >
         {{ session.isRecording ? 'Recording' : 'Idle' }}
       </p>
-    </header>
+    </div>
 
     <section class="rounded-xl border bg-card p-5 shadow-sm">
       <p class="font-mono text-4xl tabular-nums">{{ session.elapsedLabel }}</p>

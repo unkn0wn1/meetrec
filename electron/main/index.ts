@@ -1,10 +1,28 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, protocol, safeStorage, shell } from 'electron'
 import { optimizer, is } from '@electron-toolkit/utils'
-import { registerRecordingIpc } from './ipc'
-import { RecordingController } from './recording-controller'
+import { LibraryService } from '../domains/recording/library'
+import { SecretStore } from '../domains/settings/secret-store'
+import { SettingsService } from '../domains/settings/settings-service'
+import { registerAppIpc } from './ipc'
+import { registerLibraryProtocol } from './library-protocol'
+import { RecordingController, recordingsDir } from './recording-controller'
+import { attachHideToTray, markAppQuitting } from './app-lifecycle'
 import { createTray } from './tray'
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'meetrec',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+      corsEnabled: true
+    }
+  }
+])
 
 let mainWindow: BrowserWindow | null = null
 
@@ -16,8 +34,8 @@ function preloadPath(): string {
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
-    width: 480,
-    height: 640,
+    width: 960,
+    height: 720,
     show: false,
     autoHideMenuBar: true,
     title: 'meetrec',
@@ -32,6 +50,8 @@ function createWindow(): BrowserWindow {
   window.on('ready-to-show', () => {
     window.show()
   })
+
+  attachHideToTray(window)
 
   window.webContents.setWindowOpenHandler((details) => {
     void shell.openExternal(details.url)
@@ -52,7 +72,22 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  registerRecordingIpc(new RecordingController())
+  registerLibraryProtocol(recordingsDir)
+  const userDataDir = (): string => app.getPath('userData')
+  const settings = new SettingsService({
+    secrets: new SecretStore({
+      userDataDir,
+      safeStorage,
+      warn: (message) => console.warn(message)
+    }),
+    userDataDir,
+    openExternal: (url) => shell.openExternal(url)
+  })
+  registerAppIpc(
+    new RecordingController(),
+    new LibraryService(recordingsDir, () => settings.readAuthForActiveProvider()),
+    settings
+  )
   mainWindow = createWindow()
   createTray(mainWindow)
 
@@ -63,8 +98,10 @@ app.whenReady().then(() => {
   })
 })
 
+app.on('before-quit', () => {
+  markAppQuitting()
+})
+
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  // Hide-to-tray keeps the BrowserWindow alive; quit only via tray Quit.
 })
