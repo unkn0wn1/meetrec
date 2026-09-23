@@ -6,7 +6,7 @@ Sources: Vue blog, `vuejs/core` releases, Pinia docs, electron-vite, shadcn-vue.
 
 **Vue 3.5.x** + shadcn-vue + Tailwind. No Vue 3.6, no Vapor Mode, no alien-signals dependency for v1.
 
-Vue 3.6 (alien-signals + Vapor) is interesting later, but Spencer chose not to take that line while the UI kit is shadcn-vue/Reka — keep the renderer boring and compatible.
+Vue 3.6 (alien-signals + Vapor) can wait. The project stays on Vue 3.5 while the UI kit is shadcn-vue / Reka, so the renderer stays compatible.
 
 ## Vue 3.5 habits we use
 

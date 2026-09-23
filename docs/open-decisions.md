@@ -16,7 +16,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 ### 4. Platform order — LOCKED
 
-**Linux first** (Spencer’s machine). Windows/macOS capture marked experimental until verified.
+**Linux first** (daily use). Windows capture is implemented and experimental until someone verifies it on a Windows machine. macOS capture stays a stub until verified.
 
 ### 5. Artifacts — LOCKED (v1)
 
@@ -37,7 +37,13 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - **No Vue 3.6**, **no Vapor Mode**, no alien-signals chase for v1.
 - shadcn-vue / Reka on plain VDOM.
 
+### 8. Packaging — LOCKED 2026-09-23
+
+- **electron-builder**. `appId` is `io.techglint.meetrec`. `private: true` stays.
+- Windows: NSIS installer and a portable exe, both x64. Linux: AppImage.
+- Unsigned. Authenticode later via `CSC_LINK` and `CSC_KEY_PASSWORD` (`WIN_CSC_LINK` is the Windows alias). No auto-update yet.
+- Installers do not bundle ffmpeg. Users still need it on `PATH`.
+
 ## Still soft / rename anytime
 
-- Project folder name: `/www/meetrec`
-- Exact auto-arm clock (T−1 min vs meeting start) — default propose **T−1 minute** when Auto-arm was chosen
+- Exact auto-arm clock (T−1 min vs meeting start) — default proposal is **T−1 minute** when Auto-arm was chosen. Calendar arm is not built yet.

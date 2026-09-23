@@ -6,7 +6,11 @@ Meeting bots that join calls are visible, often blocked, and tied to one confere
 
 ## Primary user
 
-The person running the app (Spencer first). They are responsible for telling other participants that recording is happening.
+The person running the app on their own computer. They are responsible for telling other participants that recording is happening.
+
+## What 0.1 does
+
+Manual Record, a local folder, Library, Transcribe, and Generate summary, with one provider chosen in Settings. The calendar notification, silence auto-stop, and cloud upload in the loop below are not built yet.
 
 ## Happy path
 

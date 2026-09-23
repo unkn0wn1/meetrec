@@ -1,4 +1,4 @@
-# Folder structure (proposed)
+# Folder structure
 
 ```
 meetrec/
@@ -14,12 +14,12 @@ meetrec/
       macos.ts
       linux.ts
     domains/            # main-side domain modules (small files)
-      recording/        # session status helpers (v1)
+      recording/        # session status, folder layout, library scan
       calendar/         # later
-      transcript/       # later
-      minutes/          # later
-      providers/        # later
-      settings/         # later
+      transcript/       # STT document + diarization segments
+      minutes/          # summary markdown
+      providers/        # xAI + OpenAI STT/chat, OAuth helpers (main only)
+      settings/         # provider choice, secret bag, device-code session
   src/                  # renderer (Vue) — electron-vite renderer root
     main.ts
     App.vue
@@ -31,6 +31,10 @@ meetrec/
     composables/        # thin wrappers over window.meetrec
     styles/
   scripts/              # guard-file-size and similar
+  electron-builder.yml  # installer targets (NSIS, portable, AppImage)
+  build/                # later: icon.png and icon.ico
+  dist/                 # installer output, gitignored
+  out/                  # electron-vite compile output, gitignored
   package.json
 ```
 

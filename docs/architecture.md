@@ -4,11 +4,11 @@
 
 ```
 ┌─────────────────────┐     IPC (typed)      ┌──────────────────────┐
-│  Renderer (Vue + UI kit)│ ◄──────────────────► │  Main process         │
-│  UI kit, Pinia, views    │                      │  Window, tray, sched  │
-│  No raw API secrets  │                      │  Secrets store        │
-└─────────────────────┘                      │  Provider HTTP calls  │
-                                             │  Audio backend pick   │
+│  Renderer (Vue)      │ ◄──────────────────► │  Main process        │
+│  Pinia, views        │                      │  Window, tray, library│
+│  No provider secrets │                      │  Secrets store       │
+└─────────────────────┘                      │  Provider HTTP       │
+                                             │  Audio backend pick  │
                                              └──────────┬───────────┘
                                                         │
                                              ┌──────────▼───────────┐
@@ -17,28 +17,33 @@
                                              └──────────────────────┘
 ```
 
-- **Renderer:** UI only. Pinia for UI/session state. Axios (or thin clients) talk to **main via IPC**, not straight to provider APIs with secrets.
-- **Preload:** contextBridge — expose a narrow, typed API (`window.meetrec.*`).
-- **Main:** calendar polling/scheduling, start/stop capture, persist settings/keys, call STT/LLM providers, write files.
-- **Capture backends:** one interface, three implementations selected by `process.platform`.
+- **Renderer:** UI only. Pinia holds view state and calls `window.meetrec`. Provider HTTP stays in main.
+- **Preload:** `contextBridge` exposes a narrow typed API (`window.meetrec.*`).
+- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP. Calendar scheduling is not built yet.
+- **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation throws.
 
 ## Domains (keep separate)
 
-| Domain       | Owns                                                |
-| ------------ | --------------------------------------------------- |
-| `calendar`   | Google OAuth + upcoming events + arm/disarm         |
-| `recording`  | Session lifecycle, Stop popup, silence/calendar end |
-| `capture`    | OS audio backends only                              |
-| `transcript` | STT job, diarization labels, speaker rename         |
-| `minutes`    | LLM prompt + result artifact                        |
-| `providers`  | Registry of STT/LLM configs (no UI widgets)         |
-| `settings`   | Paths, thresholds, default providers                |
+| Domain       | Owns                                                                 |
+| ------------ | -------------------------------------------------------------------- |
+| `recording`  | Folder layout, library scan, manual start/stop                       |
+| `capture`    | OS audio backends only                                               |
+| `transcript` | STT document, diarization labels, speaker rename                     |
+| `minutes`    | Summary prompt and `summary.md`                                      |
+| `providers`  | xAI and OpenAI speech and chat (no UI widgets)                       |
+| `settings`   | Active provider, secret bag, device-code session                     |
+| `calendar`   | Planned: Google OAuth, upcoming events, arm and disarm. Not in tree. |
 
-One domain → one folder. No god-services. Cross-domain calls go through small facades or IPC handlers, not deep imports of each other’s internals.
+One domain, one folder. Cross-domain calls go through small facades or IPC handlers.
 
 ## Data artifacts (local)
 
-- `recordings/<id>.wav` (or opus)
-- `recordings/<id>.transcript.json`
-- `recordings/<id>.minutes.md`
-- `settings.json` / OS keychain for secrets (see security.md)
+One folder per recording (see [recorder-ui.md](recorder-ui.md)), under Electron `userData`:
+
+- `recordings/<id>/audio.wav`
+- `recordings/<id>/meta.json`
+- `recordings/<id>/transcript.json`
+- `recordings/<id>/summary.md`
+- `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md))
+
+Playback loads audio through the `meetrec://` protocol. The renderer does not read those files itself.

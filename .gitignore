@@ -1,6 +1,8 @@
 node_modules/
 .grok-briefs/
 .grok-logs/
+.grok-*
+.session*-brief*.md
 dist/
 out/
 recordings/

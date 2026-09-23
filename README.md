@@ -1,37 +1,111 @@
 # meetrec
 
-Personal desktop meeting recorder. Session 1 records the microphone and the default system monitor into one local WAV.
+Desktop app that records your microphone and system audio into one local WAV, then transcribes and summarizes that file on your machine.
 
-**Stack:** Electron (electron-vite) · Vue 3.5 · shadcn-vue · Tailwind · Pinia · npm. Linux first.
+It records what you already hear and say. It does not join the call. **0.1.0 is an early build, not a production release.**
 
-## Run
+## Features
+
+- Mix the default microphone and system audio into one playable WAV.
+- Library of past recordings, with playback, a transcript, and a summary.
+- One active provider in Settings: xAI sign-in, an xAI API key, or an OpenAI API key.
+- Speaker labels you can rename. Summary markdown is saved next to the audio.
+- Unsigned Linux AppImage and Windows installers (NSIS and portable).
+
+## Status
+
+| Area                                      | Today                                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Linux capture                             | Daily path. ffmpeg and Pulse (PipeWire).                                                          |
+| Windows capture                           | Experimental. ffmpeg DirectShow, or WASAPI when that demuxer exists. Verify on a Windows machine. |
+| macOS capture                             | Stub. Starting a recording throws.                                                                |
+| Transcript and summary                    | Available once Settings has a working provider and the machine can reach that API.                |
+| Calendar, silence auto-stop, cloud upload | Not built.                                                                                        |
+| Signing and auto-update                   | Not set up. Installers are unsigned and do not bundle ffmpeg.                                     |
+
+## Requirements
+
+- Node.js 22 and npm
+- [ffmpeg](https://ffmpeg.org/) on `PATH` (`ffmpeg -version`)
+- Linux for day-to-day use. Windows capture is experimental until you verify it on that OS.
+
+## Quick start
 
 ```bash
 npm install
 npm run dev
 ```
 
-Start writes a WAV. Stop finalizes it. Files land in the Electron user-data folder:
+The window opens on **Library**. Switch to **Record**, press Start, then Stop. Start creates a folder. Stop writes `audio.wav` and `meta.json`.
 
-`~/.config/meetrec/recordings/<timestamp>.wav`
+Recordings live in Electron's `userData` directory. On Linux that is `~/.config/meetrec`. On Windows it is `%APPDATA%\meetrec`.
 
-On this box that is `/home/spence/.config/meetrec/recordings/`.
+```
+recordings/<id>/
+  audio.wav
+  meta.json
+  transcript.json    # after Transcribe
+  summary.md         # after Generate summary
+```
 
-## Checks
+Older flat `*.wav` files in that recordings directory are moved into folders the first time Library scans.
+
+### Linux sandbox
+
+Electron expects `node_modules/electron/dist/chrome-sandbox` to be root-owned and mode `4755`. After `npm install` that is usually not the case, so `npm run dev` passes `--no-sandbox`. That is the right default for local development.
+
+To use the sandbox helper instead:
+
+```bash
+sudo chown root:root node_modules/electron/dist/chrome-sandbox
+sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+npm run dev:sandboxed
+```
+
+Repeat the `chown` and `chmod` after Electron is reinstalled.
+
+## Settings and providers
+
+Open **Settings** and pick one provider. Exactly one choice is active. Transcribe and Generate summary stay off until that choice is saved and a light check succeeds.
+
+1. **xAI sign-in** — device code in the browser. The client id `b1a00492-073a-47ea-816f-4c329264a828` is a public device-code client id and has no client secret. Sign out clears the stored tokens.
+2. **xAI API key** — password field, then Save or Clear. When this choice is active and Settings has no saved key, the main process can read `XAI_API_KEY` from the environment.
+3. **OpenAI** — API key, then Save or Clear. `OPENAI_API_KEY` is the same kind of fallback. Speech uses `gpt-4o-transcribe-diarize`. Summaries use `gpt-4.1-mini`.
+
+Use the Settings screen. Optional placeholders are in [`.env.example`](.env.example). Keys and tokens stay in the main process. Electron `safeStorage` encrypts them when the OS allows it. The window never receives them.
+
+## Packaging
+
+```bash
+npm run dist:linux
+npm run dist:win
+```
+
+`dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. Builds are unsigned. `ffmpeg` must still be on `PATH`. The app id stays `io.techglint.meetrec`. Details: [docs/packaging.md](docs/packaging.md).
+
+## Contributing
+
+Work on a feature branch and open a pull request. The contributor guide is [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
 npm run typecheck
 npm run lint:check
 npm run format:check
-npm run test
 npm run guard:file-size
+npm run test
 ```
 
-Husky runs the file-size guard, lint-staged, and typecheck before a commit, and unit tests before a push. Commits and pushes on `main` are blocked.
+GitHub Actions runs those checks on Ubuntu with Node 22 for pull requests and for pushes to `main`. Husky runs the file-size guard, lint-staged, and typecheck before a commit, and unit tests before a push. Direct commits and pushes to `main` are blocked.
 
-## What is stubbed
+## Docs
 
-- Windows and macOS capture throw. Linux (PipeWire / Pulse via ffmpeg) is the working path.
-- Calendar, notifications, speech-to-text, and minutes are not in this session.
+The handbook is **[docs/README.md](docs/README.md)**. Start there for architecture, capture, providers, security, and packaging. A short install path is [Getting started](docs/getting-started.md).
 
-Docs: [`docs/README.md`](docs/README.md). Agent notes: [`AGENTS.md`](AGENTS.md).
+## Further reading
+
+- [Docs index](docs/README.md)
+- [Getting started](docs/getting-started.md)
+- [Contributing](CONTRIBUTING.md)
+- [Packaging](docs/packaging.md)
+- [Security](docs/security.md)
+- [Architecture](docs/architecture.md)
