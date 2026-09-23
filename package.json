@@ -1,6 +1,6 @@
 {
   "name": "meetrec",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Desktop meeting recorder: mix mic + system audio into a local file.",
   "license": "MIT",
   "author": "Spencer Hardy",
