@@ -6,6 +6,15 @@ directories:
 files:
   - package.json
   - out/**/*
+extraResources:
+  - from: vendor/ffmpeg/${os}-${arch}
+    to: ffmpeg
+    filter:
+      - ffmpeg
+      - ffmpeg.exe
+      - LICENSE*
+      - COPYING*
+      - SOURCE.txt
 linux:
   target:
     - AppImage

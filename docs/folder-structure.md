@@ -30,7 +30,8 @@ meetrec/
     components/         # small, presentational + shadcn-vue ui/
     composables/        # thin wrappers over window.meetrec
     styles/
-  scripts/              # guard-file-size and similar
+  scripts/              # guard-file-size, fetch-ffmpeg
+  vendor/ffmpeg/        # gitignored BtbN binaries fetched before packaging
   electron-builder.yml  # installer targets (NSIS, portable, AppImage)
   build/                # later: icon.png and icon.ico
   dist/                 # installer output, gitignored

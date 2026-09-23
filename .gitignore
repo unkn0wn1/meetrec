@@ -1,4 +1,5 @@
 node_modules/
+vendor/ffmpeg/
 .grok-briefs/
 .grok-logs/
 .grok-*

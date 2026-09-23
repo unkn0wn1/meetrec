@@ -21,12 +21,12 @@ It records what you already hear and say. It does not join the call. **0.1.0 is 
 | macOS capture                             | Stub. Starting a recording throws.                                                                |
 | Transcript and summary                    | Available once Settings has a working provider and the machine can reach that API.                |
 | Calendar, silence auto-stop, cloud upload | Not built.                                                                                        |
-| Signing and auto-update                   | Not set up. Installers are unsigned and do not bundle ffmpeg.                                     |
+| Signing and auto-update                   | Not set up. Installers are unsigned. Linux and Windows builds include ffmpeg.                     |
 
 ## Requirements
 
 - Node.js 22 and npm
-- [ffmpeg](https://ffmpeg.org/) on `PATH` (`ffmpeg -version`)
+- [ffmpeg](https://ffmpeg.org/) on `PATH` for `npm run dev` (`ffmpeg -version`). Installers include it.
 - Linux for day-to-day use. Windows capture is experimental until you verify it on that OS.
 
 ## Quick start
@@ -81,7 +81,7 @@ npm run dist:linux
 npm run dist:win
 ```
 
-`dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. Builds are unsigned. `ffmpeg` must still be on `PATH`. The app id stays `io.techglint.meetrec`.
+`dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. Builds are unsigned and include ffmpeg (a pinned BtbN LGPL-static build; about 135 MiB on Linux and 127 MiB on Windows). `npm run dev` still uses ffmpeg on `PATH`. The app id stays `io.techglint.meetrec`.
 
 Public alphas come from a **`v*` tag** (GitHub runners build Linux + Windows and attach files to a Release). Merging to `main` does not publish installers. Details: [docs/packaging.md](docs/packaging.md).
 

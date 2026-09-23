@@ -3,6 +3,7 @@ import { constants } from 'node:fs'
 import { access, stat } from 'node:fs/promises'
 import type { AudioCapture, CaptureMode, CaptureStartOptions, CaptureStopResult } from './types'
 import { durationMs } from './duration'
+import { resolveFfmpegBinary } from './ffmpeg-binary'
 import {
   monitorNameForSink,
   parseDefaultSink,
@@ -39,18 +40,16 @@ export class LinuxCapture implements AudioCapture {
     if (this.running) {
       throw new Error('A recording is already in progress.')
     }
-    if (!(await this.which('ffmpeg'))) {
-      throw new Error('ffmpeg is not installed. Install it to record audio on Linux.')
-    }
+    const ffmpeg = await resolveFfmpegBinary()
     if (!(await this.which('pactl'))) {
       throw new Error('pactl is not installed. PipeWire or PulseAudio is required.')
     }
 
-    const devices = await this.detectDevices()
+    const devices = await this.detectDevices(ffmpeg)
     const plan = planCapture(devices)
     const sampleRate = opts.sampleRate ?? SAMPLE_RATE
     const args = ffmpegArgs(plan, opts.outPath, sampleRate)
-    const child = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] })
+    const child = spawn(ffmpeg, args, { stdio: ['ignore', 'ignore', 'pipe'] })
 
     const stderrChunks: Buffer[] = []
     child.stderr?.on('data', (chunk: Buffer) => {
@@ -96,9 +95,9 @@ export class LinuxCapture implements AudioCapture {
     }
   }
 
-  private async detectDevices(): Promise<PulseDevices> {
+  private async detectDevices(ffmpeg: string): Promise<PulseDevices> {
     const [sourcesText, sinkText] = await Promise.all([
-      this.runText('ffmpeg', ['-hide_banner', '-sources', 'pulse']),
+      this.runText(ffmpeg, ['-hide_banner', '-sources', 'pulse']),
       this.runText('pactl', ['get-default-sink'])
     ])
     const parsed = parseFfmpegPulseSources(sourcesText)

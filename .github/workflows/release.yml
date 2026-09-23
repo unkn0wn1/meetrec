@@ -83,7 +83,7 @@ jobs:
             **Notes**
             - Built on GitHub-hosted runners (`ubuntu-latest` + `windows-latest`).
             - Windows builds are unsigned — SmartScreen may warn.
-            - `ffmpeg` must be on `PATH` (not bundled yet).
+            - Linux and Windows builds include ffmpeg (BtbN LGPL static). `npm run dev` still uses PATH.
             - Linux is the daily path; Windows capture is experimental; macOS is stubbed.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

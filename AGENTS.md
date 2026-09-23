@@ -9,7 +9,7 @@ Desktop meeting recorder. Linux capture plus a local library, transcript, and su
 - Secrets and provider HTTP stay in the main process. The renderer talks through `window.meetrec`.
 - Linux first. Windows capture is implemented (ffmpeg DirectShow, or WASAPI when that demuxer exists). macOS capture is still a stub.
 - Artifacts are local files. No cloud upload in v1.
-- Installers use electron-builder and stay unsigned. The app does not bundle ffmpeg; it must be on PATH. No auto-update yet. See `docs/packaging.md`.
+- Installers use electron-builder and stay unsigned. They ship a pinned LGPL ffmpeg under `resources/ffmpeg/`. `npm run dev` uses `ffmpeg` on PATH when that file is absent. No auto-update yet. See `docs/packaging.md`.
 
 ## Process boundary
 
@@ -37,7 +37,7 @@ Direct commits and pushes to `main` are blocked. Override only for an emergency:
 
 ## Capture
 
-Linux records with ffmpeg against Pulse (PipeWire). Prefer a mix of the default mic and `<default sink>.monitor`. If the monitor is missing, mic-only is allowed and the note must say so, including a TODO for system audio.
+Linux records with ffmpeg against Pulse (PipeWire). Prefer a mix of the default mic and `<default sink>.monitor`. If the monitor is missing, mic-only is allowed and the note must say so, including a TODO for system audio. Capture uses the packaged binary under `process.resourcesPath/ffmpeg` when it is there, and `ffmpeg` on PATH otherwise.
 
 Windows records with ffmpeg. DirectShow mixes the mic and a Stereo Mix / loopback capture device. If `ffmpeg -devices` lists a `wasapi` demuxer whose help shows a loopback option, that path is used instead. Mic-only still requires a TODO in the note. Live Windows smoke is manual.
 
