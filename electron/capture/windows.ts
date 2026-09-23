@@ -3,6 +3,7 @@ import { constants } from 'node:fs'
 import { access, stat } from 'node:fs/promises'
 import type { AudioCapture, CaptureMode, CaptureStartOptions, CaptureStopResult } from './types'
 import { durationMs } from './duration'
+import { resolveFfmpegBinary } from './ffmpeg-binary'
 import { parseDshowAudioDevices, selectDshowInputs } from './dshow-devices'
 import {
   ffmpegListsDemuxer,
@@ -43,14 +44,9 @@ interface RunningCapture {
 
 export class WindowsCapture implements AudioCapture {
   private running: RunningCapture | null = null
-  private readonly which: (bin: string) => Promise<boolean>
   private readonly runText: (cmd: string, args: string[]) => Promise<string>
 
-  constructor(deps?: {
-    which?: (bin: string) => Promise<boolean>
-    runText?: (cmd: string, args: string[]) => Promise<string>
-  }) {
-    this.which = deps?.which ?? defaultWhich
+  constructor(deps?: { runText?: (cmd: string, args: string[]) => Promise<string> }) {
     this.runText = deps?.runText ?? defaultRunText
   }
 
@@ -60,16 +56,12 @@ export class WindowsCapture implements AudioCapture {
     if (this.running) {
       throw new Error('A recording is already in progress.')
     }
-    if (!(await this.which('ffmpeg'))) {
-      throw new Error(
-        'ffmpeg is not installed. Install it and add it to PATH to record audio on Windows.'
-      )
-    }
+    const ffmpeg = await resolveFfmpegBinary()
 
-    const plan = await this.detectPlan()
+    const plan = await this.detectPlan(ffmpeg)
     const sampleRate = opts.sampleRate ?? SAMPLE_RATE
     const args = ffmpegArgs(plan, opts.outPath, sampleRate)
-    const child = spawn('ffmpeg', args, {
+    const child = spawn(ffmpeg, args, {
       stdio: ['pipe', 'ignore', 'pipe'],
       windowsHide: true
     })
@@ -118,10 +110,10 @@ export class WindowsCapture implements AudioCapture {
     }
   }
 
-  private async detectPlan(): Promise<CapturePlan> {
-    const listed = await this.runText('ffmpeg', ['-hide_banner', '-devices'])
+  private async detectPlan(ffmpeg: string): Promise<CapturePlan> {
+    const listed = await this.runText(ffmpeg, ['-hide_banner', '-devices'])
     if (!ffmpegListsDemuxer(listed, 'wasapi')) {
-      const list = await this.runText('ffmpeg', [
+      const list = await this.runText(ffmpeg, [
         '-hide_banner',
         '-list_devices',
         'true',
@@ -134,16 +126,8 @@ export class WindowsCapture implements AudioCapture {
     }
 
     const [help, list] = await Promise.all([
-      this.runText('ffmpeg', ['-hide_banner', '-h', 'demuxer=wasapi']),
-      this.runText('ffmpeg', [
-        '-hide_banner',
-        '-f',
-        'wasapi',
-        '-list_devices',
-        'true',
-        '-i',
-        'dummy'
-      ])
+      this.runText(ffmpeg, ['-hide_banner', '-h', 'demuxer=wasapi']),
+      this.runText(ffmpeg, ['-hide_banner', '-f', 'wasapi', '-list_devices', 'true', '-i', 'dummy'])
     ])
     return planWasapiCapture({
       ...parseWasapiDevices(list),
@@ -329,15 +313,6 @@ async function fileSize(path: string): Promise<number> {
   await access(path, constants.R_OK)
   const info = await stat(path)
   return info.size
-}
-
-async function defaultWhich(bin: string): Promise<boolean> {
-  const locator = process.platform === 'win32' ? 'where' : 'which'
-  return new Promise((resolve) => {
-    const child = spawn(locator, [bin], { stdio: 'ignore', windowsHide: true })
-    child.once('exit', (code) => resolve(code === 0))
-    child.once('error', () => resolve(false))
-  })
 }
 
 function defaultRunText(cmd: string, args: string[]): Promise<string> {

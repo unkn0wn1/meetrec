@@ -32,9 +32,28 @@ APPIMAGE_EXTRACT_AND_RUN=1 npm run dist:linux
 
 ## ffmpeg
 
-Windows and Linux builds still spawn `ffmpeg` from `PATH`. The installer does not ship a binary. Capture already errors when it is missing.
+`npm run dist`, `dist:linux`, and `dist:win` run `npm run fetch:ffmpeg` before electron-builder. The script downloads a pinned [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) **LGPL static** build into `vendor/ffmpeg/` (gitignored). electron-builder copies that directory to `resources/ffmpeg/`.
 
-A later change can put ffmpeg under `extraResources` and point that spawn at `process.resourcesPath`.
+| Target      | Vendor path                        | Packaged path                 |
+| ----------- | ---------------------------------- | ----------------------------- |
+| Linux x64   | `vendor/ffmpeg/linux-x64/ffmpeg`   | `resources/ffmpeg/ffmpeg`     |
+| Windows x64 | `vendor/ffmpeg/win-x64/ffmpeg.exe` | `resources/ffmpeg/ffmpeg.exe` |
+
+`LICENSE.txt` sits next to the binary. That file is FFmpeg's `COPYING.LGPLv3` (GNU LGPLv3, `--enable-version3`). `SOURCE.txt` names the BtbN tag, the archive URL, and the SHA-256. meetrec starts ffmpeg as a separate program. The LGPL variant leaves out GPL-only libraries such as libx264 and libx265.
+
+The pin is FFmpeg **n9.0.2-3-ga5923073bf**, tag `autobuild-2026-09-22-13-18`. The Linux archive is about 131 MiB compressed and the Windows zip is about 163 MiB compressed. Unpacked `ffmpeg` is 135 MiB and unpacked `ffmpeg.exe` is 127 MiB. That is what the AppImage and the Windows installer carry before squashfs or NSIS compression. With this pin, `dist:linux` writes an AppImage of about 173 MiB. BtbN's Linux build needs glibc 2.28 or newer. The Windows build targets Windows 10 22H2 or newer.
+
+At runtime, capture uses `process.resourcesPath/ffmpeg/ffmpeg` (or `ffmpeg.exe`) when that file exists. `npm run dev` does not ship that file, so it uses `ffmpeg` on `PATH`. If both are missing, recording throws a clear error.
+
+`npm run build` does not download ffmpeg. CI unit tests stay offline. Fetch is idempotent and checks SHA-256 before extract. On Linux it also checks that the binary lists a `pulse` demuxer.
+
+```bash
+npm run fetch:ffmpeg -- --platform linux
+npm run fetch:ffmpeg -- --platform win
+npm run fetch:ffmpeg -- --platform all
+```
+
+A bare `npm run fetch:ffmpeg` downloads the host platform (`linux` or `win`).
 
 ## Icons
 

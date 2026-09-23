@@ -42,7 +42,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - **electron-builder**. `appId` is `io.techglint.meetrec`. `private: true` stays.
 - Windows: NSIS installer and a portable exe, both x64. Linux: AppImage.
 - Unsigned. Authenticode later via `CSC_LINK` and `CSC_KEY_PASSWORD` (`WIN_CSC_LINK` is the Windows alias). No auto-update yet.
-- Installers do not bundle ffmpeg. Users still need it on `PATH`.
+- Linux and Windows installers ship a pinned BtbN LGPL-static ffmpeg under `resources/ffmpeg/`. `npm run dev` uses ffmpeg on `PATH`. See [packaging.md](packaging.md).
 
 ## Still soft / rename anytime
 

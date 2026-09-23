@@ -19,9 +19,10 @@
   "scripts": {
     "dev": "electron-vite dev -- --no-sandbox",
     "build": "npm run typecheck && electron-vite build",
-    "dist": "npm run build && electron-builder --publish never",
-    "dist:linux": "npm run build && electron-builder --linux --publish never",
-    "dist:win": "npm run build && electron-builder --win --publish never",
+    "fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
+    "dist": "npm run fetch:ffmpeg && npm run build && electron-builder --publish never",
+    "dist:linux": "npm run fetch:ffmpeg -- --platform linux && npm run build && electron-builder --linux --publish never",
+    "dist:win": "npm run fetch:ffmpeg -- --platform win && npm run build && electron-builder --win --publish never",
     "preview": "electron-vite preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json --composite false",

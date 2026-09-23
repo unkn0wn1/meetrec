@@ -31,9 +31,11 @@ Pick implementation once at startup from `process.platform`.
 
 Produce **one** interleaved stereo `pcm_s16le` WAV (default 48000 Hz) the user can play back. Perfect per-speaker hardware separation is out of scope; diarization is software-side via STT.
 
-## Windows (ffmpeg)
+## ffmpeg binary
 
-`ffmpeg` must be on PATH. Installable builds do not bundle the binary either; see [packaging.md](packaging.md).
+Packaged Linux and Windows apps use the file at `resources/ffmpeg/ffmpeg` (`ffmpeg.exe` on Windows). `npm run dev` uses `ffmpeg` on `PATH`. If neither is available, start throws. The shipped build is the pinned BtbN LGPL-static binary in [packaging.md](packaging.md).
+
+## Windows (ffmpeg)
 
 Current ffmpeg builds have no WASAPI demuxer ([ticket 9408](https://trac.ffmpeg.org/ticket/9408)). Capture then uses DirectShow:
 

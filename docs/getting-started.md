@@ -1,16 +1,18 @@
 # Getting started
 
-meetrec records microphone and system audio into a local WAV, then can transcribe and summarize it. You need Node.js 22, npm, and ffmpeg. Linux is the day-to-day path. Windows capture is experimental until you verify it on that OS.
+meetrec records microphone and system audio into a local WAV, then can transcribe and summarize it. You need Node.js 22 and npm. Linux is the day-to-day path. Windows capture is experimental until you verify it on that OS.
 
-## Install ffmpeg
+## ffmpeg
 
-The app shells out to `ffmpeg` on `PATH`. It does not ship a binary.
+Linux and Windows installers include ffmpeg. You do not install it yourself to run the AppImage or the Windows exe.
+
+`npm run dev` shells out to `ffmpeg` on `PATH`.
 
 ```bash
 ffmpeg -version
 ```
 
-Debian or Ubuntu: `sudo apt install ffmpeg`. Fedora: `sudo dnf install ffmpeg`. On Windows, install ffmpeg and open a new terminal so `PATH` includes it.
+Debian or Ubuntu: `sudo apt install ffmpeg`. Fedora: `sudo dnf install ffmpeg`. On Windows, install ffmpeg and open a new terminal so `PATH` includes it. Details and the LGPL build pin are in [packaging.md](packaging.md).
 
 ## Run the app
 
