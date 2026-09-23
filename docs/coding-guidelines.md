@@ -17,12 +17,12 @@
 
 ## Where logic lives
 
-| Kind | Put it in |
-| --- | --- |
-| Capture, files, secrets, provider HTTP, recording lifecycle | Electron **main domains** (`electron/domains/`, `electron/capture/`) |
-| Shared UI / session state across views | **Pinia** setup stores (call `window.meetrec` IPC) |
-| Reusable UI helpers with no cross-route state | **Composables** under `src/composables/`, or pure helpers under `src/lib/` |
-| Layout and wiring only | Vue **views / components** (keep SFCs thin) |
+| Kind                                                        | Put it in                                                                  |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Capture, files, secrets, provider HTTP, recording lifecycle | Electron **main domains** (`electron/domains/`, `electron/capture/`)       |
+| Shared UI / session state across views                      | **Pinia** setup stores (call `window.meetrec` IPC)                         |
+| Reusable UI helpers with no cross-route state               | **Composables** under `src/composables/`, or pure helpers under `src/lib/` |
+| Layout and wiring only                                      | Vue **views / components** (keep SFCs thin)                                |
 
 Do **not** put filesystem, ffmpeg, or credential logic in composables or Pinia. Do **not** empty Pinia in favor of “composables only” — stores are for shared reactive session state; composables are for reusable view glue.
 
