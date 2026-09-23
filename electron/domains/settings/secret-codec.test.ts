@@ -6,7 +6,9 @@ describe('secret bag codec', () => {
     expect(decodeSecretBag(JSON.stringify({ xaiApiKey: '  saved  ' }))).toEqual({
       xaiApiKey: 'saved',
       openaiApiKey: null,
-      xaiOAuth: null
+      xaiOAuth: null,
+      googleClientSecret: null,
+      googleOAuth: null
     })
   })
 
@@ -29,6 +31,26 @@ describe('secret bag codec', () => {
     expect(
       decodeSecretBag(JSON.stringify({ xaiOAuth: { accessToken: 'only', refreshToken: '' } }))
         ?.xaiOAuth
+    ).toBeNull()
+  })
+
+  it('round-trips a Google calendar token and drops one without a refresh token', () => {
+    const bag = {
+      ...emptySecretBag(),
+      googleClientSecret: 'secret',
+      googleOAuth: {
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        expiresAt: 80,
+        tokenType: 'Bearer',
+        scope: 'openid email',
+        accountEmail: 'ada@example.com'
+      }
+    }
+    expect(decodeSecretBag(encodeSecretBag(bag))).toEqual(bag)
+    expect(
+      decodeSecretBag(JSON.stringify({ googleOAuth: { accessToken: 'only', refreshToken: '  ' } }))
+        ?.googleOAuth
     ).toBeNull()
   })
 })

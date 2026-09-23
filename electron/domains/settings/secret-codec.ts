@@ -8,21 +8,40 @@ export interface OAuthTokenSet {
   tokenType: string
 }
 
+export interface CalendarTokenSet {
+  accessToken: string
+  refreshToken: string
+  expiresAt: number
+  tokenType: string
+  scope: string
+  accountEmail: string | null
+}
+
 export interface SecretBag {
   xaiApiKey: string | null
   openaiApiKey: string | null
   xaiOAuth: OAuthTokenSet | null
+  googleClientSecret: string | null
+  googleOAuth: CalendarTokenSet | null
 }
 
 export function emptySecretBag(): SecretBag {
-  return { xaiApiKey: null, openaiApiKey: null, xaiOAuth: null }
+  return {
+    xaiApiKey: null,
+    openaiApiKey: null,
+    xaiOAuth: null,
+    googleClientSecret: null,
+    googleOAuth: null
+  }
 }
 
 export function encodeSecretBag(bag: SecretBag): string {
   return JSON.stringify({
     xaiApiKey: bag.xaiApiKey,
     openaiApiKey: bag.openaiApiKey,
-    xaiOAuth: bag.xaiOAuth
+    xaiOAuth: bag.xaiOAuth,
+    googleClientSecret: bag.googleClientSecret,
+    googleOAuth: bag.googleOAuth
   })
 }
 
@@ -39,7 +58,9 @@ export function decodeSecretBag(raw: string): SecretBag | null {
   return {
     xaiApiKey: trimOrNull(record.xaiApiKey),
     openaiApiKey: trimOrNull(record.openaiApiKey),
-    xaiOAuth: parseOAuth(record.xaiOAuth)
+    xaiOAuth: parseOAuth(record.xaiOAuth),
+    googleClientSecret: trimOrNull(record.googleClientSecret),
+    googleOAuth: parseCalendarToken(record.googleOAuth)
   }
 }
 
@@ -60,6 +81,25 @@ export function parseOAuth(value: unknown): OAuthTokenSet | null {
   if (!accessToken || !refreshToken) return null
   const tokenType = typeof record.tokenType === 'string' ? record.tokenType : 'Bearer'
   return { accessToken, refreshToken, expiresAt, tokenType }
+}
+
+export function parseCalendarToken(value: unknown): CalendarTokenSet | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  const accessToken = trimOrNull(record.accessToken)
+  const refreshToken = trimOrNull(record.refreshToken)
+  if (!accessToken || !refreshToken) return null
+  const expiresAt = typeof record.expiresAt === 'number' ? record.expiresAt : 0
+  const tokenType = typeof record.tokenType === 'string' ? record.tokenType : 'Bearer'
+  const scope = typeof record.scope === 'string' ? record.scope : ''
+  return {
+    accessToken,
+    refreshToken,
+    expiresAt,
+    tokenType,
+    scope,
+    accountEmail: trimOrNull(record.accountEmail)
+  }
 }
 
 function trimOrNull(value: unknown): string | null {
