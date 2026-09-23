@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AppShell from '@/components/AppShell.vue'
 import CloudUploadButton from '@/components/CloudUploadButton.vue'
-import ModeNav from '@/components/ModeNav.vue'
 import PlaybackPanel from '@/components/PlaybackPanel.vue'
 import RecordingHeader from '@/components/RecordingHeader.vue'
 import SummaryPanel from '@/components/SummaryPanel.vue'
@@ -35,11 +35,10 @@ const panes = [
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-8">
-    <div class="flex items-center justify-between gap-4">
+  <AppShell>
+    <template #heading>
       <Button variant="ghost" size="sm" @click="router.push({ name: 'library' })">Back</Button>
-      <ModeNav />
-    </div>
+    </template>
 
     <p v-if="library.error" class="text-sm text-destructive" role="alert">{{ library.error }}</p>
     <p v-if="library.loading && !library.detail" class="text-sm text-muted-foreground">
@@ -89,5 +88,5 @@ const panes = [
         </section>
       </div>
     </template>
-  </main>
+  </AppShell>
 </template>

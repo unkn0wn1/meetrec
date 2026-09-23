@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import ModeNav from '@/components/ModeNav.vue'
+import AppShell from '@/components/AppShell.vue'
 import RecordingRow from '@/components/RecordingRow.vue'
 import { Button } from '@/components/ui/button'
 import { useLibraryStore } from '@/stores/library'
@@ -22,15 +22,7 @@ function open(id: string): void {
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-6 py-8">
-    <header class="flex items-start justify-between gap-4">
-      <div>
-        <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">meetrec</p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight">Library</h1>
-      </div>
-      <ModeNav />
-    </header>
-
+  <AppShell title="Library">
     <p v-if="library.error" class="text-sm text-destructive" role="alert">{{ library.error }}</p>
 
     <section
@@ -53,5 +45,5 @@ function open(id: string): void {
         </li>
       </ul>
     </section>
-  </main>
+  </AppShell>
 </template>
