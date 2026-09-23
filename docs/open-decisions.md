@@ -52,10 +52,11 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 - Exactly one Voice default and one AI default. They may be the same provider.
 - Providers in this build: xAI sign-in, xAI API key, OpenAI. OpenRouter and Anthropic are not registered.
-- Model pickers use the current allowlist: `grok-voice-transcribe-2.0`, `grok-4.5`, `gpt-4o-transcribe-diarize`, and `gpt-4.1-mini`.
+- Model pickers show the cached catalog from Test. The registry seeds stay `grok-voice-transcribe-2.0`, `grok-4.5`, `gpt-4o-transcribe-diarize`, and `gpt-4.1-mini`.
 - A legacy `provider` value in `settings.json` becomes both defaults.
 
 ## Still soft / rename anytime
 
 - Silence auto-stop stays unwired. It is not a stop signal.
 - Mapping stored invitee names onto diarized speakers stays unwired.
+- xAI `GET /v1/models` may omit speech-to-text ids (`grok-voice-transcribe-1.0`, `grok-voice-transcribe-2.0`). Device-code access tokens may be rejected by that route. Meetrec does not invent a list until a live Test shows otherwise.

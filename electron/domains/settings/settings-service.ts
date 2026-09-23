@@ -7,6 +7,7 @@ import {
   type StoredSecretsView
 } from '../providers/auth'
 import { PROVIDER_IDS, isProviderId } from '../providers/ids'
+import { listProviderModels } from '../providers/list-models'
 import { validateOpenAiApiKey } from '../providers/openai-ping'
 import { probeAi, probeVoice } from '../providers/probes'
 import { assertRole, isAllowedModel, providerDefinition } from '../providers/registry'
@@ -23,6 +24,7 @@ import {
   type ProbePair,
   type SnapshotOauth
 } from './card-snapshot'
+import { mergeListedModels } from './model-cache'
 import { OAuthSession, type PublicOAuthPending } from './oauth-session'
 import type { SecretStore } from './secret-store'
 import { readAppSettings, writeAppSettings, type AppSettings } from './settings-file'
@@ -68,8 +70,11 @@ export class SettingsService {
   ): Promise<SettingsStatus> {
     this.requireProvider(provider)
     assertRole(provider, role)
-    if (!isAllowedModel(provider, role, modelId)) throw new Error('That model is not available.')
     const settings = await this.loadSettings()
+    const listed = settings.modelCache[provider][role].ids
+    const allowed =
+      listed.length > 0 ? listed.includes(modelId) : isAllowedModel(provider, role, modelId)
+    if (!allowed) throw new Error('That model is not available.')
     const models = {
       ...settings.models,
       [provider]: { ...settings.models[provider], [role]: modelId }
@@ -159,12 +164,12 @@ export class SettingsService {
     const settings = await this.loadSettings()
     const token = await this.tokenFor(provider)
     const missing = providerGateHint(provider)
-    const models = settings.models[provider]
+    const selected = settings.models[provider]
     if (!token) this.live.delete(provider)
-    const [voice, ai] = await Promise.all([
+    const [voice, ai, listed] = await Promise.all([
       probeVoice({
         family: definition.family,
-        model: models.voice,
+        model: selected.voice,
         token,
         supported: definition.supportsVoice,
         missingMessage: missing,
@@ -172,15 +177,30 @@ export class SettingsService {
       }),
       probeAi({
         family: definition.family,
-        model: models.ai,
+        model: selected.ai,
         token,
         supported: definition.supportsAi,
         missingMessage: missing,
         fetchImpl: this.deps.fetchImpl
       }),
+      token
+        ? listProviderModels({
+            family: definition.family,
+            token,
+            fetchImpl: this.deps.fetchImpl
+          })
+        : Promise.resolve(null),
       token ? this.checkLive(provider) : Promise.resolve()
     ])
     this.probes.set(provider, { voice, ai })
+    const next = mergeListedModels(
+      settings,
+      provider,
+      { voice, ai },
+      listed,
+      new Date(this.now()).toISOString()
+    )
+    if (next !== settings) await writeAppSettings(this.deps.userDataDir(), next)
     return this.snapshot()
   }
 

@@ -88,8 +88,14 @@ function cardFor(
     statusLabel: statusLabel(id, configured, sources.xaiKeySource, sources.openaiKeySource),
     supportsVoice: definition.supportsVoice,
     supportsAi: definition.supportsAi,
-    voiceModels: definition.voiceModels,
-    aiModels: definition.aiModels,
+    voiceModels: settings.modelCache[id].voice.ids.map((modelId) => ({
+      id: modelId,
+      label: modelId
+    })),
+    aiModels: settings.modelCache[id].ai.ids.map((modelId) => ({
+      id: modelId,
+      label: modelId
+    })),
     voiceModel: settings.models[id].voice,
     aiModel: settings.models[id].ai,
     isVoiceDefault: settings.voiceProviderId === id,

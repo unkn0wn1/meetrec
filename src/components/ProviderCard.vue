@@ -18,6 +18,7 @@ const showLiveBad = computed(
 
 function onModel(role: 'voice' | 'ai', event: Event): void {
   const value = (event.target as HTMLSelectElement).value
+  if (!value) return
   const current = role === 'voice' ? props.card.voiceModel : props.card.aiModel
   if (value === current) return
   void settings.setModel(props.card.id, role, value)
@@ -58,10 +59,13 @@ function probeLine(label: string, probe: RoleProbe): string {
         Voice model
         <select
           class="h-10 rounded-md border border-input bg-background px-3 font-normal"
-          :value="card.voiceModel"
-          :disabled="settings.saving"
+          :value="card.voiceModels.length ? card.voiceModel : ''"
+          :disabled="settings.saving || card.voiceModels.length === 0"
           @change="onModel('voice', $event)"
         >
+          <option v-if="card.voiceModels.length === 0" value="" disabled>
+            Test to load models
+          </option>
           <option v-for="model in card.voiceModels" :key="model.id" :value="model.id">
             {{ model.label }}
           </option>
@@ -71,10 +75,11 @@ function probeLine(label: string, probe: RoleProbe): string {
         AI model
         <select
           class="h-10 rounded-md border border-input bg-background px-3 font-normal"
-          :value="card.aiModel"
-          :disabled="settings.saving"
+          :value="card.aiModels.length ? card.aiModel : ''"
+          :disabled="settings.saving || card.aiModels.length === 0"
           @change="onModel('ai', $event)"
         >
+          <option v-if="card.aiModels.length === 0" value="" disabled>Test to load models</option>
           <option v-for="model in card.aiModels" :key="model.id" :value="model.id">
             {{ model.label }}
           </option>

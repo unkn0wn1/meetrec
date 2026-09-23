@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { providerGateHint, type StoredSecretsView } from '../providers/auth'
+import {
+  OPENAI_CHAT_MODEL,
+  OPENAI_STT_MODEL,
+  XAI_CHAT_MODEL,
+  XAI_STT_MODEL
+} from '../providers/models'
 import { defaultAppSettings, type AppSettings } from './settings-file'
 import { buildSettingsSnapshot, type LiveEntry } from './card-snapshot'
 
@@ -97,5 +103,30 @@ describe('settings snapshot', () => {
     expect(keyOnly.cards.find((card) => card.id === 'xai-oauth')?.statusLabel).toBe(
       'Not signed in.'
     )
+  })
+
+  it('leaves model selects empty until a catalog is cached', () => {
+    const card = snapshot(settings({})).cards.find((item) => item.id === 'xai-key')
+    expect(card?.voiceModels).toEqual([])
+    expect(card?.aiModels).toEqual([])
+    expect(card?.voiceModel).toBe(XAI_STT_MODEL)
+    expect(card?.aiModel).toBe(XAI_CHAT_MODEL)
+  })
+
+  it('maps cached ids to select options without changing the selected id', () => {
+    const app = defaultAppSettings()
+    app.modelCache.openai = {
+      voice: { ids: ['whisper-1', OPENAI_STT_MODEL], fetchedAt: 't' },
+      ai: { ids: [OPENAI_CHAT_MODEL], fetchedAt: 't' }
+    }
+    app.models.openai.voice = 'whisper-1'
+    const card = snapshot(app).cards.find((item) => item.id === 'openai')
+    expect(card?.voiceModels).toEqual([
+      { id: 'whisper-1', label: 'whisper-1' },
+      { id: OPENAI_STT_MODEL, label: OPENAI_STT_MODEL }
+    ])
+    expect(card?.aiModels).toEqual([{ id: OPENAI_CHAT_MODEL, label: OPENAI_CHAT_MODEL }])
+    expect(card?.voiceModel).toBe('whisper-1')
+    expect(card?.aiModel).toBe(OPENAI_CHAT_MODEL)
   })
 })

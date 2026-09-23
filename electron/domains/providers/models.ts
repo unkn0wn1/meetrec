@@ -18,4 +18,5 @@ export const OPENAI_STT_URL = 'https://api.openai.com/v1/audio/transcriptions'
 export const OPENAI_CHAT_MODEL = 'gpt-4.1-mini'
 export const OPENAI_CHAT_URL = 'https://api.openai.com/v1/chat/completions'
 
+export const XAI_MODELS_URL = 'https://api.x.ai/v1/models'
 export const OPENAI_MODELS_URL = 'https://api.openai.com/v1/models'
