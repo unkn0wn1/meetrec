@@ -18,9 +18,35 @@ xAI sign-in uses the public device-code client id `b1a00492-073a-47ea-816f-4c329
 - Narrow preload API (`window.meetrec`)
 - Local renderer only. Do not load remote scripts.
 
-## Google OAuth
+## Calendar OAuth (Google and Microsoft)
 
-Not implemented. When calendar ships, use an OAuth client owned by this app, start with `calendar.readonly`, and add Drive scopes only if save-to-Drive is built. An installed app should use PKCE or a loopback redirect.
+Not in the app yet. The flow below is the one calendar connect will use. It is separate from the xAI device-code client. Do not reuse that client id.
+
+Desktop public client: authorization code + PKCE (S256) + loopback. The system browser opens the provider page. That page never loads inside Electron. `state` must match. A mismatch stores nothing.
+
+| Provider  | Redirect                                                         | Token host                                 |
+| --------- | ---------------------------------------------------------------- | ------------------------------------------ |
+| Google    | `http://127.0.0.1:<port>/callback`                               | `https://oauth2.googleapis.com/token`      |
+| Microsoft | `http://localhost:<port>/callback` (socket stays on `127.0.0.1`) | `https://login.microsoftonline.com/common` |
+
+Microsoft authority stays `common`. The tenant id is not stored. Registering the app is in [oauth-clients.md](oauth-clients.md).
+
+Calendar connect scopes:
+
+- Google: `openid`, `email`, `https://www.googleapis.com/auth/calendar.readonly`
+- Microsoft: `openid`, `profile`, `email`, `offline_access`, `User.Read`, `Calendars.Read`
+
+Upload is a second consent. It adds `https://www.googleapis.com/auth/drive.file` or `Files.ReadWrite.AppFolder`. It does not request full Drive or `Files.ReadWrite.All`.
+
+Where secrets live:
+
+- `userData/secrets.bin` (safeStorage): Google client secret, Google refresh and access tokens, Microsoft refresh and access tokens.
+- `userData/calendar.json` (not a secret): Google and Microsoft client ids, upload toggles.
+- Environment fallbacks, only when nothing is saved: `MEETREC_GOOGLE_CLIENT_ID`, `MEETREC_GOOGLE_CLIENT_SECRET`, `MEETREC_MICROSOFT_CLIENT_ID`. Microsoft has no client secret.
+
+The renderer never receives tokens or the Google client secret. Status IPC returns the client id, whether a secret is set, the account email, and connect errors. Token responses are redacted before they reach logs or thrown errors (`access_token`, `refresh_token`, `id_token`, `code`, `client_secret`).
+
+While Google’s consent screen is in Testing, refresh tokens expire after about 7 days. This app does not submit that screen for verification.
 
 ## Consent
 

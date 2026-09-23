@@ -18,18 +18,22 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 **Linux first** (daily use). Windows capture is implemented and experimental until someone verifies it on a Windows machine. macOS capture stays a stub until verified.
 
-### 5. Artifacts — LOCKED (v1)
+### 5. Artifacts — LOCKED (2026-09-23)
 
-**Local files only.** No Google Drive upload in v1.
+**Local files stay the copy of record.** Optional upload is in scope: a `meetrec` folder in Google Drive, and the OneDrive app folder (`Files.ReadWrite.AppFolder`). Upload is off until the user turns it on. The control ships with the upload work; it is not in the app yet.
 
-### 6. Calendar / arm UX — LOCKED
+### 6. Calendar / arm UX — LOCKED (2026-09-23)
 
-- System **tray / toolbar** presence while the app runs.
-- **~10 minutes before** a calendar meeting: desktop notification with actions:
+- System **tray / toolbar** presence while the app runs. Hiding the window keeps calendar polling running.
+- **Google Calendar** (readonly) and **Microsoft Calendar** (Graph) on the primary calendar. Cancelled, all-day, and declined events are skipped.
+- **~10 minutes before** a timed event (`PROMPT_LEAD_MS`): a prompt and a desktop notification. Actions:
   - **Start recording**
   - **Dismiss**
-  - **Auto-arm** (start automatically at T−1 minute or at meeting start — exact offset configurable later)
-- While recording: always-on-top Stop popup (see product.md).
+  - **Auto-arm**
+- Auto-arm starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). A user-facing offset control stays unwired. Inside that last minute, Auto-arm starts immediately.
+- A recording started from that event stops at the event end plus **2 minutes** (`CALENDAR_END_GRACE_MS`). Manual Record with no calendar link keeps today’s stop behavior. User Stop or tray Stop cancels that grace.
+- The always-on-top Stop popup stays deferred. Tray **Stop recording** stops a calendar-started recording while the main window is hidden.
+- Calendar arm is not built yet.
 
 ### 7. Vue version — LOCKED 2026-09-22
 
@@ -53,4 +57,5 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 ## Still soft / rename anytime
 
-- Exact auto-arm clock (T−1 min vs meeting start) — default proposal is **T−1 minute** when Auto-arm was chosen. Calendar arm is not built yet.
+- Silence auto-stop stays unwired. It is not a stop signal.
+- Mapping stored invitee names onto diarized speakers stays unwired.

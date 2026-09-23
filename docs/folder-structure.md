@@ -15,7 +15,8 @@ meetrec/
       linux.ts
     domains/            # main-side domain modules (small files)
       recording/        # session status, folder layout, library scan
-      calendar/         # later
+      calendar/         # OAuth, poll, schedule, preferences, token slots
+      cloud/            # Drive and OneDrive upload
       transcript/       # STT document + diarization segments
       minutes/          # summary markdown
       providers/        # xAI + OpenAI STT/chat, OAuth helpers (main only)

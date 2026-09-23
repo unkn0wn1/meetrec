@@ -29,7 +29,7 @@ A fresh install defaults both roles to `xai-key` with the xAI models above.
 
 ## xAI OAuth
 
-Public device-code client (Hermes / Grok Build family). No client secret.
+Public device-code client (Hermes / Grok Build family). No client secret. Calendar OAuth is a different client (Google Cloud or Microsoft Entra, PKCE loopback). Do not mix those client ids with this one. See [oauth-clients.md](oauth-clients.md).
 
 - Issuer / discovery: `https://auth.x.ai` (`.well-known/openid-configuration`)
 - Device code: `https://auth.x.ai/oauth2/device/code`
