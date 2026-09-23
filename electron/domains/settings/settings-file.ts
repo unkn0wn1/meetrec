@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { parseDestination, type RecordingDestination } from '../../shared/destination'
 import {
   DEFAULT_PROVIDER,
   PROVIDER_IDS,
@@ -29,6 +31,8 @@ export interface AppSettings {
   aiProviderId: ProviderId
   models: Record<ProviderId, ProviderModels>
   modelCache: Record<ProviderId, ProviderModelCache>
+  destination: RecordingDestination
+  autoRecord: boolean
 }
 
 export interface ParsedAppSettings {
@@ -41,7 +45,9 @@ export function defaultAppSettings(): AppSettings {
     voiceProviderId: DEFAULT_PROVIDER,
     aiProviderId: DEFAULT_PROVIDER,
     models: defaultModels(),
-    modelCache: emptyModelCache()
+    modelCache: emptyModelCache(),
+    destination: 'local',
+    autoRecord: false
   }
 }
 
@@ -83,28 +89,59 @@ export function parseAppSettings(raw: string): ParsedAppSettings {
   const modelCache = parseModelCache(record.modelCache)
   if (!hasBoth) {
     const provider = isProviderId(record.provider) ? record.provider : DEFAULT_PROVIDER
+    const general = generalPrefs(record)
     return {
       settings: {
         voiceProviderId: provider,
         aiProviderId: provider,
         models: parseModels(record.models, modelCache),
-        modelCache
+        modelCache,
+        destination: general.destination,
+        autoRecord: general.autoRecord
       },
       legacy: true
     }
   }
+  const general = generalPrefs(record)
   const settings: AppSettings = {
     voiceProviderId: parseProviderId(record.voiceProviderId),
     aiProviderId: parseProviderId(record.aiProviderId),
     models: parseModels(record.models, modelCache),
-    modelCache
+    modelCache,
+    destination: general.destination,
+    autoRecord: general.autoRecord
   }
   const legacy =
+    general.legacy ||
     record.voiceProviderId !== settings.voiceProviderId ||
     record.aiProviderId !== settings.aiProviderId ||
     !modelsMatch(record.models, settings.models) ||
     cacheIsLegacy(record.modelCache, settings.modelCache)
   return { settings, legacy }
+}
+
+function generalPrefs(record: Record<string, unknown>): {
+  destination: RecordingDestination
+  autoRecord: boolean
+  legacy: boolean
+} {
+  const destination = parseDestination(record.destination)
+  const autoRecord = record.autoRecord === true
+  return {
+    destination,
+    autoRecord,
+    legacy:
+      (record.destination !== undefined && record.destination !== destination) ||
+      (record.autoRecord !== undefined && typeof record.autoRecord !== 'boolean')
+  }
+}
+
+export function readAutoRecordFlag(userDataDir: string): boolean {
+  try {
+    return parseAppSettings(readFileSync(settingsFilePath(userDataDir), 'utf8')).settings.autoRecord
+  } catch {
+    return false
+  }
 }
 
 function parseModels(

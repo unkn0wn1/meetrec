@@ -13,6 +13,11 @@ export interface CalendarEventView {
   startsAt: string
   endsAt: string | null
   attendeeNames: string[]
+  seriesId: string | null
+  /** False when this occurrence or its series is opted out. */
+  record: boolean
+  /** True when the whole series is opted out. */
+  seriesSkipped: boolean
 }
 
 export interface CalendarPrompt {
@@ -32,11 +37,18 @@ export interface CalendarArmView {
 
 export interface CalendarStatus {
   connectPending: 'google' | 'microsoft' | null
+  /** True when Google or Microsoft calendar has a refresh token. */
+  connected: boolean
   google: CalendarAccountStatus
   microsoft: CalendarAccountStatus
   upcoming: CalendarEventView[]
   prompt: CalendarPrompt | null
   arm: CalendarArmView | null
+}
+
+export interface CalendarList {
+  connected: boolean
+  events: CalendarEventView[]
 }
 
 export interface CalendarConnectInput {
@@ -50,4 +62,10 @@ export interface CalendarProviderInput {
 
 export interface OccurrenceInput {
   occurrenceKey: string
+}
+
+export interface CalendarRecordInput {
+  occurrenceKey: string
+  enabled: boolean
+  scope: 'occurrence' | 'series'
 }

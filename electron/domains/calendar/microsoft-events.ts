@@ -68,6 +68,7 @@ function parseMicrosoftEvent(value: unknown): CalendarEvent | null {
     provider: 'microsoft',
     eventId,
     occurrenceKey: occurrenceKey('microsoft', eventId, start),
+    seriesId: text(record.seriesMasterId),
     title: subject ?? 'Busy',
     startsAt: start,
     endsAt: dateField(record.end),

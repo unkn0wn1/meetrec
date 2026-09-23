@@ -17,6 +17,7 @@ describe('microsoft events', () => {
         {
           id: 'evt',
           subject: 'Standup',
+          seriesMasterId: 'series-9',
           isAllDay: false,
           isCancelled: false,
           responseStatus: { response: 'accepted' },
@@ -56,8 +57,10 @@ describe('microsoft events', () => {
       occurrenceKey: 'microsoft:evt:2026-09-23T15:00:00.000Z',
       startsAt: '2026-09-23T15:00:00.000Z',
       endsAt: '2026-09-23T15:30:00.000Z',
-      attendees: [{ name: 'Ada', email: 'ada@example.com' }]
+      attendees: [{ name: 'Ada', email: 'ada@example.com' }],
+      seriesId: 'series-9'
     })
     expect(events[2]?.title).toBe('Busy')
+    expect(events[2]?.seriesId).toBeNull()
   })
 })

@@ -2,14 +2,14 @@ import { readFile } from 'node:fs/promises'
 import { isSafeRecordingId } from '../../capture/paths'
 import { minutesPrompt, topicFromMarkdown } from '../minutes/markdown'
 import { saveSummary } from '../minutes/job'
-import type { ProviderRole } from '../../shared/ipc-contract'
+import type { LibraryListItem, ProviderRole } from '../../shared/ipc-contract'
 import type { ActiveAuth } from '../providers/auth'
 import { providerGateHint } from '../providers/auth'
 import { summarizeWithAuth, transcribeWithAuth } from '../providers/dispatch'
 import { saveTranscript } from '../transcript/job'
 import { parseTranscript, type TranscriptDocument } from '../transcript/parse'
 import { recordingLayout } from './layout'
-import { applySpeakerNames, type RecordingMeta, type Speaker } from './meta'
+import { applySpeakerNames, uploadFlags, type RecordingMeta, type Speaker } from './meta'
 import {
   loadRecording,
   scanRecordings,
@@ -17,17 +17,6 @@ import {
   type RecordingFlags,
   type StoredRecording
 } from './store'
-
-export interface LibraryListItem {
-  id: string
-  title: string
-  startedAt: string
-  durationMs: number
-  topic: string | null
-  speakerCount: number
-  hasTranscript: boolean
-  hasSummary: boolean
-}
 
 export interface LibraryDetail {
   meta: RecordingMeta
@@ -129,7 +118,8 @@ function toListItem(stored: StoredRecording): LibraryListItem {
     topic: stored.meta.topic,
     speakerCount: stored.meta.speakers.length,
     hasTranscript: stored.flags.hasTranscript,
-    hasSummary: stored.flags.hasSummary
+    hasSummary: stored.flags.hasSummary,
+    ...uploadFlags(stored.meta.uploads)
   }
 }
 

@@ -29,6 +29,8 @@ const api: MeetrecApi = {
     arm: (input) => ipcRenderer.invoke(IPC.calendarArm, input),
     cancelArm: () => ipcRenderer.invoke(IPC.calendarCancelArm),
     start: (input) => ipcRenderer.invoke(IPC.calendarStart, input),
+    list: () => ipcRenderer.invoke(IPC.calendarList),
+    setRecord: (input) => ipcRenderer.invoke(IPC.calendarSetRecord, input),
     onChanged: (listener) => subscribe<CalendarStatus>(IPC.calendarChanged, listener)
   },
   cloud: {
@@ -55,7 +57,9 @@ const api: MeetrecApi = {
     startXaiOAuth: () => ipcRenderer.invoke(IPC.settingsStartXaiOAuth),
     pollXaiOAuth: () => ipcRenderer.invoke(IPC.settingsPollXaiOAuth),
     signOutXaiOAuth: () => ipcRenderer.invoke(IPC.settingsSignOutXaiOAuth),
-    validate: () => ipcRenderer.invoke(IPC.settingsValidate)
+    validate: () => ipcRenderer.invoke(IPC.settingsValidate),
+    setDestination: (destination) => ipcRenderer.invoke(IPC.settingsSetDestination, destination),
+    setAutoRecord: (enabled) => ipcRenderer.invoke(IPC.settingsSetAutoRecord, enabled)
   }
 }
 

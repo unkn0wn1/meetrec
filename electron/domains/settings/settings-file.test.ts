@@ -154,4 +154,41 @@ describe('app settings', () => {
     expect(first.settings.models.openai.ai).toBe('gpt-4.1')
     expect(first.legacy).toBe(true)
   })
+
+  it('defaults destination and auto-record, and keeps an explicit choice', () => {
+    const missing = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'openai',
+        aiProviderId: 'xai-key',
+        models: defaultAppSettings().models
+      })
+    )
+    expect(missing.legacy).toBe(false)
+    expect(missing.settings.destination).toBe('local')
+    expect(missing.settings.autoRecord).toBe(false)
+
+    const chosen = parseAppSettings(
+      JSON.stringify({
+        ...defaultAppSettings(),
+        destination: 'microsoft',
+        autoRecord: true
+      })
+    )
+    expect(chosen.legacy).toBe(false)
+    expect(chosen.settings.destination).toBe('microsoft')
+    expect(chosen.settings.autoRecord).toBe(true)
+
+    const unknown = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'xai-key',
+        aiProviderId: 'xai-key',
+        models: defaultAppSettings().models,
+        destination: 'dropbox',
+        autoRecord: 'yes'
+      })
+    )
+    expect(unknown.settings.destination).toBe('local')
+    expect(unknown.settings.autoRecord).toBe(false)
+    expect(unknown.legacy).toBe(true)
+  })
 })

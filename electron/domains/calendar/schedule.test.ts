@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CALENDAR_END_GRACE_MS } from './constants'
-import { armFromEvent, decideSchedule } from './schedule'
+import { armFromEvent, decideSchedule, noticeBody } from './schedule'
 import type { CalendarEvent } from './source'
 import type { CalendarRuntimeState } from './state-file'
 
@@ -9,13 +9,15 @@ const START = Date.parse('2026-09-23T15:00:00.000Z')
 function eventAt(
   startMs: number,
   id = 'evt',
-  provider: CalendarEvent['provider'] = 'google'
+  provider: CalendarEvent['provider'] = 'google',
+  seriesId: string | null = null
 ): CalendarEvent {
   const startsAt = new Date(startMs).toISOString()
   return {
     provider,
     eventId: id,
     occurrenceKey: `${provider}:${id}:${startsAt}`,
+    seriesId,
     title: id,
     startsAt,
     endsAt: new Date(startMs + 30 * 60 * 1000).toISOString(),
@@ -24,7 +26,15 @@ function eventAt(
 }
 
 function state(partial: Partial<CalendarRuntimeState> = {}): CalendarRuntimeState {
-  return { dismissed: [], notified: [], arm: null, linkedStop: null, ...partial }
+  return {
+    dismissed: [],
+    notified: [],
+    disabledOccurrences: [],
+    disabledSeries: [],
+    arm: null,
+    linkedStop: null,
+    ...partial
+  }
 }
 
 function decide(
@@ -37,6 +47,7 @@ function decide(
     state: state(),
     recording: false,
     snapshotAt: now,
+    autoRecord: false,
     ...extra
   })
 }
@@ -113,5 +124,88 @@ describe('schedule', () => {
     const second = eventAt(START, 'second', 'microsoft')
     const decision = decide(START - 60_000, { events: [first, second] })
     expect(decision.prompt?.title).toBe('first')
+  })
+
+  it('skips an opted-out occurrence and still prompts the next one', () => {
+    const skipped = eventAt(START, 'skip')
+    const kept = eventAt(START + 120_000, 'keep')
+    const decision = decide(START - 60_000, {
+      events: [skipped, kept],
+      state: state({ disabledOccurrences: [skipped.occurrenceKey] })
+    })
+    expect(decision.prompt?.title).toBe('keep')
+    expect(decision.startAllowed).toBe(true)
+  })
+
+  it('skips every occurrence in an opted-out series', () => {
+    const skipped = eventAt(START, 'skip', 'google', 'series-1')
+    const kept = eventAt(START + 60_000, 'keep', 'microsoft', 'series-2')
+    const decision = decide(START - 60_000, {
+      events: [skipped, kept],
+      state: state({ disabledSeries: ['series-1'] })
+    })
+    expect(decision.prompt?.title).toBe('keep')
+    expect(
+      decide(START - 60_000, {
+        events: [skipped],
+        state: state({ disabledSeries: ['series-1'] })
+      }).prompt
+    ).toBeNull()
+  })
+
+  it('does not auto-arm an opted-out occurrence or series', () => {
+    const event = eventAt(START, 'evt', 'google', 'series-1')
+    const armed = armFromEvent(event)
+    expect(armed.seriesId).toBe('series-1')
+    expect(
+      decide(START - 60_000, {
+        events: [],
+        state: state({ arm: armed, disabledOccurrences: [event.occurrenceKey] })
+      }).dueArm
+    ).toBeNull()
+    expect(
+      decide(START - 60_000, {
+        events: [],
+        state: state({ arm: armed, disabledSeries: ['series-1'] })
+      }).dueArm
+    ).toBeNull()
+    expect(
+      decide(START - 60_000, {
+        events: [],
+        state: state({ arm: armed, disabledSeries: ['other-series'] })
+      }).dueArm?.occurrenceKey
+    ).toBe(event.occurrenceKey)
+  })
+
+  it('auto-record notifies without the prompt and starts at one minute', () => {
+    const ten = decide(START - 600_000, { autoRecord: true })
+    expect(ten.prompt).toBeNull()
+    expect(ten.notice?.minutesUntil).toBe(10)
+    expect(ten.notify).toBe(true)
+    expect(ten.dueArm).toBeNull()
+    expect(ten.startAllowed).toBe(false)
+    expect(noticeBody(ten.notice!, true)).toContain('recording will start 1 minute before')
+    const manual = decide(START - 60_000)
+    expect(manual.prompt?.minutesUntil).toBe(1)
+    expect(manual.dueArm).toBeNull()
+    expect(noticeBody(manual.notice!, false)).toBe('Starts in 1 min.')
+    const armed = decide(START - 60_000, { autoRecord: true })
+    expect(armed.prompt).toBeNull()
+    expect(armed.dueArm?.occurrenceKey).toBe(eventAt(START).occurrenceKey)
+    const skipped = eventAt(START, 'skip', 'google', 'series-1')
+    expect(
+      decide(START - 60_000, {
+        autoRecord: true,
+        events: [skipped],
+        state: state({ disabledOccurrences: [skipped.occurrenceKey] })
+      }).dueArm
+    ).toBeNull()
+    expect(
+      decide(START - 60_000, {
+        autoRecord: true,
+        events: [skipped],
+        state: state({ disabledSeries: ['series-1'] })
+      }).notice
+    ).toBeNull()
   })
 })

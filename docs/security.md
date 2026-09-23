@@ -44,6 +44,7 @@ Where secrets live:
 
 - `userData/secrets.bin` (safeStorage): Google and Microsoft refresh and access tokens.
 - `userData/calendar.json` (not a secret): upload toggles only.
+- `userData/settings.json` (not a secret): Voice and AI defaults, default destination, and the auto-record switch. `userData/calendar-state.json` stores dismissals and record opt-outs. Neither file holds tokens.
 
 The renderer never receives tokens or the Google client secret. Status IPC returns account email, connect errors, and upload flags. Token responses are redacted before they reach logs or thrown errors (`access_token`, `refresh_token`, `id_token`, `code`, `client_secret`).
 

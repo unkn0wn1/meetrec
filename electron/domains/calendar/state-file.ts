@@ -10,6 +10,7 @@ export interface CalendarArm {
   fireAt: string
   title: string
   endsAt: string | null
+  seriesId: string | null
 }
 
 export interface CalendarLinkedStop {
@@ -21,18 +22,30 @@ export interface CalendarLinkedStop {
 export interface CalendarRuntimeState {
   dismissed: string[]
   notified: string[]
+  disabledOccurrences: string[]
+  disabledSeries: string[]
   arm: CalendarArm | null
   linkedStop: CalendarLinkedStop | null
 }
 
 export function emptyRuntimeState(): CalendarRuntimeState {
-  return { dismissed: [], notified: [], arm: null, linkedStop: null }
+  return {
+    dismissed: [],
+    notified: [],
+    disabledOccurrences: [],
+    disabledSeries: [],
+    arm: null,
+    linkedStop: null
+  }
 }
 
 export function normalizeState(state: CalendarRuntimeState, now: number): CalendarRuntimeState {
   return {
     dismissed: pruneKeys(state.dismissed, now),
     notified: pruneKeys(state.notified, now),
+    disabledOccurrences: pruneKeys(state.disabledOccurrences, now),
+    // Series ids are not occurrence keys, so they are capped but not time-pruned.
+    disabledSeries: capIds(state.disabledSeries),
     arm: state.arm && keyIsCurrent(state.arm.occurrenceKey, now) ? state.arm : null,
     linkedStop: state.linkedStop
   }
@@ -54,6 +67,8 @@ export function parseRuntimeState(raw: string): CalendarRuntimeState | null {
   return {
     dismissed: stringList(record.dismissed),
     notified: stringList(record.notified),
+    disabledOccurrences: stringList(record.disabledOccurrences),
+    disabledSeries: stringList(record.disabledSeries),
     arm: parseArm(record.arm),
     linkedStop: parseLink(record.linkedStop)
   }
@@ -88,6 +103,18 @@ function pruneKeys(keys: string[], now: number): string[] {
   return keys.filter((key) => keyIsCurrent(key, now)).slice(0, STATE_CAP)
 }
 
+function capIds(ids: string[]): string[] {
+  const seen = new Set<string>()
+  const kept: string[] = []
+  for (const id of ids) {
+    if (seen.has(id)) continue
+    seen.add(id)
+    kept.push(id)
+    if (kept.length === STATE_CAP) break
+  }
+  return kept
+}
+
 function keyIsCurrent(key: string, now: number): boolean {
   const start = startMsFromKey(key)
   if (start == null) return false
@@ -108,7 +135,8 @@ function parseArm(value: unknown): CalendarArm | null {
     occurrenceKey: record.occurrenceKey,
     fireAt: record.fireAt,
     title: record.title,
-    endsAt: typeof record.endsAt === 'string' ? record.endsAt : null
+    endsAt: typeof record.endsAt === 'string' ? record.endsAt : null,
+    seriesId: typeof record.seriesId === 'string' && record.seriesId.trim() ? record.seriesId : null
   }
 }
 

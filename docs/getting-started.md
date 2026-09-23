@@ -25,7 +25,7 @@ npm run dev
 
 ## Choose Voice and AI defaults in Settings
 
-Open **Settings** before you transcribe. Each provider has its own card. Pick one **Default for Voice** and one **Default for AI**. They can be the same card.
+Open **Settings → Providers** before you transcribe. Each provider has its own card. Pick one **Default for Voice** and one **Default for AI**. They can be the same card.
 
 - **xAI sign-in** (device code in the browser)
 - **xAI API key**
@@ -37,7 +37,11 @@ The xAI sign-in client id `b1a00492-073a-47ea-816f-4c329264a828` is a public dev
 
 ## Connect a calendar
 
-Open **Settings** → **Calendar** and press **Connect** for Google or Microsoft. The system browser opens. A timed event on the primary calendar shows in the list. About 10 minutes before it starts, meetrec opens a prompt and adds tray actions: **Start recording**, **Dismiss**, and **Auto-arm**. Auto-arm starts the recording one minute before the event. A recording started from that event stops about two minutes after it ends, unless you press Stop.
+Open **Settings → Calendars** and press **Connect** for Google or Microsoft. The system browser opens. **Calendar**, between Record and Settings, then lists timed events for the next 14 days. **Record with meetrec** is checked. Uncheck a row to skip that occurrence, or the whole series when the event repeats.
+
+About 10 minutes before a selected event, meetrec opens a prompt and adds tray actions: **Start recording**, **Dismiss**, and **Auto-arm**. Auto-arm starts the recording one minute before the event. Turn on **Settings → General → Enable auto-record for selected meetings** to replace that prompt with a notification and an automatic start at one minute before. A recording started from that event stops about two minutes after it ends, unless you press Stop.
+
+**General → Default destination** chooses Local only, or Google Drive / OneDrive after that provider’s upload checkbox is on. Library rows show a Drive or OneDrive badge once a copy has an upload id. The local file remains the original.
 
 Publisher OAuth client setup (not an end-user step) is in [oauth-clients.md](oauth-clients.md).
 

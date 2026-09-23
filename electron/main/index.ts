@@ -91,6 +91,9 @@ app.whenReady().then(() => {
     userDataDir
   })
   hooks.afterSaved = (id) => uploadIfEnabled(calendar.service, id)
+  settings.watchAutoRecord(() => {
+    void calendar.service.refreshSchedule()
+  })
   stopCalendar = calendar.stop
 
   app.on('activate', () => {

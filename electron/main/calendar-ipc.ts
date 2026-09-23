@@ -26,6 +26,15 @@ export function registerCalendarIpc(calendar: CalendarService): void {
     const record = objectInput(input)
     return calendar.startFromOccurrence({ occurrenceKey: record.occurrenceKey })
   })
+  ipcMain.handle(IPC.calendarList, () => calendar.list())
+  ipcMain.handle(IPC.calendarSetRecord, (_event, input: unknown) => {
+    const record = objectInput(input)
+    return calendar.setRecord({
+      occurrenceKey: record.occurrenceKey,
+      enabled: record.enabled,
+      scope: record.scope
+    })
+  })
 }
 
 function objectInput(value: unknown): Record<string, unknown> {

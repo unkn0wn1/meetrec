@@ -19,6 +19,18 @@ export function formatWhen(iso: string): string {
   })
 }
 
+export function formatEventWhen(iso: string): string {
+  const parsed = Date.parse(iso)
+  if (Number.isNaN(parsed)) return iso
+  return new Date(parsed).toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  })
+}
+
 export function formatSegmentTime(seconds: number): string {
   return formatClock(Math.round(seconds * 1000))
 }

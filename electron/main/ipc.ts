@@ -8,6 +8,7 @@ import {
   type ProviderRole,
   type RecordingMetaView,
   type SetModelInput,
+  type RecordingDestination,
   type SettingsStatus
 } from '../shared/ipc-contract'
 import type { RecordingController } from './recording-controller'
@@ -87,6 +88,19 @@ export function registerAppIpc(
     settings.signOutXaiOAuth()
   )
   ipcMain.handle(IPC.settingsValidate, (): Promise<SettingsStatus> => settings.validate())
+  ipcMain.handle(IPC.settingsSetDestination, (_event, destination: unknown) => {
+    if (destination !== 'local' && destination !== 'google' && destination !== 'microsoft') {
+      return Promise.reject(new Error('Choose a destination.'))
+    }
+    const next: RecordingDestination = destination
+    return settings.setDestination(next)
+  })
+  ipcMain.handle(IPC.settingsSetAutoRecord, (_event, enabled: unknown) => {
+    if (typeof enabled !== 'boolean') {
+      return Promise.reject(new Error('Choose whether auto-record is on.'))
+    }
+    return settings.setAutoRecord(enabled)
+  })
 }
 
 async function runHook(hooks: RecordingHooks, id: string): Promise<void> {

@@ -8,26 +8,15 @@ function onUpload(provider: 'google' | 'microsoft', event: Event): void {
   const checked = event.target instanceof HTMLInputElement && event.target.checked
   void calendar.setUpload(provider, checked)
 }
-
-function formatWhen(iso: string): string {
-  const parsed = Date.parse(iso)
-  if (Number.isNaN(parsed)) return iso
-  return new Date(parsed).toLocaleString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  })
-}
 </script>
 
 <template>
-  <section class="mt-2 flex flex-col gap-4 border-t pt-6">
+  <section class="flex flex-col gap-4">
     <div>
-      <h2 class="text-lg font-semibold tracking-tight">Calendar</h2>
+      <h2 class="text-lg font-semibold tracking-tight">Calendars</h2>
       <p class="mt-1 text-sm text-muted-foreground">
-        A connected calendar prompts about 10 minutes before a timed event.
+        Connect Google or Microsoft. Upload stays off until you turn it on. Timed events are listed
+        on the Calendar tab.
       </p>
     </div>
 
@@ -86,23 +75,6 @@ function formatWhen(iso: string): string {
         Connect Google Drive
       </Button>
     </div>
-
-    <ul v-if="calendar.status && calendar.status.upcoming.length > 0" class="flex flex-col gap-2">
-      <li
-        v-for="event in calendar.status.upcoming"
-        :key="event.occurrenceKey"
-        class="text-sm text-muted-foreground"
-      >
-        {{ event.title }} · {{ formatWhen(event.startsAt) }} ·
-        {{ event.provider === 'google' ? 'Google' : 'Microsoft' }}
-      </li>
-    </ul>
-    <p
-      v-else-if="calendar.status?.google.connected || calendar.status?.microsoft.connected"
-      class="text-sm text-muted-foreground"
-    >
-      No upcoming events.
-    </p>
 
     <div class="flex flex-col gap-3 border-t pt-4">
       <h3 class="text-sm font-semibold">Microsoft</h3>
