@@ -7,6 +7,17 @@ const calendar = useCalendarStore()
 const clientId = ref('')
 const clientSecret = ref('')
 const clientDirty = ref(false)
+const microsoftClientId = ref('')
+const microsoftDirty = ref(false)
+
+watch(
+  () => calendar.status?.microsoft.clientId,
+  (value) => {
+    if (microsoftDirty.value) return
+    microsoftClientId.value = value ?? ''
+  },
+  { immediate: true }
+)
 
 watch(
   () => calendar.status?.google.clientId,
@@ -16,6 +27,11 @@ watch(
   },
   { immediate: true }
 )
+
+async function saveMicrosoft(): Promise<void> {
+  const ok = await calendar.saveMicrosoft(microsoftClientId.value)
+  if (ok) microsoftDirty.value = false
+}
 
 async function save(): Promise<void> {
   const ok = await calendar.saveGoogle(clientId.value, clientSecret.value)
@@ -129,8 +145,69 @@ function formatWhen(iso: string): string {
         {{ event.provider === 'google' ? 'Google' : 'Microsoft' }}
       </li>
     </ul>
-    <p v-else-if="calendar.status?.google.connected" class="text-sm text-muted-foreground">
+    <p
+      v-else-if="calendar.status?.google.connected || calendar.status?.microsoft.connected"
+      class="text-sm text-muted-foreground"
+    >
       No upcoming events.
     </p>
+
+    <div class="flex flex-col gap-3 border-t pt-4">
+      <h3 class="text-sm font-semibold">Microsoft</h3>
+      <label class="flex flex-col gap-2 text-sm font-medium" for="microsoft-client-id">
+        Microsoft client id
+        <input
+          id="microsoft-client-id"
+          v-model="microsoftClientId"
+          class="h-10 rounded-md border border-input bg-background px-3 font-normal"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          @input="microsoftDirty = true"
+        />
+      </label>
+      <div class="flex flex-wrap gap-2">
+        <Button :disabled="calendar.busy || !microsoftClientId.trim()" @click="saveMicrosoft">
+          Save
+        </Button>
+        <Button
+          :disabled="
+            calendar.busy ||
+            !microsoftClientId.trim() ||
+            calendar.status?.connectPending === 'microsoft'
+          "
+          @click="calendar.connectMicrosoft()"
+        >
+          Connect
+        </Button>
+        <Button
+          v-if="calendar.status?.microsoft.connected"
+          variant="outline"
+          :disabled="calendar.busy"
+          @click="calendar.disconnectMicrosoft()"
+        >
+          Disconnect
+        </Button>
+        <Button
+          v-if="calendar.status?.connectPending === 'microsoft'"
+          variant="outline"
+          @click="calendar.cancelConnect()"
+        >
+          Cancel
+        </Button>
+      </div>
+      <p
+        v-if="calendar.status?.connectPending === 'microsoft'"
+        class="text-sm text-muted-foreground"
+      >
+        Waiting for the browser…
+      </p>
+      <p v-if="calendar.status?.microsoft.connected" class="text-sm">
+        Connected as {{ calendar.status.microsoft.accountEmail || 'Microsoft account' }}
+      </p>
+      <p v-if="calendar.status?.microsoft.error" class="text-sm text-destructive" role="alert">
+        {{ calendar.status.microsoft.error }}
+      </p>
+    </div>
   </section>
 </template>

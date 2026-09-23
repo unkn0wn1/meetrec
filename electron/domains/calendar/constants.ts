@@ -21,3 +21,14 @@ export const GOOGLE_CALENDAR_SCOPE = [
 ].join(' ')
 
 export const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
+
+export const MICROSOFT_CALENDAR_SCOPE = [
+  'openid',
+  'profile',
+  'email',
+  'offline_access',
+  'User.Read',
+  'Calendars.Read'
+].join(' ')
+
+export const MICROSOFT_APPFOLDER_SCOPE = 'Files.ReadWrite.AppFolder'

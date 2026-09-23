@@ -1,20 +1,27 @@
 import type { CalendarStatus } from '../../shared/calendar-contract'
-import { GOOGLE_DRIVE_SCOPE, FETCH_INTERVAL_MS, TICK_INTERVAL_MS } from './constants'
+import {
+  FETCH_INTERVAL_MS,
+  GOOGLE_DRIVE_SCOPE,
+  MICROSOFT_APPFOLDER_SCOPE,
+  TICK_INTERVAL_MS
+} from './constants'
 import {
   armOccurrence,
   clearLinkedStop,
   disconnectGoogle,
+  disconnectMicrosoft,
   dismissOccurrence,
   fireArm,
   runGraceStop,
   startOccurrence
 } from './actions'
 import { runGoogleConnect } from './connect'
+import { runMicrosoftConnect } from './microsoft-connect'
 import { emptyMemory, type CalendarCore, type CalendarDeps, type CalendarMemory } from './deps'
 import { effectiveGoogleClientId, effectiveGoogleSecret, effectiveMicrosoftClientId } from './env'
 import { emptyPreferences, readPreferences, writePreferences } from './preferences'
 import { decideSchedule } from './schedule'
-import { cachedEvents, fetchGoogleSnapshot, freshEvents } from './snapshot'
+import { cachedEvents, fetchGoogleSnapshot, fetchMicrosoftSnapshot, freshEvents } from './snapshot'
 import type { CalendarEvent } from './source'
 import { emptyRuntimeState, readState, rememberKey, writeState } from './state-file'
 import { scopeIncludes } from './tokens'
@@ -60,6 +67,10 @@ export class CalendarService implements CalendarCore {
 
   fetchGoogle(): Promise<void> {
     return fetchGoogleSnapshot(this.deps, this.memory)
+  }
+
+  fetchMicrosoft(): Promise<void> {
+    return fetchMicrosoftSnapshot(this.deps, this.memory)
   }
 
   async saveRuntime(): Promise<void> {
@@ -154,15 +165,12 @@ export class CalendarService implements CalendarCore {
     const provider = cleanProvider(input.provider)
     const purpose = cleanPurpose(input.purpose)
     if (purpose === 'drive') return Promise.reject(new Error('Drive connect is not available yet.'))
-    if (provider === 'microsoft') {
-      return Promise.reject(new Error('Microsoft Calendar is not available yet.'))
-    }
     if (this.memory.connectPending) {
       return Promise.reject(new Error('Sign-in already in progress.'))
     }
-    this.memory.connectPending = 'google'
+    this.memory.connectPending = provider
     const generation = ++this.memory.connectGeneration
-    return this.finishConnect(generation)
+    return this.finishConnect(provider, generation)
   }
 
   cancelConnect(): Promise<CalendarStatus> {
@@ -179,8 +187,8 @@ export class CalendarService implements CalendarCore {
   disconnect(input: { provider: unknown }): Promise<CalendarStatus> {
     return this.run(async () => {
       const provider = cleanProvider(input.provider)
-      if (provider === 'microsoft') return this.buildStatus()
-      await disconnectGoogle(this)
+      if (provider === 'microsoft') await disconnectMicrosoft(this)
+      else await disconnectGoogle(this)
       return this.buildStatus()
     })
   }
@@ -219,9 +227,13 @@ export class CalendarService implements CalendarCore {
     return this.run(() => clearLinkedStop(this))
   }
 
-  private async finishConnect(generation: number): Promise<CalendarStatus> {
+  private async finishConnect(
+    provider: 'google' | 'microsoft',
+    generation: number
+  ): Promise<CalendarStatus> {
     await this.run(() => this.publish())
-    await runGoogleConnect(this, generation)
+    if (provider === 'microsoft') await runMicrosoftConnect(this, generation)
+    else await runGoogleConnect(this, generation)
     return this.run(() => this.buildStatus())
   }
 
@@ -233,6 +245,7 @@ export class CalendarService implements CalendarCore {
 
   private async fetchAndEvaluate(): Promise<void> {
     await this.fetchGoogle()
+    await this.fetchMicrosoft()
     await this.evaluate()
   }
 
@@ -292,6 +305,7 @@ export class CalendarService implements CalendarCore {
       snapshotAt: fresh.snapshotAt
     })
     const google = bag.googleOAuth
+    const microsoft = bag.microsoftOAuth
     return {
       connectPending: this.memory.connectPending,
       google: {
@@ -306,11 +320,11 @@ export class CalendarService implements CalendarCore {
       microsoft: {
         clientId: effectiveMicrosoftClientId(this.memory.prefs),
         secretSet: false,
-        connected: false,
-        accountEmail: null,
+        connected: Boolean(microsoft?.refreshToken),
+        accountEmail: microsoft?.accountEmail ?? null,
         uploadEnabled: this.memory.prefs.uploadMicrosoft,
-        uploadScopeGranted: false,
-        error: null
+        uploadScopeGranted: scopeIncludes(microsoft?.scope ?? '', MICROSOFT_APPFOLDER_SCOPE),
+        error: this.memory.errors.microsoft
       },
       upcoming: cachedEvents(this.memory).map(toView),
       prompt: decision.prompt,

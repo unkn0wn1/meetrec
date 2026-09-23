@@ -10,7 +10,7 @@ The person running the app on their own computer. They are responsible for telli
 
 ## What 0.1 does
 
-Manual Record, a local folder, Library, Transcribe, and Generate summary. Settings has one Voice default and one AI default. Google Calendar can prompt before a timed event and start or auto-arm a recording. Microsoft Calendar and optional Drive / OneDrive upload are not in the app yet. Silence auto-stop stays out.
+Manual Record, a local folder, Library, Transcribe, and Generate summary. Settings has one Voice default and one AI default. Google Calendar or Microsoft Calendar can prompt before a timed event and start or auto-arm a recording. Optional Drive / OneDrive upload is not in the app yet. Silence auto-stop stays out.
 
 ## Happy path
 

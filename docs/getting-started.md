@@ -39,7 +39,7 @@ The xAI sign-in client id `b1a00492-073a-47ea-816f-4c329264a828` is a public dev
 
 Open **Settings** and find **Calendar**. Paste the desktop client id and client secret from [OAuth clients](oauth-clients.md). **Connect** opens the system browser. A timed event on the primary calendar shows in the list. About 10 minutes before it starts, meetrec opens a prompt and adds tray actions: **Start recording**, **Dismiss**, and **Auto-arm**. Auto-arm starts the recording one minute before the event. A recording started from that event stops about two minutes after it ends, unless you press Stop.
 
-Microsoft Calendar is not in the app yet.
+Microsoft Calendar uses the same Settings block, without a client secret. The redirect registration is `http://localhost`. See [OAuth clients](oauth-clients.md).
 
 ## Make a recording
 

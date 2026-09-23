@@ -9,7 +9,7 @@ Desktop meeting recorder. Linux capture plus a local library, transcript, and su
 - Secrets and provider HTTP stay in the main process. The renderer talks through `window.meetrec`.
 - Linux first. Windows capture is implemented (ffmpeg DirectShow, or WASAPI when that demuxer exists). macOS capture is still a stub.
 - Artifacts are local files. Optional Google Drive and OneDrive app-folder upload is in scope and off by default.
-- Google Calendar polling, the pre-meeting prompt, and Google token HTTP stay in the main process. Microsoft Calendar follows.
+- Google and Microsoft calendar polling, the pre-meeting prompt, and their token HTTP stay in the main process.
 - Installers use electron-builder and stay unsigned. They ship a pinned LGPL ffmpeg under `resources/ffmpeg/`. `npm run dev` uses `ffmpeg` on PATH when that file is absent. No auto-update yet. See `docs/packaging.md`.
 
 ## Process boundary

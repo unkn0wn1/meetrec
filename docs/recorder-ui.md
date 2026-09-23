@@ -5,7 +5,7 @@
 - The app opens on **Library** (the list of past recordings).
 - Top-level modes: **Library** and **Record**.
 - A tray icon is available. Opening the app focuses Library.
-- About 10 minutes before a timed Google Calendar event, the tray adds **Start: {title}**, **Auto-arm (T−1 min)**, and **Dismiss**. While one is armed, it shows **Armed: {title}** and **Cancel auto-arm**. While recording, it shows **Stop recording**.
+- About 10 minutes before a timed Google or Microsoft calendar event, the tray adds **Start: {title}**, **Auto-arm (T−1 min)**, and **Dismiss**. While one is armed, it shows **Armed: {title}** and **Cancel auto-arm**. While recording, it shows **Stop recording**.
 - The same Start, Dismiss, and Auto-arm actions appear in a small always-on-top prompt window (`#/calendar-prompt`). Auto-arm’s label says it starts one minute before. That route is not in the mode nav.
 
 ## Library
