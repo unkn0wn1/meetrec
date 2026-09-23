@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import AppShell from '@/components/AppShell.vue'
 import CalendarEventRow from '@/components/CalendarEventRow.vue'
-import ModeNav from '@/components/ModeNav.vue'
 import { Button } from '@/components/ui/button'
 import { useCalendarStore } from '@/stores/calendar'
 import type {
@@ -65,18 +65,13 @@ function openCalendars(): void {
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-6 py-8">
-    <header class="flex items-start justify-between gap-4">
-      <div>
-        <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">meetrec</p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight">Calendar</h1>
-        <p class="mt-1 text-sm text-muted-foreground">
-          Timed events for the next 14 days. Uncheck a meeting to skip the prompt, auto-arm, and
-          tray actions.
-        </p>
-      </div>
-      <ModeNav />
-    </header>
+  <AppShell title="Calendar">
+    <template #subtitle>
+      <p class="mt-1 text-sm text-muted-foreground">
+        Timed events for the next 14 days. Uncheck a meeting to skip the prompt, auto-arm, and tray
+        actions.
+      </p>
+    </template>
 
     <p v-if="calendar.error" class="text-sm text-destructive" role="alert">{{ calendar.error }}</p>
 
@@ -111,5 +106,5 @@ function openCalendars(): void {
         />
       </ul>
     </section>
-  </main>
+  </AppShell>
 </template>

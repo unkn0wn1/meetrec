@@ -4,6 +4,10 @@
 
 - The app opens on **Library** (the list of past recordings).
 - Top-level modes: **Library**, **Record**, **Calendar**, and **Settings**. Calendar stays disabled until Google or Microsoft calendar is connected. The tooltip is "Connect a calendar in Settings".
+- Library, Record, Calendar, Settings, and Recording detail share one centered column, `max-w-3xl` (48rem), with horizontal padding `px-6`, through `AppShell`.
+- Record’s timer and Start / Stop stay in a left-aligned `max-w-md` block under that header. The header still spans the shell.
+- The main window opens at 960×720. Navigation does not resize it. There is no minimum width; below 48rem the column shrinks with the window.
+- The calendar prompt (`#/calendar-prompt`, 420×300) is not in this shell.
 - **Calendar** (`#/calendar`) lists timed events for the next 14 days. Each row shows title, time, provider, and **Record with meetrec** (on by default). Unchecking a repeating event asks for this occurrence or the entire series.
 - A tray icon is available. Opening the app focuses Library.
 - About 10 minutes before a timed event that is still set to record, the tray adds **Start: {title}**, **Auto-arm (T−1 min)**, and **Dismiss**. While one is armed, it shows **Armed: {title}** and **Cancel auto-arm**. While recording, it shows **Stop recording**.
