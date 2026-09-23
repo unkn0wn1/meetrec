@@ -33,7 +33,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Auto-arm starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). A user-facing offset control stays unwired. Inside that last minute, Auto-arm starts immediately.
 - A recording started from that event stops at the event end plus **2 minutes** (`CALENDAR_END_GRACE_MS`). Manual Record with no calendar link keeps today’s stop behavior. User Stop or tray Stop cancels that grace.
 - The always-on-top Stop popup stays deferred. Tray **Stop recording** stops a calendar-started recording while the main window is hidden.
-- Calendar arm is not built yet.
+- Google Calendar connect, the 10-minute prompt, and Auto-arm are in the app. Microsoft Calendar is not yet.
 
 ### 7. Vue version — LOCKED 2026-09-22
 

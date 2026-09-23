@@ -53,6 +53,14 @@ export const useRecordingSessionStore = defineStore('recordingSession', () => {
     }
   }
 
+  if (typeof window !== 'undefined' && window.meetrec) {
+    window.meetrec.recording.onChanged((status) => {
+      applyStatus(status)
+      if (status.phase === 'recording') startTicker()
+      else stopTicker()
+    })
+  }
+
   async function refresh(): Promise<void> {
     const status = await useMeetrec().recording.status()
     applyStatus(status)

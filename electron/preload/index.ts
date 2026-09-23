@@ -1,12 +1,38 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import type { MeetrecApi } from '../shared/ipc-contract'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import type { CalendarStatus } from '../shared/calendar-contract'
+import type { MeetrecApi, RecordingStatus } from '../shared/ipc-contract'
 import { IPC } from '../shared/ipc-contract'
+
+function subscribe<T>(channel: string, listener: (payload: T) => void): () => void {
+  const wrapped = (_event: IpcRendererEvent, payload: T): void => {
+    listener(payload)
+  }
+  ipcRenderer.on(channel, wrapped)
+  return () => {
+    ipcRenderer.removeListener(channel, wrapped)
+  }
+}
 
 const api: MeetrecApi = {
   recording: {
     start: () => ipcRenderer.invoke(IPC.recordingStart),
     stop: () => ipcRenderer.invoke(IPC.recordingStop),
-    status: () => ipcRenderer.invoke(IPC.recordingStatus)
+    status: () => ipcRenderer.invoke(IPC.recordingStatus),
+    onChanged: (listener) => subscribe<RecordingStatus>(IPC.recordingChanged, listener)
+  },
+  calendar: {
+    status: () => ipcRenderer.invoke(IPC.calendarStatus),
+    saveGoogleClient: (input) => ipcRenderer.invoke(IPC.calendarSaveGoogleClient, input),
+    clearGoogleSecret: () => ipcRenderer.invoke(IPC.calendarClearGoogleSecret),
+    saveMicrosoftClient: (input) => ipcRenderer.invoke(IPC.calendarSaveMicrosoftClient, input),
+    connect: (input) => ipcRenderer.invoke(IPC.calendarConnect, input),
+    cancelConnect: () => ipcRenderer.invoke(IPC.calendarCancelConnect),
+    disconnect: (input) => ipcRenderer.invoke(IPC.calendarDisconnect, input),
+    dismiss: (input) => ipcRenderer.invoke(IPC.calendarDismiss, input),
+    arm: (input) => ipcRenderer.invoke(IPC.calendarArm, input),
+    cancelArm: () => ipcRenderer.invoke(IPC.calendarCancelArm),
+    start: (input) => ipcRenderer.invoke(IPC.calendarStart, input),
+    onChanged: (listener) => subscribe<CalendarStatus>(IPC.calendarChanged, listener)
   },
   library: {
     list: () => ipcRenderer.invoke(IPC.libraryList),

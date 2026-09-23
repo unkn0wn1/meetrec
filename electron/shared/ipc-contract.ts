@@ -1,3 +1,12 @@
+import type {
+  CalendarConnectInput,
+  CalendarProviderInput,
+  CalendarStatus,
+  GoogleClientInput,
+  MicrosoftClientInput,
+  OccurrenceInput
+} from './calendar-contract'
+
 export const IPC = {
   recordingStart: 'recording:start',
   recordingStop: 'recording:stop',
@@ -19,7 +28,20 @@ export const IPC = {
   settingsStartXaiOAuth: 'settings:startXaiOAuth',
   settingsPollXaiOAuth: 'settings:pollXaiOAuth',
   settingsSignOutXaiOAuth: 'settings:signOutXaiOAuth',
-  settingsValidate: 'settings:validate'
+  settingsValidate: 'settings:validate',
+  recordingChanged: 'recording:changed',
+  calendarStatus: 'calendar:status',
+  calendarSaveGoogleClient: 'calendar:saveGoogleClient',
+  calendarClearGoogleSecret: 'calendar:clearGoogleSecret',
+  calendarSaveMicrosoftClient: 'calendar:saveMicrosoftClient',
+  calendarConnect: 'calendar:connect',
+  calendarCancelConnect: 'calendar:cancelConnect',
+  calendarDisconnect: 'calendar:disconnect',
+  calendarDismiss: 'calendar:dismiss',
+  calendarArm: 'calendar:arm',
+  calendarCancelArm: 'calendar:cancelArm',
+  calendarStart: 'calendar:start',
+  calendarChanged: 'calendar:changed'
 } as const
 
 export type CaptureMode = 'mix' | 'mic-only'
@@ -171,6 +193,21 @@ export interface MeetrecApi {
     start: () => Promise<RecordingStartResult>
     stop: () => Promise<RecordingStopResult>
     status: () => Promise<RecordingStatus>
+    onChanged: (listener: (status: RecordingStatus) => void) => () => void
+  }
+  calendar: {
+    status: () => Promise<CalendarStatus>
+    saveGoogleClient: (input: GoogleClientInput) => Promise<CalendarStatus>
+    clearGoogleSecret: () => Promise<CalendarStatus>
+    saveMicrosoftClient: (input: MicrosoftClientInput) => Promise<CalendarStatus>
+    connect: (input: CalendarConnectInput) => Promise<CalendarStatus>
+    cancelConnect: () => Promise<CalendarStatus>
+    disconnect: (input: CalendarProviderInput) => Promise<CalendarStatus>
+    dismiss: (input: OccurrenceInput) => Promise<CalendarStatus>
+    arm: (input: OccurrenceInput) => Promise<CalendarStatus>
+    cancelArm: () => Promise<CalendarStatus>
+    start: (input: OccurrenceInput) => Promise<CalendarStatus>
+    onChanged: (listener: (status: CalendarStatus) => void) => () => void
   }
   library: {
     list: () => Promise<LibraryListItem[]>

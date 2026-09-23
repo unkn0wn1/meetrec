@@ -19,7 +19,7 @@
 
 - **Renderer:** UI only. Pinia holds view state and calls `window.meetrec`. Provider HTTP stays in main.
 - **Preload:** `contextBridge` exposes a narrow typed API (`window.meetrec.*`).
-- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP. Main will also own the calendar poll, the prompt window, and cloud upload. That behavior is not in the app yet.
+- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP, Google Calendar poll, and the pre-meeting prompt. Cloud upload is not in the app yet. Microsoft Calendar follows.
 - **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation throws.
 
 ## Domains (keep separate)

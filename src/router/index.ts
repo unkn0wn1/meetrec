@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import CalendarPromptView from '@/views/CalendarPromptView.vue'
 import LibraryView from '@/views/LibraryView.vue'
 import RecorderView from '@/views/RecorderView.vue'
 import RecordingDetailView from '@/views/RecordingDetailView.vue'
@@ -11,6 +12,7 @@ export const router = createRouter({
     { path: '/record', name: 'record', component: RecorderView },
     { path: '/recordings/:id', name: 'recording', component: RecordingDetailView },
     { path: '/settings', name: 'settings', component: SettingsView },
+    { path: '/calendar-prompt', name: 'calendar-prompt', component: CalendarPromptView },
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ]
 })
