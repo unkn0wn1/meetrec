@@ -22,9 +22,6 @@ const api: MeetrecApi = {
   },
   calendar: {
     status: () => ipcRenderer.invoke(IPC.calendarStatus),
-    saveGoogleClient: (input) => ipcRenderer.invoke(IPC.calendarSaveGoogleClient, input),
-    clearGoogleSecret: () => ipcRenderer.invoke(IPC.calendarClearGoogleSecret),
-    saveMicrosoftClient: (input) => ipcRenderer.invoke(IPC.calendarSaveMicrosoftClient, input),
     connect: (input) => ipcRenderer.invoke(IPC.calendarConnect, input),
     cancelConnect: () => ipcRenderer.invoke(IPC.calendarCancelConnect),
     disconnect: (input) => ipcRenderer.invoke(IPC.calendarDisconnect, input),

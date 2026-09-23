@@ -38,13 +38,14 @@ Calendar connect scopes:
 
 Upload is a second consent. It adds `https://www.googleapis.com/auth/drive.file` or `Files.ReadWrite.AppFolder`. It does not request full Drive or `Files.ReadWrite.All`.
 
+Publisher client ids (and the optional Google client secret) come only from build/env: `MEETREC_GOOGLE_CLIENT_ID`, `MEETREC_GOOGLE_CLIENT_SECRET`, `MEETREC_MICROSOFT_CLIENT_ID`. Settings has no paste fields. See [oauth-clients.md](oauth-clients.md).
+
 Where secrets live:
 
-- `userData/secrets.bin` (safeStorage): Google client secret, Google refresh and access tokens, Microsoft refresh and access tokens.
-- `userData/calendar.json` (not a secret): Google and Microsoft client ids, upload toggles.
-- Environment fallbacks, only when nothing is saved: `MEETREC_GOOGLE_CLIENT_ID`, `MEETREC_GOOGLE_CLIENT_SECRET`, `MEETREC_MICROSOFT_CLIENT_ID`. Microsoft has no client secret.
+- `userData/secrets.bin` (safeStorage): Google and Microsoft refresh and access tokens.
+- `userData/calendar.json` (not a secret): upload toggles only.
 
-The renderer never receives tokens or the Google client secret. Status IPC returns the client id, whether a secret is set, the account email, and connect errors. Token responses are redacted before they reach logs or thrown errors (`access_token`, `refresh_token`, `id_token`, `code`, `client_secret`).
+The renderer never receives tokens or the Google client secret. Status IPC returns account email, connect errors, and upload flags. Token responses are redacted before they reach logs or thrown errors (`access_token`, `refresh_token`, `id_token`, `code`, `client_secret`).
 
 While Google’s consent screen is in Testing, refresh tokens expire after about 7 days. This app does not submit that screen for verification.
 

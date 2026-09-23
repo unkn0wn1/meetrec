@@ -46,7 +46,7 @@ One folder per recording (see [recorder-ui.md](recorder-ui.md)), under Electron 
 - `recordings/<id>/transcript.json`
 - `recordings/<id>/summary.md`
 - `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md))
-- `calendar.json` (client ids and upload toggles) and `calendar-state.json` (dismiss, notify, arm, linked stop)
+- `calendar.json` (upload toggles) and `calendar-state.json` (dismiss, notify, arm, linked stop)
 - `meta.json` `calendar` field: provider, occurrence, title, times, and invitee names and emails for a recording started from an event. Optional `uploads` records Drive file ids and OneDrive item ids.
 
 Playback loads audio through the `meetrec://` protocol. The renderer does not read those files itself.

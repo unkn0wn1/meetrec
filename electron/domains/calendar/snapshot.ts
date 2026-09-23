@@ -1,7 +1,12 @@
 import type { CalendarTokenSet } from '../settings/secret-codec'
 import { FETCH_LOOKBEHIND_MS, LOOKAHEAD_MS, SNAPSHOT_MAX_AGE_MS } from './constants'
 import type { CalendarDeps, CalendarMemory } from './deps'
-import { effectiveGoogleClientId, effectiveGoogleSecret, effectiveMicrosoftClientId } from './env'
+import {
+  OAUTH_CLIENT_MISSING,
+  effectiveGoogleClientId,
+  effectiveGoogleSecret,
+  effectiveMicrosoftClientId
+} from './env'
 import { CalendarHttpError, listGoogleEvents } from './google-events'
 import { refreshGoogleTokens } from './google-oauth'
 import { listMicrosoftEvents } from './microsoft-events'
@@ -22,12 +27,12 @@ export async function fetchGoogleSnapshot(
     memory.fetchedAt.google = null
     return
   }
-  const clientId = effectiveGoogleClientId(memory.prefs)
+  const clientId = effectiveGoogleClientId()
   if (!clientId) {
-    memory.errors.google = 'Add a Google client id first.'
+    memory.errors.google = OAUTH_CLIENT_MISSING
     return
   }
-  const secret = effectiveGoogleSecret(bag.googleClientSecret)
+  const secret = effectiveGoogleSecret()
   try {
     let current = tokens
     if (needsRefresh(current, now)) {
@@ -136,9 +141,9 @@ export async function fetchMicrosoftSnapshot(
     memory.fetchedAt.microsoft = null
     return
   }
-  const clientId = effectiveMicrosoftClientId(memory.prefs)
+  const clientId = effectiveMicrosoftClientId()
   if (!clientId) {
-    memory.errors.microsoft = 'Add a Microsoft client id first.'
+    memory.errors.microsoft = OAUTH_CLIENT_MISSING
     return
   }
   try {

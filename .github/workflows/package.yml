@@ -25,9 +25,16 @@ jobs:
         run: npm run dist:linux
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
+          MEETREC_GOOGLE_CLIENT_ID: ${{ secrets.MEETREC_GOOGLE_CLIENT_ID }}
+          MEETREC_GOOGLE_CLIENT_SECRET: ${{ secrets.MEETREC_GOOGLE_CLIENT_SECRET }}
+          MEETREC_MICROSOFT_CLIENT_ID: ${{ secrets.MEETREC_MICROSOFT_CLIENT_ID }}
       - name: Windows installer
         if: runner.os == 'Windows'
         run: npm run dist:win
+        env:
+          MEETREC_GOOGLE_CLIENT_ID: ${{ secrets.MEETREC_GOOGLE_CLIENT_ID }}
+          MEETREC_GOOGLE_CLIENT_SECRET: ${{ secrets.MEETREC_GOOGLE_CLIENT_SECRET }}
+          MEETREC_MICROSOFT_CLIENT_ID: ${{ secrets.MEETREC_MICROSOFT_CLIENT_ID }}
       - uses: actions/upload-artifact@v4
         with:
           name: meetrec-${{ runner.os }}

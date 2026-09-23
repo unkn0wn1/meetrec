@@ -2,8 +2,6 @@ import type {
   CalendarConnectInput,
   CalendarProviderInput,
   CalendarStatus,
-  GoogleClientInput,
-  MicrosoftClientInput,
   OccurrenceInput
 } from './calendar-contract'
 import type { CloudSetUploadInput, CloudUploadInput, CloudUploadResult } from './cloud-contract'
@@ -32,9 +30,6 @@ export const IPC = {
   settingsValidate: 'settings:validate',
   recordingChanged: 'recording:changed',
   calendarStatus: 'calendar:status',
-  calendarSaveGoogleClient: 'calendar:saveGoogleClient',
-  calendarClearGoogleSecret: 'calendar:clearGoogleSecret',
-  calendarSaveMicrosoftClient: 'calendar:saveMicrosoftClient',
   calendarConnect: 'calendar:connect',
   calendarCancelConnect: 'calendar:cancelConnect',
   calendarDisconnect: 'calendar:disconnect',
@@ -200,9 +195,6 @@ export interface MeetrecApi {
   }
   calendar: {
     status: () => Promise<CalendarStatus>
-    saveGoogleClient: (input: GoogleClientInput) => Promise<CalendarStatus>
-    clearGoogleSecret: () => Promise<CalendarStatus>
-    saveMicrosoftClient: (input: MicrosoftClientInput) => Promise<CalendarStatus>
     connect: (input: CalendarConnectInput) => Promise<CalendarStatus>
     cancelConnect: () => Promise<CalendarStatus>
     disconnect: (input: CalendarProviderInput) => Promise<CalendarStatus>

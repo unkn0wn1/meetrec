@@ -14,7 +14,7 @@ Manual Record, a local folder, Library, Transcribe, and Generate summary. Settin
 
 ## Happy path
 
-1. Google Calendar or Microsoft Calendar OAuth → upcoming timed events on the primary calendar.
+1. Google Calendar or Microsoft Calendar Connect (publisher-bundled OAuth) → upcoming timed events on the primary calendar.
 2. App lives in the **system tray**. Hiding the window does not stop calendar polling.
 3. **~10 minutes before** a timed event: notification and prompt with **Start recording**, **Dismiss**, or **Auto-arm**. The soonest event owns the prompt.
 4. If Auto-arm was chosen, recording starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). Inside that last minute it starts immediately.

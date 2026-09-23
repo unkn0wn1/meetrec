@@ -1,6 +1,4 @@
 export interface CalendarAccountStatus {
-  clientId: string | null
-  secretSet: boolean
   connected: boolean
   accountEmail: string | null
   uploadEnabled: boolean
@@ -39,15 +37,6 @@ export interface CalendarStatus {
   upcoming: CalendarEventView[]
   prompt: CalendarPrompt | null
   arm: CalendarArmView | null
-}
-
-export interface GoogleClientInput {
-  clientId: string
-  clientSecret?: string
-}
-
-export interface MicrosoftClientInput {
-  clientId: string
 }
 
 export interface CalendarConnectInput {

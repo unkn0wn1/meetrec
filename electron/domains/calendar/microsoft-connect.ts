@@ -1,6 +1,6 @@
 import { MICROSOFT_APPFOLDER_SCOPE, MICROSOFT_CALENDAR_SCOPE, OAUTH_TIMEOUT_MS } from './constants'
 import type { CalendarCore } from './deps'
-import { effectiveMicrosoftClientId } from './env'
+import { OAUTH_CLIENT_MISSING, effectiveMicrosoftClientId } from './env'
 import { openLoopback } from './loopback'
 import { exchangeMicrosoftCode, fetchMicrosoftEmail } from './microsoft-oauth'
 import { authorizeUrl } from './oauth-request'
@@ -11,10 +11,10 @@ export async function runMicrosoftConnect(
   generation: number,
   purpose: 'calendar' | 'drive' = 'calendar'
 ): Promise<void> {
-  const clientId = effectiveMicrosoftClientId(core.memory.prefs)
+  const clientId = effectiveMicrosoftClientId()
   if (generation !== core.memory.connectGeneration) return
   try {
-    if (!clientId) throw new Error('Add a Microsoft client id first.')
+    if (!clientId) throw new Error(OAUTH_CLIENT_MISSING)
     const verifier = codeVerifier()
     const state = oauthState()
     const session = await openLoopback({

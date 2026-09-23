@@ -35,11 +35,11 @@ Save the key, or finish sign-in, and wait until that card shows Live. Transcribe
 
 The xAI sign-in client id `b1a00492-073a-47ea-816f-4c329264a828` is a public device-code client id. It has no client secret. Optional environment fallbacks are listed in [`.env.example`](../.env.example). Prefer Settings.
 
-## Connect Google Calendar
+## Connect a calendar
 
-Open **Settings** and find **Calendar**. Paste the desktop client id and client secret from [OAuth clients](oauth-clients.md). **Connect** opens the system browser. A timed event on the primary calendar shows in the list. About 10 minutes before it starts, meetrec opens a prompt and adds tray actions: **Start recording**, **Dismiss**, and **Auto-arm**. Auto-arm starts the recording one minute before the event. A recording started from that event stops about two minutes after it ends, unless you press Stop.
+Open **Settings** → **Calendar** and press **Connect** for Google or Microsoft. The system browser opens. A timed event on the primary calendar shows in the list. About 10 minutes before it starts, meetrec opens a prompt and adds tray actions: **Start recording**, **Dismiss**, and **Auto-arm**. Auto-arm starts the recording one minute before the event. A recording started from that event stops about two minutes after it ends, unless you press Stop.
 
-Microsoft Calendar uses the same Settings block, without a client secret. The redirect registration is `http://localhost`. See [OAuth clients](oauth-clients.md).
+Publisher OAuth client setup (not an end-user step) is in [oauth-clients.md](oauth-clients.md).
 
 ## Make a recording
 

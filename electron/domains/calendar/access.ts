@@ -1,6 +1,11 @@
 import type { CalendarTokenSet } from '../settings/secret-codec'
 import type { CalendarDeps, CalendarMemory } from './deps'
-import { effectiveGoogleClientId, effectiveGoogleSecret, effectiveMicrosoftClientId } from './env'
+import {
+  OAUTH_CLIENT_MISSING,
+  effectiveGoogleClientId,
+  effectiveGoogleSecret,
+  effectiveMicrosoftClientId
+} from './env'
 import { refreshGoogleTokens } from './google-oauth'
 import { refreshMicrosoftTokens } from './microsoft-oauth'
 import { needsRefresh } from './tokens'
@@ -14,18 +19,11 @@ export async function loadAccess(
   const bag = await deps.secrets.readBag()
   const current = provider === 'google' ? bag.googleOAuth : bag.microsoftOAuth
   if (!current?.refreshToken) throw new Error('Connect again')
-  const clientId =
-    provider === 'google'
-      ? effectiveGoogleClientId(memory.prefs)
-      : effectiveMicrosoftClientId(memory.prefs)
-  if (!clientId) {
-    throw new Error(
-      provider === 'google' ? 'Add a Google client id first.' : 'Add a Microsoft client id first.'
-    )
-  }
+  const clientId = provider === 'google' ? effectiveGoogleClientId() : effectiveMicrosoftClientId()
+  if (!clientId) throw new Error(OAUTH_CLIENT_MISSING)
   if (!force && !needsRefresh(current, deps.now())) return current.accessToken
   try {
-    const refreshed = await refresh(deps, provider, current, clientId, bag.googleClientSecret)
+    const refreshed = await refresh(deps, provider, current, clientId)
     await deps.secrets.update((draft) => {
       if (provider === 'google') {
         if (draft.googleOAuth) draft.googleOAuth = refreshed
@@ -54,14 +52,13 @@ async function refresh(
   deps: CalendarDeps,
   provider: 'google' | 'microsoft',
   tokens: CalendarTokenSet,
-  clientId: string,
-  googleSecret: string | null
+  clientId: string
 ): Promise<CalendarTokenSet> {
   if (provider === 'google') {
     return refreshGoogleTokens({
       tokens,
       clientId,
-      clientSecret: effectiveGoogleSecret(googleSecret),
+      clientSecret: effectiveGoogleSecret(),
       fetchImpl: deps.fetchImpl,
       now: deps.now()
     })
