@@ -1,5 +1,5 @@
 import { resolveXaiApiKey, xaiKeyStatus, type XaiKeySource } from '../settings/key-status'
-import { DEFAULT_PROVIDER, type ProviderId } from './ids'
+import type { ProviderId } from './ids'
 
 export interface StoredSecretsView {
   xaiApiKey: string | null
@@ -7,17 +7,18 @@ export interface StoredSecretsView {
   xaiOAuth: boolean
 }
 
-export interface ProviderAuthStatus {
-  provider: ProviderId
-  configured: boolean
-  xaiKeySource: XaiKeySource
-  openaiKeySource: 'settings' | 'env' | 'none'
-  oauthPending: boolean
-}
-
-export interface ActiveAuth {
+export interface ProviderToken {
   provider: ProviderId
   token: string
+}
+
+export interface ActiveAuth extends ProviderToken {
+  model: string
+}
+
+export interface ProviderKeySources {
+  xaiKeySource: XaiKeySource
+  openaiKeySource: 'settings' | 'env' | 'none'
 }
 
 const MISSING: Record<ProviderId, string> = {
@@ -30,8 +31,8 @@ export function providerGateHint(provider: ProviderId): string {
   return MISSING[provider]
 }
 
-export function canUseProvider(configured: boolean, validated: boolean): boolean {
-  return configured && validated
+export function canUseRole(configured: boolean, liveOk: boolean): boolean {
+  return configured && liveOk
 }
 
 export function resolveOpenAiApiKey(
@@ -41,29 +42,31 @@ export function resolveOpenAiApiKey(
   return resolveXaiApiKey(saved, envValue)
 }
 
-export function providerAuthStatus(input: {
-  provider: ProviderId
-  secrets: StoredSecretsView
+export function providerKeySources(
+  secrets: StoredSecretsView,
   env?: NodeJS.ProcessEnv
-  oauthPending?: boolean
-}): ProviderAuthStatus {
-  const env = input.env ?? {}
-  const xai = xaiKeyStatus(input.secrets.xaiApiKey, env.XAI_API_KEY)
-  const openaiSaved = input.secrets.openaiApiKey?.trim() ?? ''
-  const openaiEnv = env.OPENAI_API_KEY?.trim() ?? ''
-  const openaiKeySource = openaiSaved ? 'settings' : openaiEnv ? 'env' : 'none'
+): ProviderKeySources {
+  const envVars = env ?? {}
+  const xai = xaiKeyStatus(secrets.xaiApiKey, envVars.XAI_API_KEY)
+  const openaiSaved = secrets.openaiApiKey?.trim() ?? ''
+  const openaiEnv = envVars.OPENAI_API_KEY?.trim() ?? ''
   return {
-    provider: input.provider,
-    configured: isConfigured(
-      input.provider,
-      xai.hasXaiKey,
-      openaiKeySource !== 'none',
-      input.secrets.xaiOAuth
-    ),
     xaiKeySource: xai.xaiKeySource,
-    openaiKeySource,
-    oauthPending: input.provider === 'xai-oauth' && Boolean(input.oauthPending)
+    openaiKeySource: openaiSaved ? 'settings' : openaiEnv ? 'env' : 'none'
   }
+}
+
+export function isProviderConfigured(
+  provider: ProviderId,
+  secrets: StoredSecretsView,
+  env?: NodeJS.ProcessEnv
+): boolean {
+  const envVars = env ?? {}
+  if (provider === 'xai-oauth') return secrets.xaiOAuth
+  if (provider === 'openai') {
+    return Boolean(resolveOpenAiApiKey(secrets.openaiApiKey, envVars.OPENAI_API_KEY))
+  }
+  return Boolean(resolveXaiApiKey(secrets.xaiApiKey, envVars.XAI_API_KEY))
 }
 
 export function resolveActiveAuth(input: {
@@ -71,7 +74,7 @@ export function resolveActiveAuth(input: {
   secrets: StoredSecretsView
   env?: NodeJS.ProcessEnv
   oauthAccessToken?: string | null
-}): ActiveAuth | null {
+}): ProviderToken | null {
   const env = input.env ?? {}
   if (input.provider === 'xai-oauth') {
     const token = input.oauthAccessToken?.trim() ?? ''
@@ -85,19 +88,6 @@ export function resolveActiveAuth(input: {
   return token ? { provider: 'xai-key', token } : null
 }
 
-function isConfigured(
-  provider: ProviderId,
-  hasXaiKey: boolean,
-  hasOpenAiKey: boolean,
-  hasOAuth: boolean
-): boolean {
-  if (provider === 'xai-oauth') return hasOAuth
-  if (provider === 'openai') return hasOpenAiKey
-  return hasXaiKey
-}
-
 export function emptySecrets(): StoredSecretsView {
   return { xaiApiKey: null, openaiApiKey: null, xaiOAuth: false }
 }
-
-export { DEFAULT_PROVIDER }

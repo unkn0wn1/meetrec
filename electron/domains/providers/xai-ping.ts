@@ -34,7 +34,7 @@ export async function validateXaiApiKey(input: {
   }
 }
 
-function acceptedWithoutFile(status: number, body: string): boolean {
+export function acceptedWithoutFile(status: number, body: string): boolean {
   if (status !== 400) return false
   const text = body.toLowerCase()
   return text.includes('file') || text.includes('audio') || text.includes('multipart')

@@ -17,7 +17,10 @@ const api: MeetrecApi = {
   },
   settings: {
     get: () => ipcRenderer.invoke(IPC.settingsGet),
-    setProvider: (provider) => ipcRenderer.invoke(IPC.settingsSetProvider, provider),
+    setVoiceDefault: (provider) => ipcRenderer.invoke(IPC.settingsSetVoiceDefault, provider),
+    setAiDefault: (provider) => ipcRenderer.invoke(IPC.settingsSetAiDefault, provider),
+    setModel: (input) => ipcRenderer.invoke(IPC.settingsSetModel, input),
+    testProvider: (provider) => ipcRenderer.invoke(IPC.settingsTestProvider, provider),
     setXaiKey: (key) => ipcRenderer.invoke(IPC.settingsSetXaiKey, key),
     clearXaiKey: () => ipcRenderer.invoke(IPC.settingsClearXaiKey),
     setOpenAiKey: (key) => ipcRenderer.invoke(IPC.settingsSetOpenAiKey, key),

@@ -71,8 +71,8 @@ const panes = [
             :transcript="library.detail.transcript"
             :speakers="library.detail.meta.speakers"
             :busy="library.busy"
-            :can-use-provider="settings.canUseProvider"
-            :gate-hint="settings.gateHint"
+            :can-transcribe="settings.canTranscribe"
+            :voice-gate="settings.voiceGate"
             @transcribe="library.transcribe(id)"
           />
           <SummaryPanel
@@ -80,8 +80,8 @@ const panes = [
             :summary="library.detail.summary"
             :has-transcript="library.detail.hasTranscript"
             :busy="library.busy"
-            :can-use-provider="settings.canUseProvider"
-            :gate-hint="settings.gateHint"
+            :can-summarize="settings.canSummarize"
+            :ai-gate="settings.aiGate"
             @summarize="library.summarize(id)"
           />
         </section>

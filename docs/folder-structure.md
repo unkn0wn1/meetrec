@@ -19,7 +19,7 @@ meetrec/
       transcript/       # STT document + diarization segments
       minutes/          # summary markdown
       providers/        # xAI + OpenAI STT/chat, OAuth helpers (main only)
-      settings/         # provider choice, secret bag, device-code session
+      settings/         # Voice and AI defaults, secret bag, device-code session
   src/                  # renderer (Vue) — electron-vite renderer root
     main.ts
     App.vue

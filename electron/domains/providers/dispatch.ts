@@ -15,14 +15,19 @@ export async function transcribeWithAuth(input: {
     return transcribeWavOpenAi({
       apiKey: input.auth.token,
       audioPath: input.audioPath,
+      model: input.auth.model,
       fetchImpl: input.fetchImpl
     })
   }
-  return transcribeWav({
-    apiKey: input.auth.token,
-    audioPath: input.audioPath,
-    fetchImpl: input.fetchImpl
-  })
+  if (input.auth.provider === 'xai-oauth' || input.auth.provider === 'xai-key') {
+    return transcribeWav({
+      apiKey: input.auth.token,
+      audioPath: input.audioPath,
+      model: input.auth.model,
+      fetchImpl: input.fetchImpl
+    })
+  }
+  throw new Error('This provider is not available.')
 }
 
 export async function summarizeWithAuth(input: {
@@ -34,12 +39,17 @@ export async function summarizeWithAuth(input: {
     return completeMinutesOpenAi({
       apiKey: input.auth.token,
       prompt: input.prompt,
+      model: input.auth.model,
       fetchImpl: input.fetchImpl
     })
   }
-  return completeMinutes({
-    apiKey: input.auth.token,
-    prompt: input.prompt,
-    fetchImpl: input.fetchImpl
-  })
+  if (input.auth.provider === 'xai-oauth' || input.auth.provider === 'xai-key') {
+    return completeMinutes({
+      apiKey: input.auth.token,
+      prompt: input.prompt,
+      model: input.auth.model,
+      fetchImpl: input.fetchImpl
+    })
+  }
+  throw new Error('This provider is not available.')
 }

@@ -1,19 +1,19 @@
 import { readFile } from 'node:fs/promises'
 import { basename } from 'node:path'
 import { documentFromStt, type TranscriptDocument } from '../transcript/parse'
-import { XAI_STT_MODEL, XAI_STT_URL } from './models'
+import { XAI_STT_URL } from './models'
 
-export const STT_MODEL = XAI_STT_MODEL
 export const STT_URL = XAI_STT_URL
 
 export async function transcribeWav(input: {
   apiKey: string
   audioPath: string
+  model: string
   fetchImpl?: typeof fetch
 }): Promise<TranscriptDocument> {
   const bytes = await readFile(input.audioPath)
   const form = new FormData()
-  form.append('model', STT_MODEL)
+  form.append('model', input.model)
   form.append('diarize', 'true')
   form.append('language', 'en')
   form.append('format', 'true')
@@ -35,7 +35,7 @@ export async function transcribeWav(input: {
   } catch {
     throw new Error('Speech-to-text returned a response that was not JSON.')
   }
-  return documentFromStt(payload, STT_MODEL, new Date().toISOString())
+  return documentFromStt(payload, input.model, new Date().toISOString())
 }
 
 export function sttErrorMessage(status: number, body: string): string {

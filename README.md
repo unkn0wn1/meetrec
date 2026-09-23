@@ -8,20 +8,20 @@ It records what you already hear and say. It does not join the call. **0.1.0 is 
 
 - Mix the default microphone and system audio into one playable WAV.
 - Library of past recordings, with playback, a transcript, and a summary.
-- One active provider in Settings: xAI sign-in, an xAI API key, or an OpenAI API key.
+- Voice and AI defaults in Settings: xAI sign-in, an xAI API key, or an OpenAI API key. Transcribe and summary can use different providers.
 - Speaker labels you can rename. Summary markdown is saved next to the audio.
 - Unsigned Linux AppImage and Windows installers (NSIS and portable).
 
 ## Status
 
-| Area                                      | Today                                                                                             |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Linux capture                             | Daily path. ffmpeg and Pulse (PipeWire).                                                          |
-| Windows capture                           | Experimental. ffmpeg DirectShow, or WASAPI when that demuxer exists. Verify on a Windows machine. |
-| macOS capture                             | Stub. Starting a recording throws.                                                                |
-| Transcript and summary                    | Available once Settings has a working provider and the machine can reach that API.                |
-| Calendar, silence auto-stop, cloud upload | Not built.                                                                                        |
-| Signing and auto-update                   | Not set up. Installers are unsigned. Linux and Windows builds include ffmpeg.                     |
+| Area                                      | Today                                                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Linux capture                             | Daily path. ffmpeg and Pulse (PipeWire).                                                                    |
+| Windows capture                           | Experimental. ffmpeg DirectShow, or WASAPI when that demuxer exists. Verify on a Windows machine.           |
+| macOS capture                             | Stub. Starting a recording throws.                                                                          |
+| Transcript and summary                    | Available once the Voice default and the AI default pass a Live check and the machine can reach those APIs. |
+| Calendar, silence auto-stop, cloud upload | Not built.                                                                                                  |
+| Signing and auto-update                   | Not set up. Installers are unsigned. Linux and Windows builds include ffmpeg.                               |
 
 ## Requirements
 
@@ -66,11 +66,13 @@ Repeat the `chown` and `chmod` after Electron is reinstalled.
 
 ## Settings and providers
 
-Open **Settings** and pick one provider. Exactly one choice is active. Transcribe and Generate summary stay off until that choice is saved and a light check succeeds.
+Open **Settings**. Each provider is its own card. Choose **Default for Voice** and **Default for AI** (they can be the same card). Transcribe stays off until the Voice default passes its Live check. Generate summary stays off until the AI default does.
 
 1. **xAI sign-in** — device code in the browser. The client id `b1a00492-073a-47ea-816f-4c329264a828` is a public device-code client id and has no client secret. Sign out clears the stored tokens.
-2. **xAI API key** — password field, then Save or Clear. When this choice is active and Settings has no saved key, the main process can read `XAI_API_KEY` from the environment.
+2. **xAI API key** — password field, then Save or Clear. When Settings has no saved xAI key, the main process can read `XAI_API_KEY` from the environment.
 3. **OpenAI** — API key, then Save or Clear. `OPENAI_API_KEY` is the same kind of fallback. Speech uses `gpt-4o-transcribe-diarize`. Summaries use `gpt-4.1-mini`.
+
+Saving a key does not move the Voice or AI default. The radios do. **Test** on a card checks Voice and AI separately.
 
 Use the Settings screen. Optional placeholders are in [`.env.example`](.env.example). Keys and tokens stay in the main process. Electron `safeStorage` encrypts them when the OS allows it. The window never receives them.
 

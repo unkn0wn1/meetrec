@@ -1,8 +1,10 @@
 # Providers
 
-## Auth choice (OR — exactly one active)
+## Voice and AI defaults
 
-Settings picks **one** active provider. The choice is stored in `userData/settings.json` (`provider`). Main does not fall across providers.
+Settings stores **one Voice default** and **one AI default**. They can be the same provider or two different ones. The choice lives in `userData/settings.json` (`voiceProviderId`, `aiProviderId`, and a `models` map). Main does not fall across providers. Transcribe uses the Voice default and its speech model. Generate summary uses the AI default and its chat model.
+
+An older file that only has `provider` is rewritten the first time Settings loads. Both defaults become that id. A missing or unknown id becomes `xai-key`. A model id outside the allowlist is replaced with that provider’s default for the role.
 
 | Id          | Auth                                                        | STT                  | Summary     |
 | ----------- | ----------------------------------------------------------- | -------------------- | ----------- |
@@ -10,9 +12,11 @@ Settings picks **one** active provider. The choice is stored in `userData/settin
 | `xai-key`   | API key (Settings or env `XAI_API_KEY`)                     | xAI `/v1/stt`        | Grok chat   |
 | `openai`    | API key (Settings or env `OPENAI_API_KEY`)                  | OpenAI transcription | OpenAI chat |
 
-Anthropic is **out** (no dedicated STT).
+OpenRouter and Anthropic are not registered. A later provider is a new id, a registry row (roles, models, credential form), a token resolver, and a family adapter.
 
 ## Models
+
+Each card stores its own Voice model and AI model. The picker allowlist is the default already used for that family:
 
 | Provider | STT                                                                                           | Summary                         |
 | -------- | --------------------------------------------------------------------------------------------- | ------------------------------- |
@@ -20,6 +24,8 @@ Anthropic is **out** (no dedicated STT).
 | OpenAI   | `gpt-4o-transcribe-diarize` with `response_format=diarized_json` and `chunking_strategy=auto` | `gpt-4.1-mini` chat completions |
 
 `gpt-4.1-mini` is the stable smaller chat alias (snapshot `gpt-4.1-mini-2025-04-14`). OpenAI STT uses the diarized model so speaker labels stay Speaker 1, Speaker 2, and so on.
+
+A fresh install defaults both roles to `xai-key` with the xAI models above.
 
 ## xAI OAuth
 
@@ -33,12 +39,14 @@ Public device-code client (Hermes / Grok Build family). No client secret.
 - Device grant: `urn:ietf:params:oauth:grant-type:device_code`
 - API base: `https://api.x.ai/v1`
 
-Main stores refresh and access tokens in `userData/secrets.bin` via Electron `safeStorage`. Access tokens refresh 60 seconds before expiry, before STT or chat. IPC returns the user code and verification URL only while a sign-in is in progress. It never returns tokens or API keys.
+Main stores refresh and access tokens in `userData/secrets.bin` via Electron `safeStorage`. Access tokens refresh 60 seconds before expiry, before a Live check, a Test probe, STT, or chat. IPC returns the user code and verification URL only while a sign-in is in progress. It never returns tokens or API keys.
 
 ## Behaviour
 
-- Switching provider clears “validated”. If the new choice already has credentials, main runs the light check immediately. Otherwise Transcribe and Summary stay greyed until save or sign-in.
-- Transcribe / Summary stay greyed until the **active** provider has working credentials.
-- Secrets and OAuth tokens live in Electron main only. Renderer holds a key only while the password field is being typed.
-- A saved key wins over the matching environment variable. The environment is used only for the active provider.
-- `settings:get` returns `{ provider, configured, validated, message, xaiKeySource, openaiKeySource, oauthPending, oauthUserCode, verificationUrl, oauthExpiresAt, oauthIntervalSec }`.
+- Each card shows **Live** (a green dot and a short message) after its credential check succeeds. xAI posts to `/v1/stt` with no file. OpenAI reads `/v1/models`. Live stays in memory and is not written to `settings.json`.
+- **Test** runs a Voice probe and an AI probe for that card. Live is hidden while they run. Voice posts the speech endpoint with the selected model and no audio file. AI sends a one-token chat completion. The row then shows passed, failed, or not available. A Voice probe can pass on “file required” before the host checks the model id. The allowlist is what keeps the id valid; the probe checks credentials and that the endpoint is reachable.
+- Saving a key or finishing sign-in does not change either default. **Default for Voice** and **Default for AI** are the only controls that do. Exactly one provider is selected for each role.
+- Transcribe stays off until the Voice default is configured and Live. Generate summary stays off until the AI default is configured and Live. Pressing Test is not required before those actions.
+- Secrets and OAuth tokens live in Electron main only. The renderer holds a key only while the password field is being typed.
+- A saved key wins over the matching environment variable. The environment applies whenever that provider has no saved key, even if it is not a default. A job still resolves a token only for the provider selected for that role.
+- `settings:get` returns `{ voiceProviderId, aiProviderId, cards, canTranscribe, canSummarize, voiceGate, aiGate, xaiKeySource, openaiKeySource, oauthPending, oauthUserCode, verificationUrl, oauthExpiresAt, oauthIntervalSec }`. Each card includes its label, credential form, model choices, Live state, and the last Voice and AI probe. Cards do not include keys or tokens.

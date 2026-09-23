@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { isSafeRecordingId } from '../../capture/paths'
 import { minutesPrompt, topicFromMarkdown } from '../minutes/markdown'
 import { saveSummary } from '../minutes/job'
+import type { ProviderRole } from '../../shared/ipc-contract'
 import type { ActiveAuth } from '../providers/auth'
 import { providerGateHint } from '../providers/auth'
 import { summarizeWithAuth, transcribeWithAuth } from '../providers/dispatch'
@@ -39,7 +40,7 @@ export interface LibraryDetail {
 export class LibraryService {
   constructor(
     private readonly recordingsDir: () => string,
-    private readonly readAuth: () => Promise<ActiveAuth> = async () => {
+    private readonly readAuth: (role: ProviderRole) => Promise<ActiveAuth> = async () => {
       throw new Error(providerGateHint('xai-key'))
     }
   ) {}
@@ -75,7 +76,7 @@ export class LibraryService {
 
   async transcribe(id: string): Promise<LibraryDetail> {
     const stored = await this.require(id)
-    const auth = await this.readAuth()
+    const auth = await this.readAuth('voice')
     const layout = recordingLayout(this.recordingsDir(), id)
     const document = await transcribeWithAuth({ auth, audioPath: layout.audioPath })
     await saveTranscript({
@@ -91,7 +92,7 @@ export class LibraryService {
     if (!stored.flags.hasTranscript) {
       throw new Error('Transcribe this recording before generating a summary.')
     }
-    const auth = await this.readAuth()
+    const auth = await this.readAuth('ai')
     const layout = recordingLayout(this.recordingsDir(), id)
     const transcript = await readTranscript(layout.transcriptPath)
     if (!transcript?.text.trim()) {

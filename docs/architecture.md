@@ -31,7 +31,7 @@
 | `transcript` | STT document, diarization labels, speaker rename                     |
 | `minutes`    | Summary prompt and `summary.md`                                      |
 | `providers`  | xAI and OpenAI speech and chat (no UI widgets)                       |
-| `settings`   | Active provider, secret bag, device-code session                     |
+| `settings`   | Voice default, AI default, secret bag, device-code session           |
 | `calendar`   | Planned: Google OAuth, upcoming events, arm and disarm. Not in tree. |
 
 One domain, one folder. Cross-domain calls go through small facades or IPC handlers.

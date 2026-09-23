@@ -7,8 +7,8 @@ defineProps<{
   transcript: TranscriptView | null
   speakers: RecordingMetaView['speakers']
   busy: boolean
-  canUseProvider: boolean
-  gateHint: string | null
+  canTranscribe: boolean
+  voiceGate: string | null
 }>()
 
 const emit = defineEmits<{
@@ -32,13 +32,15 @@ function speakerName(
         No transcript yet. Diarization labels speakers as Speaker 1, Speaker 2, and so on.
       </p>
       <Button
-        :disabled="busy || !canUseProvider"
-        :title="canUseProvider ? undefined : (gateHint ?? undefined)"
+        :disabled="busy || !canTranscribe"
+        :title="canTranscribe ? undefined : (voiceGate ?? undefined)"
         @click="emit('transcribe')"
       >
         {{ busy ? 'Transcribing…' : 'Transcribe' }}
       </Button>
-      <p v-if="!canUseProvider && gateHint" class="text-xs text-muted-foreground">{{ gateHint }}</p>
+      <p v-if="!canTranscribe && voiceGate" class="text-xs text-muted-foreground">
+        {{ voiceGate }}
+      </p>
     </div>
     <div v-else class="flex flex-col gap-4">
       <p class="text-sm leading-6">{{ transcript.text }}</p>
