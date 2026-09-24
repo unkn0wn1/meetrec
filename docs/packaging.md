@@ -57,10 +57,16 @@ A bare `npm run fetch:ffmpeg` downloads the host platform (`linux` or `win`).
 
 ## Icons
 
-No app icon is checked in. electron-builder uses the default Electron icon. Replace it later with:
+App icons are checked in under `build/`, derived from the marketing favicon mark (`meetrec-web/public/favicon.svg`).
 
-- `build/icon.png` — Linux, at least 512×512
-- `build/icon.ico` — Windows
+| File                                     | Use                                                               |
+| ---------------------------------------- | ----------------------------------------------------------------- |
+| `build/icon.png`                         | Linux packaging and window chrome (≥512×512; currently 1024×1024) |
+| `build/icon.ico`                         | Windows packaging (multi-size 16–256)                             |
+| `build/tray-icon.png`                    | Tray (32×32 filled mark; resized to 16×16 at runtime)             |
+| `build/icon.svg` / `build/tray-icon.svg` | Sources for regenerating the rasters                              |
+
+electron-builder picks up `build/icon.png` / `build/icon.ico` from the default `build/` resources directory. Runtime tray and `BrowserWindow` icons load from `resources/icons/` in packaged builds (`extraResources`) and from `build/` in `npm run dev`.
 
 ## Windows signing
 
@@ -109,4 +115,4 @@ For a prerelease, use a hyphenated tag that matches `package.json` (e.g. `v0.1.0
 
 ## Local installer smoke
 
-`APPIMAGE_EXTRACT_AND_RUN=1 npm run dist:linux` is the Linux smoke when FUSE is missing. The builder uses the default Electron icon until `build/icon.png` exists. Run `dist:win` on Windows (or `windows-latest`).
+`APPIMAGE_EXTRACT_AND_RUN=1 npm run dist:linux` is the Linux smoke when FUSE is missing. Installers and the tray use `build/icon.*` / `build/tray-icon.png`. Run `dist:win` on Windows (or `windows-latest`).

@@ -15,6 +15,11 @@ extraResources:
       - LICENSE*
       - COPYING*
       - SOURCE.txt
+  - from: build
+    to: icons
+    filter:
+      - icon.png
+      - tray-icon.png
 linux:
   target:
     - AppImage
