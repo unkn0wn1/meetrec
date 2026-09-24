@@ -24,6 +24,11 @@ export interface RecordingCalendarLink {
   attendees: { name: string; email: string | null }[]
 }
 
+export interface CalendarSummary {
+  title: string
+  attendees: { name: string; email: string | null }[]
+}
+
 export interface RecordingMeta {
   id: string
   startedAt: string
@@ -84,6 +89,18 @@ export function uploadFlags(uploads: RecordingUploads | undefined): {
 
 function hasUploadId(files: UploadFileIds | undefined): boolean {
   return Boolean(files?.audio || files?.transcript || files?.summary)
+}
+
+/** Slim calendar payload for the renderer. Omits provider ids and event times. */
+export function calendarSummary(calendar: RecordingCalendarLink | null): CalendarSummary | null {
+  if (!calendar) return null
+  return {
+    title: calendar.title,
+    attendees: calendar.attendees.map((attendee) => ({
+      name: attendee.name,
+      email: attendee.email
+    }))
+  }
 }
 
 export function displayTitle(meta: Pick<RecordingMeta, 'id' | 'title' | 'startedAt'>): string {

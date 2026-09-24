@@ -29,7 +29,7 @@
 
 - Title and started-at
 - Duration (from the file or `meta.json`)
-- Speakers: count plus editable names (empty until diarization or you type them)
+- Speakers: count plus editable names (empty until diarization or you type them). A calendar-linked meeting also lists its invitees; choosing one fills that speaker’s name, and Save writes it.
 - Topic: filled after the summary; placeholder before
 
 **Delete:**

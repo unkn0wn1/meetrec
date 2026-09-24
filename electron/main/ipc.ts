@@ -1,5 +1,6 @@
 import { ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { parseLibraryDeleteOptions } from '../domains/recording/delete-options'
+import { calendarSummary, type RecordingCalendarLink } from '../domains/recording/meta'
 import type { LibraryService } from '../domains/recording/library'
 import type { SettingsService } from '../domains/settings/settings-service'
 import {
@@ -190,6 +191,7 @@ function toMetaView(meta: {
   captureMode: RecordingMetaView['captureMode']
   note: string | null
   title: string | null
+  calendar: RecordingCalendarLink | null
 }): RecordingMetaView {
   return {
     id: meta.id,
@@ -204,7 +206,8 @@ function toMetaView(meta: {
     topic: meta.topic,
     captureMode: meta.captureMode,
     note: meta.note,
-    title: meta.title
+    title: meta.title,
+    calendar: calendarSummary(meta.calendar)
   }
 }
 
