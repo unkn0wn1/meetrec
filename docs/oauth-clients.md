@@ -40,13 +40,13 @@ Redirect used by the app: `http://127.0.0.1:<port>/callback`.
 
 ## What the app stores
 
-| Value                                   | Where                                                                                     |
-| --------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Publisher client ids                    | Build-time env (not in Settings UI)                                                       |
-| Google client secret                    | Build-time env when set                                                                   |
-| Refresh and access tokens               | `userData/secrets.bin` (`googleConnections` for each Google account, one Microsoft token) |
-| Upload on or off, selected calendar ids | `userData/calendar.json`                                                                  |
+| Value                                   | Where                                                                                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Publisher client ids                    | Build-time env (not in Settings UI)                                                                                           |
+| Google client secret                    | Build-time env when set                                                                                                       |
+| Refresh and access tokens               | `userData/secrets.bin` (`googleConnections` for each Google account, `microsoftConnections` for up to two Microsoft accounts) |
+| Upload on or off, selected calendar ids | `userData/calendar.json`                                                                                                      |
 
-`calendar.readonly` covers `calendarList.list`. Google Calendar connect can be repeated for another Google account (up to five). Drive consent stays on the account that grants `drive.file`; upload uses the first such account. Microsoft lists calendars on the one connected account. A second Microsoft account is a follow-up.
+`calendar.readonly` covers `calendarList.list`. Google Calendar connect can be repeated for another Google account (up to five). Drive consent stays on the account that grants `drive.file`; upload uses the first such account. Microsoft Calendar connect can be repeated for a second account. OneDrive consent stays on the account that grants `Files.ReadWrite.AppFolder`; upload uses the first such account.
 
 Legacy pasted client ids in old `calendar.json` / `secrets.bin` are ignored.

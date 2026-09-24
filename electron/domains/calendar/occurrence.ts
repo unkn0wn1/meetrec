@@ -12,6 +12,9 @@ export function occurrenceKey(input: {
   if (provider === 'google' && input.connectionId && input.calendarId) {
     return `google:v2:${encodeURIComponent(input.connectionId)}:${encodeURIComponent(input.calendarId)}:${encodeURIComponent(eventId)}:${startsAt}`
   }
+  if (provider === 'microsoft' && input.connectionId && input.calendarId) {
+    return `microsoft:v2:${encodeURIComponent(input.connectionId)}:${encodeURIComponent(input.calendarId)}:${encodeURIComponent(eventId)}:${startsAt}`
+  }
   if (provider === 'microsoft' && input.calendarId) {
     return `microsoft:v2:${encodeURIComponent(input.calendarId)}:${encodeURIComponent(eventId)}:${startsAt}`
   }
@@ -36,6 +39,15 @@ export function parseOccurrenceKey(key: string): {
   }
   const parts = middle.slice(3).split(':')
   if (provider === 'google' && parts.length === 3) {
+    return {
+      provider,
+      connectionId: decodePart(parts[0]),
+      calendarId: decodePart(parts[1]),
+      eventId: decodePart(parts[2]),
+      startsAt
+    }
+  }
+  if (provider === 'microsoft' && parts.length === 3) {
     return {
       provider,
       connectionId: decodePart(parts[0]),

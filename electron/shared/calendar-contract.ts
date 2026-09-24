@@ -21,6 +21,17 @@ export interface GoogleConnectionStatus {
   calendars: CalendarChoice[]
 }
 
+export interface MicrosoftConnectionStatus {
+  id: string
+  accountEmail: string | null
+  error: string | null
+  uploadScopeGranted: boolean
+  calendars: CalendarChoice[]
+}
+
+/** Settings can connect a second Microsoft account, and no more. */
+export const MAX_MICROSOFT_CONNECTIONS = 2
+
 export interface CalendarEventView {
   occurrenceKey: string
   provider: 'google' | 'microsoft'
@@ -55,14 +66,16 @@ export interface CalendarArmView {
 
 export interface CalendarStatus {
   connectPending: 'google' | 'microsoft' | null
-  /** Google card a reconnect or Drive consent is updating. Null adds an account. */
+  /** Account card a reconnect or upload consent is updating. Null adds an account. */
   connectTargetId: string | null
   /** True when Google or Microsoft calendar has a refresh token. */
   connected: boolean
   /** Aggregate used by upload and the Calendar tab gate. */
   google: CalendarAccountStatus
   googleAccounts: GoogleConnectionStatus[]
-  microsoft: CalendarAccountStatus & { calendars: CalendarChoice[] }
+  /** Aggregate. OneDrive uses the first account that granted app-folder scope. */
+  microsoft: CalendarAccountStatus
+  microsoftAccounts: MicrosoftConnectionStatus[]
   upcoming: CalendarEventView[]
   prompt: CalendarPrompt | null
   arm: CalendarArmView | null
@@ -76,7 +89,7 @@ export interface CalendarList {
 export interface CalendarConnectInput {
   provider: 'google' | 'microsoft'
   purpose: 'calendar' | 'drive'
-  /** Reconnect or Drive consent for one Google account. Omit to add an account. */
+  /** Reconnect or upload consent for one account. Omit to add an account. */
   connectionId?: string | null
 }
 

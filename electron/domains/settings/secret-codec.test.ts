@@ -9,7 +9,7 @@ describe('secret bag codec', () => {
       xaiOAuth: null,
       googleClientSecret: null,
       googleConnections: [],
-      microsoftOAuth: null
+      microsoftConnections: []
     })
   })
 
@@ -50,17 +50,21 @@ describe('secret bag codec', () => {
           accountEmail: 'ada@example.com'
         }
       ],
-      microsoftOAuth: {
-        accessToken: 'ms-access',
-        refreshToken: 'ms-refresh',
-        expiresAt: 90,
-        tokenType: 'Bearer',
-        scope: 'Calendars.Read',
-        accountEmail: 'ada@contoso.com'
-      }
+      microsoftConnections: [
+        {
+          id: 'oid-1',
+          accessToken: 'ms-access',
+          refreshToken: 'ms-refresh',
+          expiresAt: 90,
+          tokenType: 'Bearer',
+          scope: 'Calendars.Read',
+          accountEmail: 'ada@contoso.com'
+        }
+      ]
     }
     const encoded = encodeSecretBag(bag)
     expect(encoded).not.toContain('googleOAuth')
+    expect(encoded).not.toContain('microsoftOAuth')
     expect(decodeSecretBag(encoded)).toEqual(bag)
   })
 
@@ -121,5 +125,60 @@ describe('secret bag codec', () => {
         accountEmail: null
       }
     ])
+  })
+
+  it('migrates a legacy microsoftOAuth token into one connection', () => {
+    const decoded = decodeSecretBag(
+      JSON.stringify({
+        microsoftOAuth: {
+          accessToken: 'access',
+          refreshToken: 'refresh',
+          expiresAt: 90,
+          tokenType: 'Bearer',
+          scope: 'Calendars.Read',
+          accountEmail: 'Ada@Contoso.com'
+        }
+      })
+    )
+    expect(decoded?.microsoftConnections).toEqual([
+      {
+        id: 'email:ada@contoso.com',
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        expiresAt: 90,
+        tokenType: 'Bearer',
+        scope: 'Calendars.Read',
+        accountEmail: 'Ada@Contoso.com'
+      }
+    ])
+    expect(
+      decodeSecretBag(
+        JSON.stringify({
+          microsoftOAuth: {
+            accessToken: 'access',
+            refreshToken: 'refresh',
+            expiresAt: 1,
+            tokenType: 'Bearer',
+            scope: '',
+            accountEmail: null
+          }
+        })
+      )?.microsoftConnections[0]?.id
+    ).toBe('legacy')
+    expect(
+      decodeSecretBag(
+        JSON.stringify({
+          microsoftConnections: [],
+          microsoftOAuth: {
+            accessToken: 'access',
+            refreshToken: 'refresh',
+            expiresAt: 1,
+            tokenType: 'Bearer',
+            scope: '',
+            accountEmail: 'ada@contoso.com'
+          }
+        })
+      )?.microsoftConnections
+    ).toEqual([])
   })
 })

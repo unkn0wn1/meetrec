@@ -88,6 +88,29 @@ describe('microsoft events', () => {
     )
     expect(events[0]?.occurrenceKey).toBe('microsoft:v2:cal%2Fid:evt%3A1:2026-09-23T15:00:00.000Z')
     expect(events[0]?.calendarId).toBe('cal/id')
+    expect(events[0]?.connectionId).toBeNull()
     expect(events[0]?.accountEmail).toBe('ada@contoso.com')
+    const named = parseMicrosoftEvents(
+      {
+        value: [
+          {
+            id: 'evt:1',
+            subject: 'Standup',
+            start: { dateTime: '2026-09-23T15:00:00.0000000', timeZone: 'UTC' }
+          }
+        ]
+      },
+      {
+        connectionId: 'oid 1',
+        calendarId: 'cal/id',
+        accountEmail: 'ada@contoso.com',
+        calendarLabel: 'Team',
+        calendarPrimary: false
+      }
+    )
+    expect(named[0]?.occurrenceKey).toBe(
+      'microsoft:v2:oid%201:cal%2Fid:evt%3A1:2026-09-23T15:00:00.000Z'
+    )
+    expect(named[0]?.connectionId).toBe('oid 1')
   })
 })

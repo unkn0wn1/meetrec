@@ -9,7 +9,7 @@ export { fetchMicrosoftSnapshot } from './microsoft-fetch'
 export function cachedEvents(memory: CalendarMemory): CalendarEvent[] {
   return mergeEvents([
     ...Object.values(memory.events.googleByConnection),
-    memory.events.microsoft
+    ...Object.values(memory.events.microsoftByConnection)
   ]).slice(0, MAX_EVENTS)
 }
 
@@ -25,10 +25,11 @@ export function freshEvents(
     groups.push(events)
     snapshotAt = snapshotAt == null ? fetchedAt : Math.min(snapshotAt, fetchedAt)
   }
-  const microsoftAt = memory.fetchedAt.microsoft
-  if (microsoftAt != null && now - microsoftAt <= SNAPSHOT_MAX_AGE_MS) {
-    groups.push(memory.events.microsoft)
-    snapshotAt = snapshotAt == null ? microsoftAt : Math.min(snapshotAt, microsoftAt)
+  for (const [id, events] of Object.entries(memory.events.microsoftByConnection)) {
+    const fetchedAt = memory.fetchedAt.microsoftByConnection[id]
+    if (fetchedAt == null || now - fetchedAt > SNAPSHOT_MAX_AGE_MS) continue
+    groups.push(events)
+    snapshotAt = snapshotAt == null ? fetchedAt : Math.min(snapshotAt, fetchedAt)
   }
   return { events: mergeEvents(groups).slice(0, MAX_EVENTS), snapshotAt }
 }

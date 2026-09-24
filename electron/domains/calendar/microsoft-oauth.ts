@@ -3,7 +3,7 @@ import { MICROSOFT_TOKEN_URL, refreshRequestBody, tokenRequestBody } from './oau
 import { readJson } from './redact'
 import { mergeCalendarRefresh, postToken } from './tokens'
 
-const PROFILE_URL = 'https://graph.microsoft.com/v1.0/me?$select=mail,userPrincipalName'
+const PROFILE_URL = 'https://graph.microsoft.com/v1.0/me?$select=id,mail,userPrincipalName'
 
 export async function exchangeMicrosoftCode(input: {
   code: string
@@ -43,17 +43,27 @@ export async function refreshMicrosoftTokens(input: {
   return mergeCalendarRefresh(input.tokens, next)
 }
 
-export async function fetchMicrosoftEmail(
+export async function fetchMicrosoftProfile(
   accessToken: string,
   fetchImpl: typeof fetch = fetch
-): Promise<string | null> {
+): Promise<{ id: string | null; email: string | null }> {
   const response = await fetchImpl(PROFILE_URL, {
     headers: { Authorization: `Bearer ${accessToken}` }
   })
   const payload = await readJson(response)
-  if (!response.ok || !payload || typeof payload !== 'object') return null
+  if (!response.ok || !payload || typeof payload !== 'object') return { id: null, email: null }
   const record = payload as Record<string, unknown>
-  return text(record.mail) ?? text(record.userPrincipalName)
+  return {
+    id: text(record.id),
+    email: text(record.mail) ?? text(record.userPrincipalName)
+  }
+}
+
+export async function fetchMicrosoftEmail(
+  accessToken: string,
+  fetchImpl: typeof fetch = fetch
+): Promise<string | null> {
+  return (await fetchMicrosoftProfile(accessToken, fetchImpl)).email
 }
 
 function text(value: unknown): string | null {

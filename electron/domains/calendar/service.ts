@@ -140,7 +140,7 @@ export class CalendarService implements CalendarCore {
       return Promise.reject(new Error('Sign-in already in progress.'))
     }
     this.memory.connectPending = provider
-    this.memory.connectTargetId = provider === 'google' ? connectionId : null
+    this.memory.connectTargetId = connectionId
     const generation = ++this.memory.connectGeneration
     return this.finishConnect(provider, purpose, generation)
   }
@@ -160,8 +160,9 @@ export class CalendarService implements CalendarCore {
   disconnect(input: { provider: unknown; connectionId?: unknown }): Promise<CalendarStatus> {
     return this.run(async () => {
       const provider = cleanProvider(input.provider)
-      if (provider === 'microsoft') await disconnectMicrosoft(this)
-      else await disconnectGoogle(this, cleanConnectionId(input.connectionId))
+      const connectionId = cleanConnectionId(input.connectionId)
+      if (provider === 'microsoft') await disconnectMicrosoft(this, connectionId)
+      else await disconnectGoogle(this, connectionId)
       return this.buildStatus()
     })
   }
@@ -235,7 +236,20 @@ export class CalendarService implements CalendarCore {
       const provider = cleanProvider(input.provider)
       const calendarIds = cleanCalendarIds(input.calendarIds)
       if (provider === 'microsoft') {
-        this.memory.prefs = { ...this.memory.prefs, microsoftCalendarIds: calendarIds }
+        const connectionId = cleanConnectionId(input.connectionId)
+        if (!connectionId) throw new Error('Choose a Microsoft account.')
+        const bag = await this.deps.secrets.readBag()
+        if (!bag.microsoftConnections.some((item) => item.id === connectionId)) {
+          throw new Error('That Microsoft account is not connected.')
+        }
+        this.memory.prefs = {
+          ...this.memory.prefs,
+          microsoftCalendarIds: null,
+          microsoftCalendars: {
+            ...this.memory.prefs.microsoftCalendars,
+            [connectionId]: calendarIds
+          }
+        }
       } else {
         const connectionId = cleanConnectionId(input.connectionId)
         if (!connectionId) throw new Error('Choose a Google account.')

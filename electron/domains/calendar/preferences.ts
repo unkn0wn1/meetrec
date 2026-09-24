@@ -8,7 +8,9 @@ export interface CalendarPreferences {
   uploadMicrosoft: boolean
   /** Missing key means the user has not chosen yet. An empty array means none. */
   googleCalendars: Record<string, string[]>
-  /** Null means the user has not chosen yet. */
+  /** Per Microsoft account. Missing key means the user has not chosen yet. */
+  microsoftCalendars: Record<string, string[]>
+  /** Flat list from before per-account selection. Null after it is copied onto one connection. */
   microsoftCalendarIds: string[] | null
 }
 
@@ -17,6 +19,7 @@ export function emptyPreferences(): CalendarPreferences {
     uploadGoogle: false,
     uploadMicrosoft: false,
     googleCalendars: {},
+    microsoftCalendars: {},
     microsoftCalendarIds: null
   }
 }
@@ -34,6 +37,7 @@ export function parsePreferences(raw: string): CalendarPreferences | null {
     uploadGoogle: record.uploadGoogle === true,
     uploadMicrosoft: record.uploadMicrosoft === true,
     googleCalendars: calendarMap(record.googleCalendars),
+    microsoftCalendars: calendarMap(record.microsoftCalendars),
     microsoftCalendarIds: calendarIdList(record.microsoftCalendarIds)
   }
 }
@@ -67,6 +71,53 @@ export function dropGoogleCalendarSelection(
   const googleCalendars = { ...prefs.googleCalendars }
   delete googleCalendars[connectionId]
   return { ...prefs, googleCalendars }
+}
+
+export function microsoftCalendarSelection(
+  prefs: CalendarPreferences,
+  connectionId: string
+): string[] | undefined {
+  if (!Object.hasOwn(prefs.microsoftCalendars, connectionId)) return undefined
+  return prefs.microsoftCalendars[connectionId]
+}
+
+export function moveMicrosoftCalendarSelection(
+  prefs: CalendarPreferences,
+  fromId: string,
+  toId: string
+): CalendarPreferences {
+  if (fromId === toId || !Object.hasOwn(prefs.microsoftCalendars, fromId)) return prefs
+  const microsoftCalendars = { ...prefs.microsoftCalendars }
+  const moved = microsoftCalendars[fromId] ?? []
+  delete microsoftCalendars[fromId]
+  if (!Object.hasOwn(microsoftCalendars, toId)) microsoftCalendars[toId] = moved
+  return { ...prefs, microsoftCalendars }
+}
+
+export function dropMicrosoftCalendarSelection(
+  prefs: CalendarPreferences,
+  connectionId: string
+): CalendarPreferences {
+  if (!Object.hasOwn(prefs.microsoftCalendars, connectionId)) return prefs
+  const microsoftCalendars = { ...prefs.microsoftCalendars }
+  delete microsoftCalendars[connectionId]
+  return { ...prefs, microsoftCalendars }
+}
+
+/** Copy a flat calendar list onto one connection, then clear that flat list. */
+export function adoptFlatMicrosoftCalendars(
+  prefs: CalendarPreferences,
+  connectionId: string
+): CalendarPreferences {
+  if (prefs.microsoftCalendarIds == null) return prefs
+  if (Object.keys(prefs.microsoftCalendars).length > 0) {
+    return { ...prefs, microsoftCalendarIds: null }
+  }
+  return {
+    ...prefs,
+    microsoftCalendars: { [connectionId]: prefs.microsoftCalendarIds },
+    microsoftCalendarIds: null
+  }
 }
 
 export async function readPreferences(dir: string): Promise<CalendarPreferences> {

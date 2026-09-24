@@ -1,0 +1,50 @@
+<script setup lang="ts">
+import type { MicrosoftConnectionStatus } from '../../electron/shared/calendar-contract'
+import { Button } from '@/components/ui/button'
+import CalendarChecklist from '@/components/CalendarChecklist.vue'
+
+defineProps<{
+  account: MicrosoftConnectionStatus
+  busy: boolean
+  pending: boolean
+}>()
+
+const emit = defineEmits<{
+  reconnect: []
+  disconnect: []
+  onedrive: []
+  calendars: [calendarIds: string[]]
+}>()
+</script>
+
+<template>
+  <div class="glass flex flex-col gap-2 px-3 py-3">
+    <p class="text-sm font-medium">
+      {{ account.accountEmail || 'Microsoft account' }}
+    </p>
+    <p v-if="pending" class="text-sm text-muted-foreground">Waiting for the browser…</p>
+    <p v-if="account.error" class="text-sm text-destructive" role="alert">{{ account.error }}</p>
+    <CalendarChecklist
+      v-if="account.calendars.length > 0"
+      :calendars="account.calendars"
+      :busy="busy || pending"
+      @change="emit('calendars', $event)"
+    />
+    <div class="flex flex-wrap gap-2">
+      <Button variant="outline" :disabled="busy || pending" @click="emit('reconnect')">
+        Reconnect
+      </Button>
+      <Button variant="outline" :disabled="busy || pending" @click="emit('disconnect')">
+        Disconnect
+      </Button>
+      <Button
+        v-if="!account.uploadScopeGranted"
+        variant="outline"
+        :disabled="busy || pending"
+        @click="emit('onedrive')"
+      >
+        Connect OneDrive
+      </Button>
+    </div>
+  </div>
+</template>

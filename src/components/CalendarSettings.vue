@@ -1,22 +1,35 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { MAX_MICROSOFT_CONNECTIONS } from '../../electron/shared/calendar-contract'
 import { Button } from '@/components/ui/button'
-import CalendarChecklist from '@/components/CalendarChecklist.vue'
 import GoogleAccountCard from '@/components/GoogleAccountCard.vue'
+import MicrosoftAccountCard from '@/components/MicrosoftAccountCard.vue'
 import { useCalendarStore } from '@/stores/calendar'
 
 const calendar = useCalendarStore()
 const accounts = computed(() => calendar.status?.googleAccounts ?? [])
+const microsoftAccounts = computed(() => calendar.status?.microsoftAccounts ?? [])
 const googlePending = computed(() => calendar.status?.connectPending === 'google')
+const microsoftPending = computed(() => calendar.status?.connectPending === 'microsoft')
 const addingGoogle = computed(() => googlePending.value && !calendar.status?.connectTargetId)
+const addingMicrosoft = computed(() => microsoftPending.value && !calendar.status?.connectTargetId)
 const driveEmail = computed(
   () => accounts.value.find((account) => account.uploadScopeGranted)?.accountEmail ?? null
+)
+const oneDriveEmail = computed(
+  () => microsoftAccounts.value.find((account) => account.uploadScopeGranted)?.accountEmail ?? null
 )
 const uploadLabel = computed(() =>
   driveEmail.value
     ? `Upload to Google Drive as ${driveEmail.value} (folder meetrec in My Drive)`
     : 'Upload to Google Drive (folder meetrec in My Drive)'
 )
+const oneDriveLabel = computed(() =>
+  oneDriveEmail.value
+    ? `Upload to OneDrive as ${oneDriveEmail.value} (the meetrec app folder)`
+    : 'Upload to OneDrive (the meetrec app folder)'
+)
+const canAddMicrosoft = computed(() => microsoftAccounts.value.length < MAX_MICROSOFT_CONNECTIONS)
 
 function onUpload(provider: 'google' | 'microsoft', event: Event): void {
   const checked = event.target instanceof HTMLInputElement && event.target.checked
@@ -76,44 +89,32 @@ function onUpload(provider: 'google' | 'microsoft', event: Event): void {
       <h3 class="text-sm font-semibold">Microsoft</h3>
       <div class="flex flex-wrap gap-2">
         <Button
-          :disabled="calendar.busy || calendar.status?.connectPending === 'microsoft'"
+          v-if="canAddMicrosoft"
+          :disabled="calendar.busy || microsoftPending"
           @click="calendar.connectMicrosoft()"
         >
-          Connect
+          {{
+            microsoftAccounts.length > 0 ? 'Connect another Microsoft account' : 'Connect Microsoft'
+          }}
         </Button>
-        <Button
-          v-if="calendar.status?.microsoft.connected"
-          variant="outline"
-          :disabled="calendar.busy"
-          @click="calendar.disconnectMicrosoft()"
-        >
-          Disconnect
-        </Button>
-        <Button
-          v-if="calendar.status?.connectPending === 'microsoft'"
-          variant="outline"
-          @click="calendar.cancelConnect()"
-        >
+        <Button v-if="microsoftPending" variant="outline" @click="calendar.cancelConnect()">
           Cancel
         </Button>
       </div>
-      <p
-        v-if="calendar.status?.connectPending === 'microsoft'"
-        class="text-sm text-muted-foreground"
-      >
-        Waiting for the browser…
-      </p>
-      <p v-if="calendar.status?.microsoft.connected" class="text-sm">
-        Connected as {{ calendar.status.microsoft.accountEmail || 'Microsoft account' }}
-      </p>
+      <p v-if="addingMicrosoft" class="text-sm text-muted-foreground">Waiting for the browser…</p>
       <p v-if="calendar.status?.microsoft.error" class="text-sm text-destructive" role="alert">
         {{ calendar.status.microsoft.error }}
       </p>
-      <CalendarChecklist
-        v-if="calendar.status?.microsoft.calendars.length"
-        :calendars="calendar.status.microsoft.calendars"
+      <MicrosoftAccountCard
+        v-for="account in microsoftAccounts"
+        :key="account.id"
+        :account="account"
         :busy="calendar.busy"
-        @change="calendar.setCalendars('microsoft', null, $event)"
+        :pending="microsoftPending && calendar.status?.connectTargetId === account.id"
+        @reconnect="calendar.connectMicrosoft(account.id)"
+        @disconnect="calendar.disconnectMicrosoft(account.id)"
+        @onedrive="calendar.connectDrive('microsoft', account.id)"
+        @calendars="calendar.setCalendars('microsoft', account.id, $event)"
       />
       <label class="flex items-center gap-2 text-sm">
         <input
@@ -122,16 +123,8 @@ function onUpload(provider: 'google' | 'microsoft', event: Event): void {
           :disabled="calendar.busy || calendar.status?.microsoft.uploadScopeGranted !== true"
           @change="onUpload('microsoft', $event)"
         />
-        Upload to OneDrive (the meetrec app folder)
+        {{ oneDriveLabel }}
       </label>
-      <Button
-        v-if="calendar.status?.microsoft.uploadScopeGranted !== true"
-        variant="outline"
-        :disabled="calendar.busy || calendar.status?.connectPending === 'microsoft'"
-        @click="calendar.connectDrive('microsoft')"
-      >
-        Connect OneDrive
-      </Button>
     </div>
   </section>
 </template>

@@ -70,14 +70,15 @@ export function dropProviderKeys(
   }
 }
 
-/** Drop dismissals and arms whose occurrence key belongs to one Google connection. */
-export function dropGoogleConnectionKeys(
+/** Drop dismissals and arms whose occurrence key belongs to one connection. */
+export function dropConnectionKeys(
   state: CalendarRuntimeState,
+  provider: 'google' | 'microsoft',
   connectionId: string
 ): CalendarRuntimeState {
   const drop = (key: string): boolean => {
     const parsed = parseOccurrenceKey(key)
-    return parsed?.provider === 'google' && parsed.connectionId === connectionId
+    return parsed?.provider === provider && parsed.connectionId === connectionId
   }
   return {
     ...state,
@@ -87,6 +88,14 @@ export function dropGoogleConnectionKeys(
     arm: state.arm && drop(state.arm.occurrenceKey) ? null : state.arm,
     linkedStop: state.linkedStop && drop(state.linkedStop.occurrenceKey) ? null : state.linkedStop
   }
+}
+
+/** Drop dismissals and arms whose occurrence key belongs to one Google connection. */
+export function dropGoogleConnectionKeys(
+  state: CalendarRuntimeState,
+  connectionId: string
+): CalendarRuntimeState {
+  return dropConnectionKeys(state, 'google', connectionId)
 }
 
 export function parseRuntimeState(raw: string): CalendarRuntimeState | null {
