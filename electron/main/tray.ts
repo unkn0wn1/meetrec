@@ -1,17 +1,7 @@
-import {
-  Menu,
-  Tray,
-  nativeImage,
-  type BrowserWindow,
-  type MenuItemConstructorOptions
-} from 'electron'
+import { Menu, Tray, type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
 import { buildTrayModel, type TrayActionId, type TrayModel } from '../domains/calendar/tray-model'
 import { showMeetrecWindow } from './app-lifecycle'
-
-const TRAY_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAsklEQVR4nO2WQQrCMBBF/0kR8QJi4Q28gBdQ8AJeQMvNPbiCR3DzDk6g4AXcwA0sFBH1IyKbTdK0CfnJZzKZ/CGhA0pHnAEnwAkwA5wBJ8AJMAOcASfACXACnAAn4AVYgU7AC7ACXsALsAJewAuwAl7AC7ACXsALsAJewAuwAl7AC3gBVuAFeIEX4AVegBd4AV7gBXiBF+AFXoAXeAFe4AV4gRfgBV6AF3gBXuAFeIEX4AVegBd4AV7gBXiBF+AFXoAXeAFe4AU+A1b/AVb+A34BKm0n1m0n1j0AAAAASUVORK5CYII=',
-  'base64'
-)
+import { loadTrayImage } from './app-icon'
 
 export interface TrayController {
   render: (model: TrayModel) => void
@@ -21,8 +11,7 @@ export function createTray(
   window: BrowserWindow,
   onAction: (id: TrayActionId) => void
 ): TrayController {
-  const image = nativeImage.createFromBuffer(TRAY_PNG).resize({ width: 16, height: 16 })
-  const tray = new Tray(image)
+  const tray = new Tray(loadTrayImage())
   const render = (model: TrayModel): void => {
     tray.setToolTip(model.tooltip)
     tray.setContextMenu(Menu.buildFromTemplate(menuTemplate(model, onAction)))

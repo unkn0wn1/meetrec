@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandMark from '@/components/BrandMark.vue'
 import ModeNav from '@/components/ModeNav.vue'
 
 defineProps<{
@@ -11,10 +12,8 @@ defineProps<{
     <header class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <slot name="heading">
-          <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            meetrec
-          </p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight">{{ title }}</h1>
+          <BrandMark class="mb-2" />
+          <h1 class="text-2xl font-semibold tracking-tight">{{ title }}</h1>
           <slot name="subtitle" />
         </slot>
       </div>

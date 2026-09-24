@@ -28,14 +28,14 @@ onMounted(() => {
         </p>
       </div>
 
-      <section class="rounded-xl border bg-card p-5 shadow-sm">
+      <section class="glass p-5">
         <p class="font-mono text-4xl tabular-nums">{{ session.elapsedLabel }}</p>
         <p class="mt-2 text-sm text-muted-foreground">
           <template v-if="session.captureMode === 'mix'">Mic + system audio</template>
           <template v-else-if="session.captureMode === 'mic-only'">Microphone only</template>
           <template v-else>Mic and system monitor, one local WAV</template>
         </p>
-        <p v-if="session.note" class="mt-3 text-sm text-amber-800">{{ session.note }}</p>
+        <p v-if="session.note" class="mt-3 text-sm text-amber-300">{{ session.note }}</p>
         <p v-if="session.error" class="mt-3 text-sm text-destructive" role="alert">
           {{ session.error }}
         </p>

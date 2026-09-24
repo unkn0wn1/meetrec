@@ -1,5 +1,6 @@
 import { BrowserWindow, Notification } from 'electron'
 import { isAppQuitting } from './app-lifecycle'
+import { loadWindowIcon } from './app-icon'
 import { loadRenderer, preloadPath } from './renderer-window'
 
 export interface CalendarPrompt {
@@ -15,11 +16,13 @@ export function createCalendarPrompt(): CalendarPrompt {
     const created = new BrowserWindow({
       width: 420,
       height: 300,
+      backgroundColor: '#111527',
       show: false,
       alwaysOnTop: true,
       autoHideMenuBar: true,
       resizable: false,
       title: 'meetrec',
+      icon: loadWindowIcon(),
       webPreferences: {
         preload: preloadPath(),
         contextIsolation: true,

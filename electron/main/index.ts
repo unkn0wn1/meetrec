@@ -9,6 +9,7 @@ import { uploadIfEnabled } from './cloud-ipc'
 import { registerAppIpc, type RecordingHooks } from './ipc'
 import { registerLibraryProtocol } from './library-protocol'
 import { RecordingController, recordingsDir } from './recording-controller'
+import { loadWindowIcon } from './app-icon'
 import { loadRenderer, preloadPath } from './renderer-window'
 
 protocol.registerSchemesAsPrivileged([
@@ -31,9 +32,11 @@ function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 960,
     height: 720,
+    backgroundColor: '#111527',
     show: false,
     autoHideMenuBar: true,
     title: 'meetrec',
+    icon: loadWindowIcon(),
     webPreferences: {
       preload: preloadPath(),
       contextIsolation: true,

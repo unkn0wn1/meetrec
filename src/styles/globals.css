@@ -27,30 +27,44 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Always-dark palette aligned with meetrec.dev (ink-800 shell + cyan). */
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.985 0.002 90);
-  --foreground: oklch(0.21 0.02 60);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 60);
-  --primary: oklch(0.28 0.04 50);
-  --primary-foreground: oklch(0.98 0.005 90);
-  --secondary: oklch(0.96 0.005 90);
-  --secondary-foreground: oklch(0.28 0.03 50);
-  --muted: oklch(0.96 0.005 90);
-  --muted-foreground: oklch(0.5 0.02 60);
-  --accent: oklch(0.94 0.02 70);
-  --accent-foreground: oklch(0.28 0.04 50);
-  --destructive: oklch(0.55 0.2 25);
-  --success: oklch(0.52 0.14 145);
-  --border: oklch(0.9 0.01 80);
-  --input: oklch(0.9 0.01 80);
-  --ring: oklch(0.55 0.08 55);
+  /* ink-800 #111527 — page shell a few shades above near-black */
+  --background: oklch(0.202 0.037 273.2);
+  --foreground: oklch(0.984 0.003 247.9);
+  /* elevated panel surface (solid fallback; prefer .glass on panels) */
+  --card: oklch(0.251 0.046 272);
+  --card-foreground: oklch(0.984 0.003 247.9);
+  /* cyan #22d3ee — primary actions, dark label */
+  --primary: oklch(0.797 0.134 211.5);
+  --primary-foreground: oklch(0.123 0.011 271.4);
+  /* slightly elevated ink for secondary chips */
+  --secondary: oklch(0.258 0.042 271.5);
+  --secondary-foreground: oklch(0.869 0.02 252.9);
+  --muted: oklch(0.258 0.042 271.5);
+  /* slate-400-ish secondary text */
+  --muted-foreground: oklch(0.711 0.035 256.8);
+  /* cyan-tinted hover / badge — not violet */
+  --accent: oklch(0.3 0.045 215);
+  --accent-foreground: oklch(0.92 0.03 210);
+  /* readable red / green on dark */
+  --destructive: oklch(0.711 0.166 22.2);
+  --success: oklch(0.723 0.192 149.6);
+  /* white/10 glass-ish borders */
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
+  /* cyan focus ring */
+  --ring: oklch(0.797 0.134 211.5);
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
   }
 
   body {
@@ -62,5 +76,29 @@
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
+  }
+}
+
+/* Site-parity patchy mesh (meetrec.dev bg-hero-grid + orbs). */
+@layer utilities {
+  .bg-hero-grid {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.18), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 10%, rgba(167, 139, 250, 0.12), transparent);
+  }
+}
+
+/* Site-parity glass panels (meetrec.dev .glass / .glass-hover). */
+@layer components {
+  .glass {
+    @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl;
+  }
+
+  .glass-hover {
+    @apply transition-[color,background-color,border-color,box-shadow] duration-300;
+  }
+
+  .glass-hover:hover {
+    @apply border-cyan-400/30 bg-white/[0.06] shadow-[0_0_40px_#22d3ee26];
   }
 }

@@ -79,7 +79,7 @@ function openCalendars(): void {
       Loading calendar…
     </section>
 
-    <section v-else-if="!connected" class="rounded-xl border bg-card p-8">
+    <section v-else-if="!connected" class="glass p-8">
       <p class="font-medium">Connect a calendar in Settings</p>
       <p class="mt-2 text-sm text-muted-foreground">
         Google or Microsoft calendar unlocks this list.
@@ -87,11 +87,11 @@ function openCalendars(): void {
       <Button class="mt-4" @click="openCalendars">Open Calendars</Button>
     </section>
 
-    <section v-else-if="events.length === 0" class="rounded-xl border bg-card p-8">
+    <section v-else-if="events.length === 0" class="glass p-8">
       <p class="font-medium">No timed events in the next 14 days</p>
     </section>
 
-    <section v-else class="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <section v-else class="glass overflow-hidden">
       <ul class="divide-y">
         <CalendarEventRow
           v-for="event in events"

@@ -34,7 +34,7 @@ meetrec/
   scripts/              # guard-file-size, fetch-ffmpeg
   vendor/ffmpeg/        # gitignored BtbN binaries fetched before packaging
   electron-builder.yml  # installer targets (NSIS, portable, AppImage)
-  build/                # later: icon.png and icon.ico
+  build/                # icon.png, icon.ico, tray-icon.png (+ svg sources)
   dist/                 # installer output, gitignored
   out/                  # electron-vite compile output, gitignored
   package.json

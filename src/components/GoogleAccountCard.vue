@@ -18,7 +18,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 rounded-lg border px-3 py-3">
+  <div class="glass flex flex-col gap-2 px-3 py-3">
     <p class="text-sm font-medium">
       {{ account.accountEmail || 'Google account' }}
     </p>
