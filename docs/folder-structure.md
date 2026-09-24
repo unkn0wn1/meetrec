@@ -14,7 +14,7 @@ meetrec/
       macos.ts
       linux.ts
     domains/            # main-side domain modules (small files)
-      recording/        # session status, folder layout, library scan
+      recording/        # session status, folder layout, library scan, silence auto-stop
       calendar/         # OAuth, multi-account Google slots, calendar selection, poll, schedule, opt-out
       cloud/            # Drive and OneDrive upload and optional delete
       transcript/       # STT document + diarization segments

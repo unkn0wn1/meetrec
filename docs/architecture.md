@@ -25,17 +25,17 @@
 
 ## Domains (keep separate)
 
-| Domain       | Owns                                                                                      |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| `recording`  | Folder layout, library scan, permanent local delete, manual start/stop                    |
-| `capture`    | OS audio backends only                                                                    |
-| `transcript` | STT document, diarization labels, speaker rename                                          |
-| `minutes`    | Summary prompt and `summary.md`                                                           |
-| `providers`  | xAI and OpenAI speech and chat (no UI widgets)                                            |
-| `settings`   | Voice default, AI default, secret bag, device-code session                                |
-| `calendar`   | OAuth, 14-day poll of selected calendars, opt-out, prompt or auto-record, arm, grace stop |
-| `cloud`      | Optional upload, and optional trash or recycle of those stored file ids                   |
-| `updater`    | GitHub Releases check, download snapshot, quit-to-install only while idle                 |
+| Domain       | Owns                                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `recording`  | Folder layout, library scan, permanent local delete, start/stop, optional silence auto-stop |
+| `capture`    | OS audio backends only                                                                      |
+| `transcript` | STT document, diarization labels, speaker rename                                            |
+| `minutes`    | Summary prompt and `summary.md`                                                             |
+| `providers`  | xAI and OpenAI speech and chat (no UI widgets)                                              |
+| `settings`   | Voice default, AI default, secret bag, device-code session                                  |
+| `calendar`   | OAuth, 14-day poll of selected calendars, opt-out, prompt or auto-record, arm, grace stop   |
+| `cloud`      | Optional upload, and optional trash or recycle of those stored file ids                     |
+| `updater`    | GitHub Releases check, download snapshot, quit-to-install only while idle                   |
 
 One domain, one folder. Cross-domain calls go through small facades or IPC handlers.
 
@@ -47,7 +47,7 @@ One folder per recording (see [recorder-ui.md](recorder-ui.md)), under Electron 
 - `recordings/<id>/meta.json`
 - `recordings/<id>/transcript.json`
 - `recordings/<id>/summary.md`
-- `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md)). `settings.json` also stores the default destination and the auto-record switch.
+- `settings.json` and `secrets.bin` beside the recordings directory (see [security.md](security.md)). `settings.json` also stores the default destination, the auto-record switch, and the silence auto-stop switch and threshold.
 - `calendar.json` (upload toggles and selected calendar ids) and `calendar-state.json` (dismiss, notify, occurrence and series opt-out, arm, linked stop). `secrets.bin` stores one Microsoft token and a list of Google connections (`googleConnections`). A file that still has a single `googleOAuth` token is read as one connection.
 - Occurrence keys for newly fetched events include the account and calendar (`google:v2:…` or `microsoft:v2:…`). Older keys in `calendar-state.json` are left as they are and will not match those events. The existing time prune drops them once the event is in the past.
 - `meta.json` `calendar` field: provider, occurrence, title, times, and invitee names and emails for a recording started from an event. Optional `uploads` records Drive file ids and OneDrive item ids. When delete confirm includes cloud copies, those file ids are trashed on Drive or recycled on OneDrive before the local folder is removed. A failed cloud delete leaves the folder in place.

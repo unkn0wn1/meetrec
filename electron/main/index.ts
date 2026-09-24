@@ -10,7 +10,7 @@ import { UpdateService } from '../domains/updater/service'
 import { attachHideToTray, markAppQuitting } from './app-lifecycle'
 import { attachCalendar } from './calendar-runtime'
 import { uploadIfEnabled } from './cloud-ipc'
-import { registerAppIpc, type RecordingHooks } from './ipc'
+import { registerAppIpc, stopRecording, type RecordingHooks } from './ipc'
 import { registerLibraryProtocol } from './library-protocol'
 import { RecordingController, recordingsDir } from './recording-controller'
 import { loadWindowIcon } from './app-icon'
@@ -121,6 +121,13 @@ app.whenReady().then(() => {
   })
   calendarService = calendar.service
   hooks.afterSaved = (id) => uploadIfEnabled(calendar.service, id)
+  controller.setSilenceStop(() => {
+    void stopRecording(controller, hooks).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Stop failed.'
+      if (message === 'Not recording.') return
+      console.warn(message)
+    })
+  })
   settings.watchAutoRecord(() => {
     void calendar.service.refreshSchedule()
   })

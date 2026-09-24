@@ -67,7 +67,8 @@ const api: MeetrecApi = {
     signOutXaiOAuth: () => ipcRenderer.invoke(IPC.settingsSignOutXaiOAuth),
     validate: () => ipcRenderer.invoke(IPC.settingsValidate),
     setDestination: (destination) => ipcRenderer.invoke(IPC.settingsSetDestination, destination),
-    setAutoRecord: (enabled) => ipcRenderer.invoke(IPC.settingsSetAutoRecord, enabled)
+    setAutoRecord: (enabled) => ipcRenderer.invoke(IPC.settingsSetAutoRecord, enabled),
+    setSilenceAutoStop: (input) => ipcRenderer.invoke(IPC.settingsSetSilenceAutoStop, input)
   },
   updater: {
     get: () => ipcRenderer.invoke(IPC.updaterGet),

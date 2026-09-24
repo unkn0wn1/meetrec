@@ -66,7 +66,9 @@ export function buildSettingsSnapshot(input: {
     oauthExpiresAt: input.oauth.expiresAt,
     oauthIntervalSec: input.oauth.intervalSec,
     destination: input.settings.destination,
-    autoRecord: input.settings.autoRecord
+    autoRecord: input.settings.autoRecord,
+    silenceAutoStop: input.settings.silenceAutoStop,
+    silenceAutoStopSeconds: input.settings.silenceAutoStopSeconds
   }
 }
 

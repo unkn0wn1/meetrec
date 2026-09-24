@@ -225,6 +225,19 @@ export class SettingsService {
     return this.snapshot()
   }
 
+  async setSilenceAutoStop(enabled: boolean, seconds: number): Promise<SettingsStatus> {
+    const settings = await this.loadSettings()
+    if (settings.silenceAutoStop === enabled && settings.silenceAutoStopSeconds === seconds) {
+      return this.snapshot()
+    }
+    await writeAppSettings(this.deps.userDataDir(), {
+      ...settings,
+      silenceAutoStop: enabled,
+      silenceAutoStopSeconds: seconds
+    })
+    return this.snapshot()
+  }
+
   async readAuth(role: ProviderRole): Promise<ActiveAuth> {
     const settings = await this.loadSettings()
     const provider = role === 'voice' ? settings.voiceProviderId : settings.aiProviderId

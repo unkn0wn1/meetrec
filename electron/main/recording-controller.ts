@@ -14,7 +14,9 @@ import {
   withCaptureSupport,
   type ActiveSession
 } from '../domains/recording/session'
+import { createSilenceWatch, type SilenceWatch } from '../domains/recording/silence-watch'
 import { readMeta, writeMeta } from '../domains/recording/store'
+import { readSilenceAutoStop } from '../domains/settings/settings-file'
 import type {
   RecordingStartResult,
   RecordingStatus,
@@ -25,9 +27,16 @@ export class RecordingController {
   private session: ActiveSession | null = null
   private capture: AudioCapture | null = null
   private onChange: ((status: RecordingStatus) => void) | null = null
+  private silence: SilenceWatch | null = null
+  private silenceStop: (() => void) | null = null
 
   setOnChange(listener: (status: RecordingStatus) => void): void {
     this.onChange = listener
+  }
+
+  /** Silence auto-stop uses the manual stop path, including the upload hook. */
+  setSilenceStop(request: () => void): void {
+    this.silenceStop = request
   }
 
   status(): RecordingStatus {
@@ -45,6 +54,7 @@ export class RecordingController {
     if (this.session) {
       throw new Error('Already recording.')
     }
+    this.clearSilence()
     assertCaptureSupported()
     const folder = buildRecordingFolder(recordingsDir())
     const startedAt = new Date().toISOString()
@@ -69,6 +79,7 @@ export class RecordingController {
       captureMode: started.captureMode,
       note: started.note
     }
+    this.armSilence()
     const result = {
       outPath: folder.audioPath,
       captureMode: started.captureMode,
@@ -79,6 +90,7 @@ export class RecordingController {
   }
 
   async stop(): Promise<RecordingStopResult> {
+    this.clearSilence()
     if (!this.session || !this.capture) {
       throw new Error('Not recording.')
     }
@@ -120,6 +132,37 @@ export class RecordingController {
 
   private emit(): void {
     this.onChange?.(this.status())
+  }
+
+  private armSilence(): void {
+    this.clearSilence()
+    const session = this.session
+    if (!session) return
+    // Latched at start. A settings change during this recording waits for the next one.
+    const policy = readSilenceAutoStop(app.getPath('userData'))
+    if (!policy.enabled) return
+    this.silence = createSilenceWatch({
+      outPath: session.outPath,
+      startedAtMs: session.startedAtMs,
+      thresholdSeconds: policy.seconds,
+      onTrip: () => {
+        this.tripSilence()
+      }
+    })
+  }
+
+  private tripSilence(): void {
+    const request = this.silenceStop
+    if (request) {
+      request()
+      return
+    }
+    void this.stop().catch(() => undefined)
+  }
+
+  private clearSilence(): void {
+    this.silence?.clear()
+    this.silence = null
   }
 }
 

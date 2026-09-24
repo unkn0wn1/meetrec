@@ -38,6 +38,7 @@ export const IPC = {
   settingsValidate: 'settings:validate',
   settingsSetDestination: 'settings:setDestination',
   settingsSetAutoRecord: 'settings:setAutoRecord',
+  settingsSetSilenceAutoStop: 'settings:setSilenceAutoStop',
   recordingChanged: 'recording:changed',
   calendarStatus: 'calendar:status',
   calendarConnect: 'calendar:connect',
@@ -211,6 +212,15 @@ export interface ProviderCardStatus {
   aiProbe: RoleProbe
 }
 
+export const SILENCE_AUTO_STOP_SECONDS_MIN = 30
+export const SILENCE_AUTO_STOP_SECONDS_MAX = 600
+export const SILENCE_AUTO_STOP_SECONDS_DEFAULT = 120
+
+export interface SilenceAutoStopInput {
+  enabled: boolean
+  seconds: number
+}
+
 export interface SettingsStatus {
   voiceProviderId: ProviderId
   aiProviderId: ProviderId
@@ -228,6 +238,8 @@ export interface SettingsStatus {
   oauthIntervalSec: number | null
   destination: RecordingDestination
   autoRecord: boolean
+  silenceAutoStop: boolean
+  silenceAutoStopSeconds: number
 }
 
 export interface SetModelInput {
@@ -306,6 +318,7 @@ export interface MeetrecApi {
     validate: () => Promise<SettingsStatus>
     setDestination: (destination: RecordingDestination) => Promise<SettingsStatus>
     setAutoRecord: (enabled: boolean) => Promise<SettingsStatus>
+    setSilenceAutoStop: (input: SilenceAutoStopInput) => Promise<SettingsStatus>
   }
   updater: {
     get: () => Promise<UpdateSnapshot>

@@ -12,6 +12,7 @@ import {
   type RecordingMetaView,
   type SetModelInput,
   type RecordingDestination,
+  type RecordingStopResult,
   type SettingsStatus
 } from '../shared/ipc-contract'
 import type { RecordingController } from './recording-controller'
@@ -27,11 +28,7 @@ export function registerAppIpc(
   hooks: RecordingHooks = {}
 ): void {
   ipcMain.handle(IPC.recordingStart, () => controller.start())
-  ipcMain.handle(IPC.recordingStop, async () => {
-    const result = await controller.stop()
-    await runHook(hooks, result.id)
-    return result
-  })
+  ipcMain.handle(IPC.recordingStop, () => stopRecording(controller, hooks))
   ipcMain.handle(IPC.recordingStatus, () => controller.status())
   ipcMain.handle(IPC.libraryList, () => library.list())
   ipcMain.handle(IPC.libraryDetail, (_event, id: string) => library.detail(id).then(toDetailView))
@@ -124,6 +121,28 @@ export function registerAppIpc(
     }
     return settings.setAutoRecord(enabled)
   })
+  ipcMain.handle(IPC.settingsSetSilenceAutoStop, (_event, input: unknown) => {
+    const parsed = parseSilenceAutoStop(input)
+    if (!parsed) return Promise.reject(new Error('Choose a silence auto-stop setting.'))
+    return settings.setSilenceAutoStop(parsed.enabled, parsed.seconds)
+  })
+}
+
+export async function stopRecording(
+  controller: RecordingController,
+  hooks: RecordingHooks
+): Promise<RecordingStopResult> {
+  const result = await controller.stop()
+  await runHook(hooks, result.id)
+  return result
+}
+
+function parseSilenceAutoStop(input: unknown): { enabled: boolean; seconds: number } | null {
+  if (!input || typeof input !== 'object') return null
+  const record = input as Record<string, unknown>
+  if (typeof record.enabled !== 'boolean') return null
+  if (typeof record.seconds !== 'number' || !Number.isFinite(record.seconds)) return null
+  return { enabled: record.enabled, seconds: record.seconds }
 }
 
 type JobStage = NonNullable<LibraryJobProgress['stage']>

@@ -51,7 +51,7 @@ Order of work: record, optionally rename speakers, transcribe, then summarize. *
 
 Left rail: **General**, **Providers**, **Calendars**.
 
-- **General** shows the app version, Check for updates, an update status line, and Restart and install when an update is ready and recording is idle. A shell banner stays up while a recording is in progress and an update is ready. General also shows the default destination (local, or an enabled Drive / OneDrive) and auto-record for selected meetings.
+- **General** shows the app version, Check for updates, an update status line, and Restart and install when an update is ready and recording is idle. A shell banner stays up while a recording is in progress and an update is ready. General also shows the default destination (local, or an enabled Drive / OneDrive), auto-record for selected meetings, and **Stop recording after sustained silence** (off by default). The **Silence threshold** in seconds stays disabled until that box is on.
 - **Providers** is the Voice and AI cards.
 - **Calendars** is Connect / Disconnect and the upload checkboxes.
 
