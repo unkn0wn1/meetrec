@@ -81,4 +81,4 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 - Silence auto-stop stays unwired. It is not a stop signal.
 - Mapping stored invitee names onto diarized speakers stays unwired.
-- xAI `GET /v1/models` may omit speech-to-text ids (`grok-voice-transcribe-1.0`, `grok-voice-transcribe-2.0`). Device-code access tokens may be rejected by that route. Meetrec does not invent a list until a live Test shows otherwise.
+- xAI `GET /v1/models` often omits speech-to-text ids. After a passing Voice probe with a successful (chat-only) catalog, Settings stores the registry Voice seed so the picker is not stuck empty. A rejected catalog request still leaves selects empty (device-code tokens may be rejected by that route).

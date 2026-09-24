@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { OPENAI_CHAT_MODEL, XAI_CHAT_MODEL, XAI_STT_MODEL } from '../providers/models'
-import { applyRoleList, mergeListedModels } from './model-cache'
+import { applyRoleList, mergeListedModels, roleIdsOrSeed } from './model-cache'
 import { defaultAppSettings } from './settings-file'
 
 const fetchedAt = '2026-09-23T18:00:00.000Z'
@@ -44,6 +44,31 @@ describe('applyRoleList', () => {
   })
 })
 
+describe('roleIdsOrSeed', () => {
+  it('returns null when the catalog request failed', () => {
+    expect(roleIdsOrSeed('xai-key', 'voice', null)).toBeNull()
+    expect(roleIdsOrSeed('openai', 'ai', null)).toBeNull()
+  })
+
+  it('prefers live ids when the role matched', () => {
+    expect(roleIdsOrSeed('openai', 'voice', { voice: ['whisper-1'], ai: ['gpt-4.1'] })).toEqual([
+      'whisper-1'
+    ])
+    expect(roleIdsOrSeed('openai', 'ai', { voice: ['whisper-1'], ai: ['gpt-4.1'] })).toEqual([
+      'gpt-4.1'
+    ])
+  })
+
+  it('falls back to registry seeds when a role matched nothing', () => {
+    expect(roleIdsOrSeed('xai-key', 'voice', { voice: [], ai: ['grok-4.5'] })).toEqual([
+      XAI_STT_MODEL
+    ])
+    expect(roleIdsOrSeed('xai-oauth', 'voice', { voice: [], ai: ['grok-4.5'] })).toEqual([
+      XAI_STT_MODEL
+    ])
+  })
+})
+
 describe('mergeListedModels', () => {
   it('skips a role whose probe did not pass', () => {
     const base = defaultAppSettings()
@@ -71,6 +96,24 @@ describe('mergeListedModels', () => {
     }
     expect(mergeListedModels(base, 'xai-key', probes, null, fetchedAt)).toBe(base)
     expect(base.models['xai-key'].voice).toBe(XAI_STT_MODEL)
+  })
+
+  it('seeds Voice from the registry when the catalog omitted speech ids', () => {
+    const base = defaultAppSettings()
+    const next = mergeListedModels(
+      base,
+      'xai-key',
+      {
+        voice: { state: 'pass', message: 'Voice check passed.' },
+        ai: { state: 'pass', message: 'AI check passed.' }
+      },
+      { voice: [], ai: ['grok-4.5', 'grok-4.7'] },
+      fetchedAt
+    )
+    expect(next.modelCache['xai-key'].voice).toEqual({ ids: [XAI_STT_MODEL], fetchedAt })
+    expect(next.models['xai-key'].voice).toBe(XAI_STT_MODEL)
+    expect(next.modelCache['xai-key'].ai.ids).toEqual(['grok-4.5', 'grok-4.7'])
+    expect(next.models['xai-key'].ai).toBe(XAI_CHAT_MODEL)
   })
 
   it('does not apply a role that is not available', () => {
