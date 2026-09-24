@@ -1,9 +1,11 @@
-import { ipcMain } from 'electron'
+import { ipcMain, type IpcMainInvokeEvent } from 'electron'
 import type { LibraryService } from '../domains/recording/library'
 import type { SettingsService } from '../domains/settings/settings-service'
 import {
   IPC,
   type LibraryDetail,
+  type LibraryJobKind,
+  type LibraryJobProgress,
   type ProviderId,
   type ProviderRole,
   type RecordingMetaView,
@@ -35,13 +37,23 @@ export function registerAppIpc(
   ipcMain.handle(IPC.librarySpeakers, (_event, id: string, names: Record<string, string>) =>
     library.updateSpeakers(id, names).then(toMetaView)
   )
-  ipcMain.handle(IPC.libraryTranscribe, async (_event, id: string) => {
-    const detail = await library.transcribe(id)
+  ipcMain.handle(IPC.libraryTranscribe, async (event, id: unknown) => {
+    if (typeof id !== 'string') {
+      throw new Error('Unknown recording.')
+    }
+    const detail = await withJobProgress(event, id, 'transcribe', (report) =>
+      library.transcribe(id, report)
+    )
     await runHook(hooks, id)
     return toDetailView(detail)
   })
-  ipcMain.handle(IPC.librarySummarize, async (_event, id: string) => {
-    const detail = await library.summarize(id)
+  ipcMain.handle(IPC.librarySummarize, async (event, id: unknown) => {
+    if (typeof id !== 'string') {
+      throw new Error('Unknown recording.')
+    }
+    const detail = await withJobProgress(event, id, 'summarize', (report) =>
+      library.summarize(id, report)
+    )
     await runHook(hooks, id)
     return toDetailView(detail)
   })
@@ -110,6 +122,29 @@ export function registerAppIpc(
     }
     return settings.setAutoRecord(enabled)
   })
+}
+
+type JobStage = NonNullable<LibraryJobProgress['stage']>
+
+async function withJobProgress<T>(
+  event: IpcMainInvokeEvent,
+  id: string,
+  job: LibraryJobKind,
+  run: (report: (stage: JobStage) => void) => Promise<T>
+): Promise<T> {
+  const startedAt = Date.now()
+  const send = (stage: LibraryJobProgress['stage']): void => {
+    if (event.sender.isDestroyed()) return
+    const payload: LibraryJobProgress = { id, job, stage, startedAt }
+    event.sender.send(IPC.libraryJobProgress, payload)
+  }
+  try {
+    return await run((stage) => {
+      send(stage)
+    })
+  } finally {
+    send(null)
+  }
 }
 
 async function runHook(hooks: RecordingHooks, id: string): Promise<void> {

@@ -12,6 +12,7 @@ export async function transcribeWav(input: {
   mimeType?: string
   fileName?: string
   fetchImpl?: typeof fetch
+  onWaiting?: () => void
 }): Promise<TranscriptDocument> {
   const bytes = await readFile(input.audioPath)
   const mimeType = input.mimeType ?? 'audio/wav'
@@ -23,6 +24,7 @@ export async function transcribeWav(input: {
   form.append('format', 'true')
   form.append('file', new Blob([bytes], { type: mimeType }), fileName)
 
+  input.onWaiting?.()
   const fetchImpl = input.fetchImpl ?? fetch
   const response = await fetchImpl(STT_URL, {
     method: 'POST',

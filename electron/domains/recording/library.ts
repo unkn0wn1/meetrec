@@ -2,7 +2,12 @@ import { readFile } from 'node:fs/promises'
 import { isSafeRecordingId } from '../../capture/paths'
 import { minutesPrompt, topicFromMarkdown } from '../minutes/markdown'
 import { saveSummary } from '../minutes/job'
-import type { LibraryListItem, ProviderRole } from '../../shared/ipc-contract'
+import type {
+  LibraryListItem,
+  ProviderRole,
+  SummarizeStage,
+  TranscribeStage
+} from '../../shared/ipc-contract'
 import type { ActiveAuth } from '../providers/auth'
 import { providerGateHint } from '../providers/auth'
 import { summarizeWithAuth, transcribeWithAuth } from '../providers/dispatch'
@@ -69,11 +74,19 @@ export class LibraryService {
     return next
   }
 
-  async transcribe(id: string): Promise<LibraryDetail> {
+  async transcribe(
+    id: string,
+    report: (stage: TranscribeStage) => void = () => {}
+  ): Promise<LibraryDetail> {
     const stored = await this.require(id)
     const auth = await this.readAuth('voice')
     const layout = recordingLayout(this.recordingsDir(), id)
-    const document = await transcribeWithAuth({ auth, audioPath: layout.audioPath })
+    const document = await transcribeWithAuth({
+      auth,
+      audioPath: layout.audioPath,
+      onStage: report
+    })
+    report('saving')
     await saveTranscript({
       recordingsDir: this.recordingsDir(),
       meta: stored.meta,
@@ -82,20 +95,25 @@ export class LibraryService {
     return this.detail(id)
   }
 
-  async summarize(id: string): Promise<LibraryDetail> {
+  async summarize(
+    id: string,
+    report: (stage: SummarizeStage) => void = () => {}
+  ): Promise<LibraryDetail> {
     const stored = await this.require(id)
     if (!stored.flags.hasTranscript) {
       throw new Error('Transcribe this recording before generating a summary.')
     }
     const auth = await this.readAuth('ai')
+    report('preparing')
     const layout = recordingLayout(this.recordingsDir(), id)
     const transcript = await readTranscript(layout.transcriptPath)
     if (!transcript?.text.trim()) {
       throw new Error('The transcript file is empty.')
     }
     const prompt = minutesPrompt(transcript.text, speakerLines(stored.meta.speakers, transcript))
-    const result = await summarizeWithAuth({ auth, prompt })
+    const result = await summarizeWithAuth({ auth, prompt, onStage: report })
     const topic = result.draft.topic.trim() || topicFromMarkdown(result.markdown)
+    report('saving')
     await saveSummary({
       recordingsDir: this.recordingsDir(),
       meta: stored.meta,

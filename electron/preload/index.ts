@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { CalendarStatus } from '../shared/calendar-contract'
-import type { MeetrecApi, RecordingStatus } from '../shared/ipc-contract'
+import type { LibraryJobProgress, MeetrecApi, RecordingStatus } from '../shared/ipc-contract'
 import { IPC } from '../shared/ipc-contract'
 
 function subscribe<T>(channel: string, listener: (payload: T) => void): () => void {
@@ -44,7 +44,8 @@ const api: MeetrecApi = {
     updateSpeakers: (id, names) => ipcRenderer.invoke(IPC.librarySpeakers, id, names),
     transcribe: (id) => ipcRenderer.invoke(IPC.libraryTranscribe, id),
     summarize: (id) => ipcRenderer.invoke(IPC.librarySummarize, id),
-    delete: (id) => ipcRenderer.invoke(IPC.libraryDelete, id)
+    delete: (id) => ipcRenderer.invoke(IPC.libraryDelete, id),
+    onJobProgress: (listener) => subscribe<LibraryJobProgress>(IPC.libraryJobProgress, listener)
   },
   settings: {
     get: () => ipcRenderer.invoke(IPC.settingsGet),

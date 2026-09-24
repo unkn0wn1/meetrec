@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Loader2 } from 'lucide-vue-next'
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
@@ -73,6 +74,15 @@ const panes = [
       />
       <CloudUploadButton :recording-id="id" />
       <DeleteRecordingButton :busy="library.busy" @confirm="onDelete" />
+
+      <div
+        v-if="library.jobProgress && library.jobProgress.id === id"
+        class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
+      >
+        <Loader2 class="size-4 animate-spin" aria-hidden="true" />
+        <span role="status" aria-live="polite">{{ library.jobProgress.label }}</span>
+        <span class="font-mono tabular-nums">· {{ library.jobElapsed }}</span>
+      </div>
 
       <div class="grid gap-4 md:grid-cols-[11rem_1fr]">
         <nav class="flex flex-row gap-2 md:flex-col" aria-label="Recording sections">
