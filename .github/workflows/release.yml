@@ -95,9 +95,15 @@ jobs:
             | `*-portable.exe` | Windows portable (x64) |
             | `*.AppImage` | Linux |
 
+            ### Windows SmartScreen (“Windows protected your PC”)
+
+            The Windows installers are **code-signed by TechGlint** (Azure Trusted Signing). SmartScreen still shows a blue warning for new publishers until enough people download and run that build. That is normal; it is not an unsigned or malware flag.
+
+            If you trust this release: **More info** → **Run anyway**.
+
             **Notes**
             - Built on GitHub-hosted runners (`ubuntu-latest` + `windows-latest`).
-            - Windows NSIS and portable builds are signed with Azure Trusted Signing when `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are set. SmartScreen reputation for this publisher still builds over time, so Windows may warn until that reputation exists.
+            - Windows NSIS and portable builds are signed with Azure Trusted Signing when `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are set.
             - The Linux AppImage stays unsigned.
             - Linux and Windows builds include ffmpeg (BtbN LGPL static). `npm run dev` still uses PATH.
             - Linux is the daily path; Windows capture is experimental; macOS is stubbed.

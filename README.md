@@ -1,4 +1,4 @@
-# meetrec
+# MeetRec
 
 Desktop app that records your microphone and system audio into one local WAV, then transcribes and summarizes that file on your machine.
 
