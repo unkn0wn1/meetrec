@@ -10,21 +10,21 @@ It records what you already hear and say. It does not join the call. **0.1.0-alp
 - Library of past recordings, with playback, a transcript, and a summary.
 - Voice and AI defaults in Settings: xAI sign-in, an xAI API key, or an OpenAI API key. Transcribe and summary can use different providers.
 - Speaker labels you can rename. Summary markdown is saved next to the audio.
-- Unsigned Linux AppImage and Windows installers (NSIS and portable).
+- Linux AppImage stays unsigned. Windows NSIS and portable exes from a `v*` tag are signed with Azure Trusted Signing. SmartScreen reputation still builds over time. Ad-hoc and local Windows builds stay unsigned.
 
 ## Status
 
-| Area                    | Today                                                                                                                                                            |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Linux capture           | Daily path. ffmpeg and Pulse (PipeWire).                                                                                                                         |
-| Windows capture         | Experimental. ffmpeg DirectShow, or WASAPI when that demuxer exists. Verify on a Windows machine.                                                                |
-| macOS capture           | Stub. Starting a recording throws.                                                                                                                               |
-| Transcript and summary  | Available once the Voice default and the AI default pass a Live check and the machine can reach those APIs.                                                      |
-| Google Calendar         | Connect under Settings → Calendars. The Calendar tab lists 14 days and can opt out. Prompt, or auto-record from General. [oauth clients](docs/oauth-clients.md). |
-| Microsoft Calendar      | Same Calendar tab, prompt, and auto-record via Microsoft Graph. Publisher public client; no secret. See [oauth clients](docs/oauth-clients.md).                  |
-| Cloud upload            | Optional. Drive or OneDrive copies follow Settings → General, and only after that provider’s upload checkbox is on. Local files stay the original.               |
-| Silence auto-stop       | Not built.                                                                                                                                                       |
-| Signing and auto-update | Not set up. Installers are unsigned. Linux and Windows builds include ffmpeg.                                                                                    |
+| Area                    | Today                                                                                                                                                                                                                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Linux capture           | Daily path. ffmpeg and Pulse (PipeWire).                                                                                                                                                                                                                                   |
+| Windows capture         | Experimental. ffmpeg DirectShow, or WASAPI when that demuxer exists. Verify on a Windows machine.                                                                                                                                                                          |
+| macOS capture           | Stub. Starting a recording throws.                                                                                                                                                                                                                                         |
+| Transcript and summary  | Available once the Voice default and the AI default pass a Live check and the machine can reach those APIs.                                                                                                                                                                |
+| Google Calendar         | Connect under Settings → Calendars. The Calendar tab lists 14 days and can opt out. Prompt, or auto-record from General. [oauth clients](docs/oauth-clients.md).                                                                                                           |
+| Microsoft Calendar      | Same Calendar tab, prompt, and auto-record via Microsoft Graph. Publisher public client; no secret. See [oauth clients](docs/oauth-clients.md).                                                                                                                            |
+| Cloud upload            | Optional. Drive or OneDrive copies follow Settings → General, and only after that provider’s upload checkbox is on. Local files stay the original.                                                                                                                         |
+| Silence auto-stop       | Not built.                                                                                                                                                                                                                                                                 |
+| Signing and auto-update | Azure Trusted Signing on Windows tag releases when the repo secrets are set. Linux AppImage, ad-hoc Windows builds, and local `dist:win` stay unsigned. SmartScreen reputation still builds over time. Auto-update is not set up. Linux and Windows builds include ffmpeg. |
 
 ## Requirements
 
@@ -86,7 +86,7 @@ npm run dist:linux
 npm run dist:win
 ```
 
-`dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. Builds are unsigned and include ffmpeg (a pinned BtbN LGPL-static build; about 135 MiB on Linux and 127 MiB on Windows). `npm run dev` still uses ffmpeg on `PATH`. The app id stays `io.techglint.meetrec`.
+`dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. A `v*` tag signs those Windows exes with Azure Trusted Signing. The Linux AppImage, ad-hoc Windows builds, and a local `dist:win` stay unsigned. SmartScreen reputation still builds over time. Builds include ffmpeg (a pinned BtbN LGPL-static build; about 135 MiB on Linux and 127 MiB on Windows). `npm run dev` still uses ffmpeg on `PATH`. The app id stays `io.techglint.meetrec`.
 
 Public alphas come from a **`v*` tag** (GitHub runners build Linux + Windows and attach files to a Release). Merging to `main` does not publish installers. Details: [docs/packaging.md](docs/packaging.md).
 
