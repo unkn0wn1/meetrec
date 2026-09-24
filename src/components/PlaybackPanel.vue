@@ -14,6 +14,7 @@ const currentMs = ref(0)
 const durationMs = ref(0)
 const scrubbing = ref(false)
 const pendingSeekMs = ref<number | null>(null)
+const playWhenReady = ref(false)
 
 watch(
   () => props.audioUrl,
@@ -23,10 +24,16 @@ watch(
     durationMs.value = 0
     scrubbing.value = false
     pendingSeekMs.value = null
+    playWhenReady.value = false
   }
 )
 
 function play(): void {
+  if (pendingSeekMs.value !== null) {
+    playWhenReady.value = true
+    return
+  }
+  playWhenReady.value = false
   void audio.value?.play()
 }
 
@@ -37,6 +44,7 @@ function pause(): void {
 function stop(): void {
   scrubbing.value = false
   pendingSeekMs.value = null
+  playWhenReady.value = false
   const node = audio.value
   if (!node) return
   node.pause()
@@ -54,6 +62,7 @@ function onMeta(): void {
   const seconds = audio.value?.duration
   durationMs.value = Number.isFinite(seconds) ? Math.round((seconds ?? 0) * 1000) : 0
   if (pendingSeekMs.value !== null) seekMs(pendingSeekMs.value)
+  if (playWhenReady.value) play()
 }
 
 function onEnded(): void {
@@ -94,9 +103,10 @@ function seekMs(ms: number): void {
   currentMs.value = applied
 }
 
-defineExpose({ seekMs })
+defineExpose({ seekMs, play })
 
 onBeforeUnmount(() => {
+  playWhenReady.value = false
   audio.value?.pause()
 })
 </script>

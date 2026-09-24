@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
 import CloudUploadButton from '@/components/CloudUploadButton.vue'
@@ -17,6 +17,10 @@ const router = useRouter()
 const library = useLibraryStore()
 const settings = useSettingsStore()
 const pane = ref<'playback' | 'transcript' | 'summary'>('playback')
+const playback = useTemplateRef<{
+  seekMs: (ms: number) => void
+  play: () => void
+}>('playback')
 
 const id = computed(() => String(route.params.id ?? ''))
 
@@ -27,6 +31,16 @@ watch(
   },
   { immediate: true }
 )
+
+function onTranscriptSeek(startMs: number): void {
+  pane.value = 'playback'
+  void nextTick(() => {
+    const panel = playback.value
+    if (!panel) return
+    panel.seekMs(startMs)
+    panel.play()
+  })
+}
 
 async function onDelete(): Promise<void> {
   const ok = await library.remove(id.value)
@@ -73,7 +87,11 @@ const panes = [
           </Button>
         </nav>
         <section class="glass p-5">
-          <PlaybackPanel v-if="pane === 'playback'" :audio-url="library.detail.audioUrl" />
+          <PlaybackPanel
+            v-if="pane === 'playback'"
+            ref="playback"
+            :audio-url="library.detail.audioUrl"
+          />
           <TranscriptPanel
             v-else-if="pane === 'transcript'"
             :transcript="library.detail.transcript"
@@ -82,6 +100,7 @@ const panes = [
             :can-transcribe="settings.canTranscribe"
             :voice-gate="settings.voiceGate"
             @transcribe="library.transcribe(id)"
+            @seek="onTranscriptSeek"
           />
           <SummaryPanel
             v-else
