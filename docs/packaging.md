@@ -57,13 +57,13 @@ A bare `npm run fetch:ffmpeg` downloads the host platform (`linux` or `win`).
 
 ## Icons
 
-App icons are checked in under `build/`, derived from the marketing favicon mark (`meetrec-web/public/favicon.svg`).
+App icons are checked in under `build/`, derived from the marketing header mark (mic on cyan→violet rounded square; same language as `meetrec-web` `AppHeader` / `public/favicon.svg`).
 
 | File                                     | Use                                                               |
 | ---------------------------------------- | ----------------------------------------------------------------- |
 | `build/icon.png`                         | Linux packaging and window chrome (≥512×512; currently 1024×1024) |
 | `build/icon.ico`                         | Windows packaging (multi-size 16–256)                             |
-| `build/tray-icon.png`                    | Tray (32×32 filled mark; resized to 16×16 at runtime)             |
+| `build/tray-icon.png`                    | Tray (32×32 filled mic on gradient; resized to 16×16 at runtime)  |
 | `build/icon.svg` / `build/tray-icon.svg` | Sources for regenerating the rasters                              |
 
 electron-builder picks up `build/icon.png` / `build/icon.ico` from the default `build/` resources directory. Runtime tray and `BrowserWindow` icons load from `resources/icons/` in packaged builds (`extraResources`) and from `build/` in `npm run dev`.

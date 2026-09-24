@@ -10,24 +10,31 @@ withDefaults(
 
 <template>
   <span class="inline-flex items-center gap-2" aria-label="MeetRec">
-    <svg
-      class="shrink-0 rounded-[22%]"
+    <span
+      class="flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500"
       :class="size === 'md' ? 'size-8' : 'size-6'"
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect width="64" height="64" rx="14" fill="#0a0c14" />
-      <circle cx="32" cy="28" r="10" stroke="#22d3ee" stroke-width="3" />
-      <path
-        d="M20 44c2.5-6 7-9 12-9s9.5 3 12 9"
-        stroke="#a78bfa"
-        stroke-width="3"
-        stroke-linecap="round"
-      />
-      <circle cx="46" cy="18" r="4" fill="#22d3ee" />
-    </svg>
+      <svg
+        class="text-[#05060a]"
+        :class="size === 'md' ? 'size-[18px]' : 'size-3.5'"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 3a4 4 0 0 1 4 4v3a4 4 0 1 1-8 0V7a4 4 0 0 1 4-4Z"
+          stroke="currentColor"
+          stroke-width="2"
+        />
+        <path
+          d="M5 12a7 7 0 0 0 14 0M12 19v2"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </span>
     <span
       v-if="showWordmark"
       class="text-sm font-semibold tracking-tight text-foreground"
