@@ -30,7 +30,7 @@ jobs:
           MEETREC_MICROSOFT_CLIENT_ID: ${{ secrets.MEETREC_MICROSOFT_CLIENT_ID }}
       - name: Windows installer
         if: runner.os == 'Windows'
-        run: npm run dist:win
+        run: npm run dist:win -- --config.win.signAndEditExecutable=false
         env:
           MEETREC_GOOGLE_CLIENT_ID: ${{ secrets.MEETREC_GOOGLE_CLIENT_ID }}
           MEETREC_GOOGLE_CLIENT_SECRET: ${{ secrets.MEETREC_GOOGLE_CLIENT_SECRET }}

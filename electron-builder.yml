@@ -29,6 +29,11 @@ win:
     - target: portable
       arch:
         - x64
+  azureSignOptions:
+    publisherName: 'CN=TechGlint, O=TechGlint, L=London, S=Greater London, C=GB'
+    endpoint: 'https://eus.codesigning.azure.net/'
+    certificateProfileName: 'meetrec-public'
+    codeSigningAccountName: 'techglint'
 nsis:
   oneClick: false
   perMachine: false
