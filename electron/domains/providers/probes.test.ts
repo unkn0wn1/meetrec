@@ -6,19 +6,39 @@ function fakeFetch(
   status: number,
   body = '',
   url = ''
-): { fetchImpl: typeof fetch; calls: string[] } {
+): { fetchImpl: typeof fetch; calls: string[]; inits: RequestInit[] } {
   const calls: string[] = []
-  const fetchImpl = (async (input: RequestInfo | URL) => {
+  const inits: RequestInit[] = []
+  const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
     calls.push(String(input))
+    inits.push(init ?? {})
     expect(url === '' || String(input) === url).toBe(true)
     return new Response(body, { status })
   }) as typeof fetch
-  return { fetchImpl, calls }
+  return { fetchImpl, calls, inits }
+}
+
+async function expectProbeFile(init: RequestInit, model: string): Promise<void> {
+  expect(init.body).toBeInstanceOf(FormData)
+  const form = init.body as FormData
+  expect(form.get('model')).toBe(model)
+  const file = form.get('file')
+  expect(file).toBeInstanceOf(Blob)
+  const blob = file as Blob
+  expect(blob.type).toBe('audio/wav')
+  expect(blob.size).toBeGreaterThan(44)
+  const bytes = new Uint8Array(await blob.arrayBuffer())
+  expect(String.fromCharCode(bytes[0] ?? 0, bytes[1] ?? 0, bytes[2] ?? 0, bytes[3] ?? 0)).toBe(
+    'RIFF'
+  )
+  const headers = new Headers(init.headers)
+  expect(headers.get('content-type')).toBeNull()
+  expect(headers.get('authorization')).toMatch(/^Bearer /)
 }
 
 describe('role probes', () => {
-  it('accepts an xAI voice check that asks for a file', async () => {
-    const fake = fakeFetch(400, JSON.stringify({ error: 'file is required' }), XAI_STT_URL)
+  it('passes an xAI voice check that accepts the sample', async () => {
+    const fake = fakeFetch(200, '{"text":""}', XAI_STT_URL)
     const result = await probeVoice({
       family: 'xai',
       model: 'grok-voice-transcribe-2.0',
@@ -29,6 +49,23 @@ describe('role probes', () => {
     })
     expect(result).toEqual({ state: 'pass', message: 'Voice check passed.' })
     expect(fake.calls).toEqual([XAI_STT_URL])
+    await expectProbeFile(fake.inits[0] ?? {}, 'grok-voice-transcribe-2.0')
+  })
+
+  it('fails an xAI voice check that still asks for a file', async () => {
+    const fake = fakeFetch(400, JSON.stringify({ error: 'file is required' }), XAI_STT_URL)
+    const result = await probeVoice({
+      family: 'xai',
+      model: 'grok-voice-transcribe-2.0',
+      token: 'good-key',
+      supported: true,
+      missingMessage: 'missing',
+      fetchImpl: fake.fetchImpl
+    })
+    expect(result.state).toBe('fail')
+    expect(result.message).toContain('400')
+    expect(result.message).not.toContain('file is required')
+    await expectProbeFile(fake.inits[0] ?? {}, 'grok-voice-transcribe-2.0')
   })
 
   it('fails an xAI voice check on 401 without the response body', async () => {
@@ -63,18 +100,32 @@ describe('role probes', () => {
     expect(fake.calls).toEqual([])
   })
 
-  it('accepts an OpenAI voice check that asks for multipart', async () => {
-    const fake = fakeFetch(400, 'multipart form required', OPENAI_STT_URL)
+  it('passes an OpenAI voice check on HTTP 200 and rejects a bare multipart 400', async () => {
+    const ok = fakeFetch(200, '{"text":""}', OPENAI_STT_URL)
+    const passed = await probeVoice({
+      family: 'openai',
+      model: 'gpt-4o-transcribe-diarize',
+      token: 'oa',
+      supported: true,
+      missingMessage: 'missing',
+      fetchImpl: ok.fetchImpl
+    })
+    expect(passed.state).toBe('pass')
+    expect(ok.calls).toEqual([OPENAI_STT_URL])
+    await expectProbeFile(ok.inits[0] ?? {}, 'gpt-4o-transcribe-diarize')
+
+    const missing = fakeFetch(400, 'multipart form required', OPENAI_STT_URL)
     const result = await probeVoice({
       family: 'openai',
       model: 'gpt-4o-transcribe-diarize',
       token: 'oa',
       supported: true,
       missingMessage: 'missing',
-      fetchImpl: fake.fetchImpl
+      fetchImpl: missing.fetchImpl
     })
-    expect(result.state).toBe('pass')
-    expect(fake.calls).toEqual([OPENAI_STT_URL])
+    expect(result.state).toBe('fail')
+    expect(result.message).toContain('400')
+    expect(result.message).not.toContain('multipart form required')
   })
 
   it('passes an AI check on HTTP 200 and hides a failure body', async () => {

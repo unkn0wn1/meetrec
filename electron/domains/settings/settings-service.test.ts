@@ -36,7 +36,7 @@ describe('SettingsService model catalog', () => {
         status: 200,
         body: JSON.stringify({ data: [{ id: 'whisper-1' }, { id: 'gpt-4.1' }] })
       },
-      [`POST ${OPENAI_STT_URL}`]: { status: 400, body: 'multipart form required' },
+      [`POST ${OPENAI_STT_URL}`]: { status: 200, body: '{"text":""}' },
       [`POST ${OPENAI_CHAT_URL}`]: { status: 200, body: '{"choices":[]}' }
     }
     const service = createService(dir, routedFetch(routes, calls), () => now)
@@ -102,7 +102,7 @@ describe('SettingsService model catalog', () => {
         status: 200,
         body: JSON.stringify({ data: [{ id: 'grok-4.5' }, { id: 'grok-4.7' }] })
       },
-      [`POST ${XAI_STT_URL}`]: { status: 400, body: 'file is required' },
+      [`POST ${XAI_STT_URL}`]: { status: 200, body: '{"text":""}' },
       [`POST ${XAI_CHAT_URL}`]: { status: 200, body: '{"choices":[]}' }
     }
     const service = createService(dir, routedFetch(routes, calls), () => 1_700_000_000_000)
@@ -137,7 +137,7 @@ describe('SettingsService model catalog', () => {
     const calls: string[] = []
     const routes: Record<string, { status: number; body: string }> = {
       [`GET ${XAI_MODELS_URL}`]: { status: 403, body: `rejected ${token}` },
-      [`POST ${XAI_STT_URL}`]: { status: 400, body: 'file is required' },
+      [`POST ${XAI_STT_URL}`]: { status: 200, body: '{"text":""}' },
       [`POST ${XAI_CHAT_URL}`]: { status: 200, body: '{"choices":[]}' }
     }
     const service = createService(dir, routedFetch(routes, calls), () => 1_700_000_000_000)

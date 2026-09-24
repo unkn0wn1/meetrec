@@ -34,6 +34,11 @@ export async function validateXaiApiKey(input: {
   }
 }
 
+/**
+ * Credential ping posts no audio. A 400 that only complains about a missing
+ * file means the key was accepted. The Settings Test voice probe sends a
+ * sample and does not use this.
+ */
 export function acceptedWithoutFile(status: number, body: string): boolean {
   if (status !== 400) return false
   const text = body.toLowerCase()
