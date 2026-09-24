@@ -32,6 +32,7 @@ function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 960,
     height: 720,
+    backgroundColor: '#05060a',
     show: false,
     autoHideMenuBar: true,
     title: 'meetrec',

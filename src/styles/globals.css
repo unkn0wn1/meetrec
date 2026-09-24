@@ -27,30 +27,44 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Always-dark palette aligned with meetrec.dev (ink + cyan/violet). */
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.985 0.002 90);
-  --foreground: oklch(0.21 0.02 60);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 60);
-  --primary: oklch(0.28 0.04 50);
-  --primary-foreground: oklch(0.98 0.005 90);
-  --secondary: oklch(0.96 0.005 90);
-  --secondary-foreground: oklch(0.28 0.03 50);
-  --muted: oklch(0.96 0.005 90);
-  --muted-foreground: oklch(0.5 0.02 60);
-  --accent: oklch(0.94 0.02 70);
-  --accent-foreground: oklch(0.28 0.04 50);
-  --destructive: oklch(0.55 0.2 25);
-  --success: oklch(0.52 0.14 145);
-  --border: oklch(0.9 0.01 80);
-  --input: oklch(0.9 0.01 80);
-  --ring: oklch(0.55 0.08 55);
+  /* ink-950 #05060a */
+  --background: oklch(0.123 0.011 271.4);
+  --foreground: oklch(0.984 0.003 247.9);
+  /* ink-900 #0a0c14 — slightly elevated card */
+  --card: oklch(0.156 0.017 273.4);
+  --card-foreground: oklch(0.984 0.003 247.9);
+  /* cyan #22d3ee — primary buttons stay readable with dark label */
+  --primary: oklch(0.797 0.134 211.5);
+  --primary-foreground: oklch(0.123 0.011 271.4);
+  /* ink-800 #111527 */
+  --secondary: oklch(0.202 0.037 273.2);
+  --secondary-foreground: oklch(0.869 0.02 252.9);
+  --muted: oklch(0.202 0.037 273.2);
+  /* slate-400-ish secondary text */
+  --muted-foreground: oklch(0.711 0.035 256.8);
+  /* violet-tinted hover / badge surface */
+  --accent: oklch(0.28 0.055 293);
+  --accent-foreground: oklch(0.92 0.02 293);
+  /* readable red / green on dark */
+  --destructive: oklch(0.711 0.166 22.2);
+  --success: oklch(0.723 0.192 149.6);
+  /* white/10 glass-ish borders */
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
+  /* cyan focus ring */
+  --ring: oklch(0.797 0.134 211.5);
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
   }
 
   body {

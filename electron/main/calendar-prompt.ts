@@ -16,6 +16,7 @@ export function createCalendarPrompt(): CalendarPrompt {
     const created = new BrowserWindow({
       width: 420,
       height: 300,
+      backgroundColor: '#05060a',
       show: false,
       alwaysOnTop: true,
       autoHideMenuBar: true,

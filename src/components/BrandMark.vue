@@ -30,7 +30,7 @@ withDefaults(
     </svg>
     <span
       v-if="showWordmark"
-      class="text-sm font-semibold tracking-tight"
+      class="text-sm font-semibold tracking-tight text-foreground"
       :class="size === 'md' ? 'text-base' : ''"
     >
       Meet<span

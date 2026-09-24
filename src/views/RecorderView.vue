@@ -35,7 +35,7 @@ onMounted(() => {
           <template v-else-if="session.captureMode === 'mic-only'">Microphone only</template>
           <template v-else>Mic and system monitor, one local WAV</template>
         </p>
-        <p v-if="session.note" class="mt-3 text-sm text-amber-800">{{ session.note }}</p>
+        <p v-if="session.note" class="mt-3 text-sm text-amber-300">{{ session.note }}</p>
         <p v-if="session.error" class="mt-3 text-sm text-destructive" role="alert">
           {{ session.error }}
         </p>

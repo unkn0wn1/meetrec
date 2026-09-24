@@ -10,6 +10,7 @@
 - The calendar prompt (`#/calendar-prompt`, 420×300) is not in this shell.
 - **Calendar** (`#/calendar`) lists timed events for the next 14 days from every checked Google or Microsoft calendar. Each row shows title, time, provider, the account email when meetrec has one, and **Record with meetrec** (on by default). Unchecking a repeating event asks for this occurrence or the entire series.
 - The AppShell header shows the favicon mark plus a Meet**Rec** wordmark (Rec uses the marketing cyan→violet→pink gradient).
+- Theme is always dark: near-black background (`#05060a` / `#0a0c14` cards), cyan primary, violet accent/hover, white/10 borders — aligned with [meetrec.dev](https://meetrec.dev). Tokens live in `src/styles/globals.css`. Prefer `bg-background`, `text-muted-foreground`, etc. over one-off hex.
 - A tray icon is available (same mark, filled variant). Opening the app focuses Library.
 - About 10 minutes before a timed event that is still set to record, the tray adds **Start: {title}**, **Auto-arm (T−1 min)**, and **Dismiss**. While one is armed, it shows **Armed: {title}** and **Cancel auto-arm**. While recording, it shows **Stop recording**.
 - The same Start, Dismiss, and Auto-arm actions appear in a small always-on-top prompt window (`#/calendar-prompt`). Auto-arm’s label says it starts one minute before. That route is not in the mode nav.
