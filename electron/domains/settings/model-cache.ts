@@ -52,19 +52,24 @@ export function mergeListedModels(
 }
 
 /**
- * Prefer the live catalog for a role. When the catalog request succeeded but that
- * role matched nothing (common for xAI STT), fall back to the registry seeds so a
- * passing probe is not stuck on “Test to load models”. A failed catalog request
- * (`listed === null`) still leaves the role empty.
+ * Prefer the live catalog for a role. When the catalog request failed
+ * (`listed === null`) or succeeded but that role matched nothing (common for
+ * xAI STT), fall back to registry seeds so a passing probe is not stuck on
+ * “Test to load models”. Seeds are registry ids only.
  */
 export function roleIdsOrSeed(
   provider: ProviderId,
   role: ProviderRole,
   listed: ListedModels | null
 ): string[] | null {
-  if (!listed) return null
-  const ids = role === 'voice' ? listed.voice : listed.ai
-  if (ids.length > 0) return ids
+  if (listed) {
+    const ids = role === 'voice' ? listed.voice : listed.ai
+    if (ids.length > 0) return ids
+  }
+  return registrySeedIds(provider, role)
+}
+
+function registrySeedIds(provider: ProviderId, role: ProviderRole): string[] | null {
   const seeds = modelOptions(provider, role).map((item) => item.id)
   return seeds.length > 0 ? seeds : null
 }
