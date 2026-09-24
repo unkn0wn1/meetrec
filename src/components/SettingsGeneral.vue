@@ -47,6 +47,8 @@ function onAutoRecord(event: Event): void {
       </p>
     </div>
 
+    <p v-if="settings.error" class="text-sm text-destructive" role="alert">{{ settings.error }}</p>
+
     <fieldset class="flex flex-col gap-2" :disabled="settings.saving">
       <legend class="text-sm font-semibold">Default destination</legend>
       <p class="text-sm text-muted-foreground">

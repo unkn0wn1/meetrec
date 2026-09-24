@@ -1,6 +1,6 @@
 import type { ProviderRole, RoleProbe } from '../../shared/ipc-contract'
-import { acceptedWithoutFile } from './xai-ping'
 import { OPENAI_CHAT_URL, OPENAI_STT_URL, XAI_CHAT_URL, XAI_STT_URL } from './models'
+import { silentWavBytes } from './probe-sample'
 import type { ProviderFamily } from './registry'
 
 export interface RoleProbeInput {
@@ -27,7 +27,7 @@ export async function probeVoice(input: RoleProbeInput): Promise<RoleProbe> {
     label: 'Voice',
     fetchImpl: input.fetchImpl,
     body: voiceBody(input.model),
-    accept: (status, raw) => status === 200 || acceptedWithoutFile(status, raw)
+    accept: (status) => status === 200
   })
 }
 
@@ -62,6 +62,8 @@ function unsupported(role: ProviderRole): RoleProbe {
 function voiceBody(model: string): FormData {
   const form = new FormData()
   form.append('model', model)
+  const bytes = silentWavBytes()
+  form.append('file', new Blob([new Uint8Array(bytes)], { type: 'audio/wav' }), 'probe.wav')
   return form
 }
 

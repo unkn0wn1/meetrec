@@ -6,8 +6,10 @@ import {
   OPENAI_CHAT_URL,
   OPENAI_MODELS_URL,
   OPENAI_STT_URL,
+  XAI_CHAT_MODEL,
   XAI_CHAT_URL,
   XAI_MODELS_URL,
+  XAI_STT_MODEL,
   XAI_STT_URL
 } from '../providers/models'
 import { readAppSettings } from './settings-file'
@@ -36,7 +38,7 @@ describe('SettingsService model catalog', () => {
         status: 200,
         body: JSON.stringify({ data: [{ id: 'whisper-1' }, { id: 'gpt-4.1' }] })
       },
-      [`POST ${OPENAI_STT_URL}`]: { status: 400, body: 'multipart form required' },
+      [`POST ${OPENAI_STT_URL}`]: { status: 200, body: '{"text":""}' },
       [`POST ${OPENAI_CHAT_URL}`]: { status: 200, body: '{"choices":[]}' }
     }
     const service = createService(dir, routedFetch(routes, calls), () => now)
@@ -102,7 +104,7 @@ describe('SettingsService model catalog', () => {
         status: 200,
         body: JSON.stringify({ data: [{ id: 'grok-4.5' }, { id: 'grok-4.7' }] })
       },
-      [`POST ${XAI_STT_URL}`]: { status: 400, body: 'file is required' },
+      [`POST ${XAI_STT_URL}`]: { status: 200, body: '{"text":""}' },
       [`POST ${XAI_CHAT_URL}`]: { status: 200, body: '{"choices":[]}' }
     }
     const service = createService(dir, routedFetch(routes, calls), () => 1_700_000_000_000)
@@ -131,13 +133,13 @@ describe('SettingsService model catalog', () => {
     expect(calls).toContain(`GET ${XAI_MODELS_URL}`)
   })
 
-  it('leaves the xAI cache empty when listing models is rejected', async () => {
+  it('seeds registry models when the xAI catalog request fails', async () => {
     const dir = tempDir()
     const token = 'xai-secret-token'
     const calls: string[] = []
     const routes: Record<string, { status: number; body: string }> = {
       [`GET ${XAI_MODELS_URL}`]: { status: 403, body: `rejected ${token}` },
-      [`POST ${XAI_STT_URL}`]: { status: 400, body: 'file is required' },
+      [`POST ${XAI_STT_URL}`]: { status: 200, body: '{"text":""}' },
       [`POST ${XAI_CHAT_URL}`]: { status: 200, body: '{"choices":[]}' }
     }
     const service = createService(dir, routedFetch(routes, calls), () => 1_700_000_000_000)
@@ -145,8 +147,10 @@ describe('SettingsService model catalog', () => {
 
     const status = await service.testProvider('xai-key')
     const card = status.cards.find((item) => item.id === 'xai-key')
-    expect(card?.voiceModels).toEqual([])
-    expect(card?.aiModels).toEqual([])
+    expect(card?.voiceModels).toEqual([{ id: XAI_STT_MODEL, label: XAI_STT_MODEL }])
+    expect(card?.aiModels).toEqual([{ id: XAI_CHAT_MODEL, label: XAI_CHAT_MODEL }])
+    expect(card?.voiceModel).toBe(XAI_STT_MODEL)
+    expect(card?.aiModel).toBe(XAI_CHAT_MODEL)
     expect(card?.voiceProbe.state).toBe('pass')
     expect(card?.aiProbe.state).toBe('pass')
     expect(JSON.stringify(status)).not.toContain(token)
@@ -154,8 +158,19 @@ describe('SettingsService model catalog', () => {
     expect(card?.aiProbe.message).not.toContain(token)
 
     const saved = await readAppSettings(dir)
-    expect(saved.settings.modelCache['xai-key'].voice.ids).toEqual([])
-    expect(saved.settings.modelCache['xai-key'].ai.ids).toEqual([])
+    const fetchedAt = new Date(1_700_000_000_000).toISOString()
+    expect(saved.settings.modelCache['xai-key'].voice).toEqual({
+      ids: [XAI_STT_MODEL],
+      fetchedAt
+    })
+    expect(saved.settings.modelCache['xai-key'].ai).toEqual({
+      ids: [XAI_CHAT_MODEL],
+      fetchedAt
+    })
+    expect(saved.settings.models['xai-key']).toEqual({
+      voice: XAI_STT_MODEL,
+      ai: XAI_CHAT_MODEL
+    })
     expect(calls).toContain(`GET ${XAI_MODELS_URL}`)
     expect(calls).toContain(`POST ${XAI_STT_URL}`)
     expect(calls).toContain(`POST ${XAI_CHAT_URL}`)

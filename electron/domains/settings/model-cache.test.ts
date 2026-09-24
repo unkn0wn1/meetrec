@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { OPENAI_CHAT_MODEL, XAI_CHAT_MODEL, XAI_STT_MODEL } from '../providers/models'
+import {
+  OPENAI_CHAT_MODEL,
+  OPENAI_STT_MODEL,
+  XAI_CHAT_MODEL,
+  XAI_STT_MODEL
+} from '../providers/models'
 import { applyRoleList, mergeListedModels, roleIdsOrSeed } from './model-cache'
 import { defaultAppSettings } from './settings-file'
 
@@ -45,9 +50,12 @@ describe('applyRoleList', () => {
 })
 
 describe('roleIdsOrSeed', () => {
-  it('returns null when the catalog request failed', () => {
-    expect(roleIdsOrSeed('xai-key', 'voice', null)).toBeNull()
-    expect(roleIdsOrSeed('openai', 'ai', null)).toBeNull()
+  it('falls back to registry seeds when the catalog request failed', () => {
+    expect(roleIdsOrSeed('xai-key', 'voice', null)).toEqual([XAI_STT_MODEL])
+    expect(roleIdsOrSeed('xai-key', 'ai', null)).toEqual([XAI_CHAT_MODEL])
+    expect(roleIdsOrSeed('xai-oauth', 'voice', null)).toEqual([XAI_STT_MODEL])
+    expect(roleIdsOrSeed('openai', 'voice', null)).toEqual([OPENAI_STT_MODEL])
+    expect(roleIdsOrSeed('openai', 'ai', null)).toEqual([OPENAI_CHAT_MODEL])
   })
 
   it('prefers live ids when the role matched', () => {
@@ -88,14 +96,37 @@ describe('mergeListedModels', () => {
     expect(next.models.openai.ai).toBe('gpt-4.1')
   })
 
-  it('does not write a catalog when the list request failed', () => {
+  it('seeds both roles from the registry when the list request failed', () => {
     const base = defaultAppSettings()
     const probes = {
       voice: { state: 'pass' as const, message: 'Voice check passed.' },
       ai: { state: 'pass' as const, message: 'AI check passed.' }
     }
-    expect(mergeListedModels(base, 'xai-key', probes, null, fetchedAt)).toBe(base)
-    expect(base.models['xai-key'].voice).toBe(XAI_STT_MODEL)
+    const next = mergeListedModels(base, 'xai-key', probes, null, fetchedAt)
+    expect(next).not.toBe(base)
+    expect(next.modelCache['xai-key'].voice).toEqual({ ids: [XAI_STT_MODEL], fetchedAt })
+    expect(next.modelCache['xai-key'].ai).toEqual({ ids: [XAI_CHAT_MODEL], fetchedAt })
+    expect(next.models['xai-key'].voice).toBe(XAI_STT_MODEL)
+    expect(next.models['xai-key'].ai).toBe(XAI_CHAT_MODEL)
+    expect(next.modelCache.openai).toEqual(base.modelCache.openai)
+  })
+
+  it('seeds only the role whose probe passed when the list request failed', () => {
+    const base = defaultAppSettings()
+    const next = mergeListedModels(
+      base,
+      'openai',
+      {
+        voice: { state: 'fail', message: 'Voice check failed (401).' },
+        ai: { state: 'pass', message: 'AI check passed.' }
+      },
+      null,
+      fetchedAt
+    )
+    expect(next.modelCache.openai.voice).toEqual(base.modelCache.openai.voice)
+    expect(next.models.openai.voice).toBe(base.models.openai.voice)
+    expect(next.modelCache.openai.ai).toEqual({ ids: [OPENAI_CHAT_MODEL], fetchedAt })
+    expect(next.models.openai.ai).toBe(OPENAI_CHAT_MODEL)
   })
 
   it('seeds Voice from the registry when the catalog omitted speech ids', () => {

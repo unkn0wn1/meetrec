@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { RecordingMetaView } from '../../electron/shared/ipc-contract'
 import { Button } from '@/components/ui/button'
 import { formatClock, formatWhen } from '@/lib/format'
@@ -25,6 +25,12 @@ watch(
   { immediate: true }
 )
 
+const captureLabel = computed(() => {
+  if (props.meta.captureMode === 'mix') return 'Mic + system audio'
+  if (props.meta.captureMode === 'mic-only') return 'Microphone only'
+  return ''
+})
+
 function save(): void {
   emit('save', { ...drafts.value })
 }
@@ -46,6 +52,8 @@ function save(): void {
       <span class="text-muted-foreground">Topic</span>
       <span class="ml-2">{{ meta.topic || 'Appears after a summary.' }}</span>
     </p>
+    <p v-if="captureLabel" class="mt-2 text-sm text-muted-foreground">{{ captureLabel }}</p>
+    <p v-if="meta.note" class="mt-2 text-sm text-amber-300">{{ meta.note }}</p>
 
     <div class="mt-4">
       <p class="text-sm text-muted-foreground">
