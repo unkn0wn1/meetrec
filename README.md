@@ -2,7 +2,7 @@
 
 Desktop app that records your microphone and system audio into one local WAV, then transcribes and summarizes that file on your machine.
 
-It records what you already hear and say. It does not join the call. **0.1.0-alpha.3 is an early alpha, not a production release.**
+It records what you already hear and say. It does not join the call. **0.1.0** is the first non-alpha release (Windows tag builds signed with Azure Trusted Signing; Linux AppImage stays unsigned).
 
 ## Features
 
@@ -88,7 +88,7 @@ npm run dist:win
 
 `dist:linux` writes an AppImage under `dist/`. `dist:win` writes an NSIS installer and a portable exe. A `v*` tag signs those Windows exes with Azure Trusted Signing. The Linux AppImage, ad-hoc Windows builds, and a local `dist:win` stay unsigned. SmartScreen reputation still builds over time. Builds include ffmpeg (a pinned BtbN LGPL-static build; about 135 MiB on Linux and 127 MiB on Windows). `npm run dev` still uses ffmpeg on `PATH`. The app id stays `io.techglint.meetrec`.
 
-Public alphas come from a **`v*` tag** (GitHub runners build Linux + Windows and attach files to a Release). Merging to `main` does not publish installers. Details: [docs/packaging.md](docs/packaging.md).
+Public releases come from a **`v*` tag** (GitHub runners build Linux + Windows and attach files to a Release). Plain tags like `v0.1.0` are Latest; hyphenated tags (`v0.1.0-alpha.3`) stay prerelease. Merging to `main` does not publish installers. Details: [docs/packaging.md](docs/packaging.md).
 
 ## Contributing
 
