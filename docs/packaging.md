@@ -95,13 +95,15 @@ Auto-update is not included. A follow-up can add `electron-updater` and a publis
 
 **Releases** (`.github/workflows/release.yml`) run only when you push a `v*` tag. GitHub-hosted runners build Linux (`ubuntu-latest` → AppImage) and Windows (`windows-latest` → NSIS + portable exe), then attach those files to a GitHub Release. The Windows job signs with Azure Trusted Signing when `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are set. The Linux AppImage stays unsigned. Tags with a hyphen (`v0.1.0-alpha.1`, `v0.2.0-beta.1`, `v1.0.0-rc.1`) are marked **prerelease**. Plain tags like `v1.0.0` are a full release.
 
-Cut an alpha after the version bump is on `main`:
+Cut a release after the version bump is on `main`:
 
 ```bash
-# package.json "version" should already match, e.g. 0.1.0-alpha.1
-git tag v0.1.0-alpha.1
-git push origin v0.1.0-alpha.1
+# package.json "version" should already match, e.g. 0.1.0
+git tag v0.1.0
+git push origin v0.1.0
 ```
+
+For a prerelease, use a hyphenated tag that matches `package.json` (e.g. `v0.1.0-alpha.3`).
 
 **Ad-hoc package** (`.github/workflows/package.yml`) is **workflow_dispatch** only: same builders, upload artifacts, no GitHub Release. It does not receive the Azure secrets. The Windows job passes `--config.win.signAndEditExecutable=false`, so those artifacts stay unsigned. Use it to smoke-test packaging without tagging.
 
