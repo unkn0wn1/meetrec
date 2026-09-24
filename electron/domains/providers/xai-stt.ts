@@ -14,6 +14,19 @@ export async function transcribeWav(input: {
   fetchImpl?: typeof fetch
   onWaiting?: () => void
 }): Promise<TranscriptDocument> {
+  const payload = await postXaiTranscription(input)
+  return documentFromStt(payload, input.model, new Date().toISOString())
+}
+
+export async function postXaiTranscription(input: {
+  apiKey: string
+  audioPath: string
+  model: string
+  mimeType?: string
+  fileName?: string
+  fetchImpl?: typeof fetch
+  onWaiting?: () => void
+}): Promise<unknown> {
   const bytes = await readFile(input.audioPath)
   const mimeType = input.mimeType ?? 'audio/wav'
   const fileName = input.fileName ?? basename(input.audioPath)
@@ -35,13 +48,11 @@ export async function transcribeWav(input: {
   if (!response.ok) {
     throw new Error(sttErrorMessage(response.status, raw))
   }
-  let payload: unknown
   try {
-    payload = JSON.parse(raw)
+    return JSON.parse(raw) as unknown
   } catch {
     throw new Error('Speech-to-text returned a response that was not JSON.')
   }
-  return documentFromStt(payload, input.model, new Date().toISOString())
 }
 
 export function sttErrorMessage(status: number, body: string): string {

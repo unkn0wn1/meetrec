@@ -93,7 +93,7 @@ export class LibraryService {
 
   async transcribe(
     id: string,
-    report: (stage: TranscribeStage) => void = () => {}
+    report: (stage: TranscribeStage, message?: string) => void = () => {}
   ): Promise<LibraryDetail> {
     const stored = await this.require(id)
     const auth = await this.readAuth('voice')

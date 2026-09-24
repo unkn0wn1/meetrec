@@ -19,8 +19,8 @@
 
 - **Renderer:** UI only. Pinia holds view state and calls `window.meetrec`. Provider HTTP stays in main.
 - **Preload:** `contextBridge` exposes a narrow typed API (`window.meetrec.*`).
-- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP (STT upload is mono 16 kHz MP3 from the WAV), Google and Microsoft calendar polls, the pre-meeting prompt, optional Drive / OneDrive upload, and update checks for packaged NSIS and AppImage builds.
-- **Library job progress:** transcribe and summarize push `library:job-progress` to the calling window (`id`, `job`, `stage`, `startedAt`). `stage: null` clears the row. The renderer shows the stage label and elapsed time. There is no percent.
+- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP (STT upload is mono 16 kHz MP3 from the WAV, and a file over 24 MB is split in the temp directory before upload), Google and Microsoft calendar polls, the pre-meeting prompt, optional Drive / OneDrive upload, and update checks for packaged NSIS and AppImage builds.
+- **Library job progress:** transcribe and summarize push `library:job-progress` to the calling window (`id`, `job`, `stage`, `startedAt`). The event may include `message`. `stage: null` clears the row. The renderer shows that text instead of the stage label, plus elapsed time. Multi-piece transcribe uses it for `Uploading chunk i of n` and `Waiting for model (chunk i of n)`. There is still no percent.
 - **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation rejects; `RecordingStatus.captureSupported` is false so the UI disables Start.
 
 ## Domains (keep separate)

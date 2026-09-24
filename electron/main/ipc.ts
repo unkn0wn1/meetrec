@@ -132,17 +132,20 @@ async function withJobProgress<T>(
   event: IpcMainInvokeEvent,
   id: string,
   job: LibraryJobKind,
-  run: (report: (stage: JobStage) => void) => Promise<T>
+  run: (report: (stage: JobStage, message?: string) => void) => Promise<T>
 ): Promise<T> {
   const startedAt = Date.now()
-  const send = (stage: LibraryJobProgress['stage']): void => {
+  const send = (stage: LibraryJobProgress['stage'], message?: string): void => {
     if (event.sender.isDestroyed()) return
     const payload: LibraryJobProgress = { id, job, stage, startedAt }
+    if (stage !== null && typeof message === 'string' && message.trim() !== '') {
+      payload.message = message
+    }
     event.sender.send(IPC.libraryJobProgress, payload)
   }
   try {
-    return await run((stage) => {
-      send(stage)
+    return await run((stage, message) => {
+      send(stage, message)
     })
   } finally {
     send(null)

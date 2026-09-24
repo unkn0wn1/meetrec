@@ -62,7 +62,13 @@ export async function prepareSttUpload(
   return { path, mimeType: STT_MIME, fileName, cleanup }
 }
 
+const COMPRESS_FAILURE = 'Could not compress the recording for speech-to-text.'
+
 function spawnFfmpeg(ffmpeg: string, args: string[]): Promise<void> {
+  return runSttFfmpeg(ffmpeg, args, COMPRESS_FAILURE)
+}
+
+export function runSttFfmpeg(ffmpeg: string, args: string[], failure: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(ffmpeg, args, {
       stdio: ['ignore', 'ignore', 'pipe'],
@@ -83,13 +89,7 @@ function spawnFfmpeg(ffmpeg: string, args: string[]): Promise<void> {
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, 200)
-      reject(
-        new Error(
-          detail
-            ? `Could not compress the recording for speech-to-text: ${detail}`
-            : 'Could not compress the recording for speech-to-text.'
-        )
-      )
+      reject(new Error(detail ? `${failure}: ${detail}` : failure))
     })
   })
 }

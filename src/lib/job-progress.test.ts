@@ -42,6 +42,13 @@ describe('progressLabel', () => {
     expect(progressLabel('transcribe', 'waiting', '   ')).toBe('Waiting for model')
     expect(progressLabel('summarize', 'uploading', 'Nope')).toBeNull()
   })
+
+  it('shows a chunk upload message as the label', () => {
+    const message = 'Uploading chunk 2 of 3'
+    expect(progressLabel('transcribe', 'uploading', message)).toBe(message)
+    const next = nextJobView(null, null, event({ stage: 'uploading', message }))
+    expect(next.current?.label).toBe(message)
+  })
 })
 
 describe('elapsedLabel', () => {

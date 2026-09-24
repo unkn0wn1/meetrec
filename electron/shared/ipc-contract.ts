@@ -163,7 +163,7 @@ export interface LibraryJobProgress {
   job: LibraryJobKind
   /** null clears the row after the job settles. */
   stage: TranscribeStage | SummarizeStage | null
-  /** Optional label override. Main leaves this unset. */
+  /** Main sets this for multi-piece transcribe progress and leaves it unset otherwise. */
   message?: string
   /** Date.now() at job start. The same value on every event for that job, including the clear. */
   startedAt: number
