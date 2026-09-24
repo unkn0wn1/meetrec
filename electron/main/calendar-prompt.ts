@@ -15,7 +15,7 @@ export function createCalendarPrompt(): CalendarPrompt {
     if (window && !window.isDestroyed()) return window
     const created = new BrowserWindow({
       width: 420,
-      height: 300,
+      height: 400,
       backgroundColor: '#111527',
       show: false,
       alwaysOnTop: true,

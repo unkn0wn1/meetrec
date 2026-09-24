@@ -118,7 +118,15 @@ describe('planWasapiCapture', () => {
   it('falls back to mic-only when loopback or a render device is missing', () => {
     const noFlag = planWasapiCapture({ ...devices(), loopbackForm: null })
     expect(noFlag.mode).toBe('mic-only')
-    expect(noFlag.note).toContain('TODO')
+    expect(noFlag.system).toBeNull()
+    expect(noFlag.note).toBe(
+      'System audio is unavailable, so only the microphone is being recorded. This ffmpeg build has no WASAPI loopback option. Enable Stereo Mix under Sound → Recording, or use a build with WASAPI loopback.'
+    )
+    expect(noFlag.note).not.toContain('TODO')
+    const noFlagArgs = ffmpegArgs(noFlag, 'audio.wav', 48000)
+    expect(noFlagArgs.filter((_, index) => noFlagArgs[index - 1] === '-i')).toEqual(['Headset Mic'])
+    expect(noFlagArgs.some((arg) => arg.includes('amix'))).toBe(false)
+    expect(noFlagArgs).not.toContain('-loopback')
 
     const noRender = planWasapiCapture({
       captures: devices().captures,
@@ -126,9 +134,16 @@ describe('planWasapiCapture', () => {
       loopbackForm: 'loopback'
     })
     expect(noRender.mode).toBe('mic-only')
-    expect(noRender.note).toContain('TODO')
-    expect(
-      ffmpegArgs(noRender, 'audio.wav', 48000).filter((_, index, all) => all[index - 1] === '-i')
-    ).toEqual(['Headset Mic'])
+    expect(noRender.system).toBeNull()
+    expect(noRender.note).toBe(
+      'System audio is unavailable, so only the microphone is being recorded. No playback device was listed. Connect a speaker or headphones, or enable Stereo Mix under Sound → Recording.'
+    )
+    expect(noRender.note).not.toContain('TODO')
+    const noRenderArgs = ffmpegArgs(noRender, 'audio.wav', 48000)
+    expect(noRenderArgs.filter((_, index) => noRenderArgs[index - 1] === '-i')).toEqual([
+      'Headset Mic'
+    ])
+    expect(noRenderArgs.some((arg) => arg.includes('amix'))).toBe(false)
+    expect(noRenderArgs).not.toContain('-filter_complex')
   })
 })

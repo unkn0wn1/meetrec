@@ -44,7 +44,7 @@ export async function startEvent(core: CalendarCore, event: CalendarEvent): Prom
   if (core.deps.recording.status().phase === 'recording') {
     throw new Error('Already recording.')
   }
-  await core.deps.recording.start({
+  const started = await core.deps.recording.start({
     title: event.title,
     calendar: {
       provider: event.provider,
@@ -70,6 +70,7 @@ export async function startEvent(core: CalendarCore, event: CalendarEvent): Prom
         }
       : null
   await core.saveRuntime()
+  core.revealMicOnlyNote = started.captureMode === 'mic-only' && Boolean(started.note)
   await core.publish()
 }
 

@@ -23,11 +23,11 @@ Pick implementation once at startup from `process.platform`.
 
 ## Backends
 
-| OS      | Approach                                                                                                                                                                                                           |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Windows | ffmpeg. WASAPI mic + playback loopback when `ffmpeg -devices` lists a `wasapi` demuxer. Otherwise DirectShow mic + Stereo Mix (or another loopback capture name).                                                  |
-| macOS   | Not implemented. Start is disabled in the Record UI and calendar prompt. `MacosCapture` / `assertCaptureSupported` reject with a clear message. Phased plan: [mac-system-audio-plan.md](mac-system-audio-plan.md). |
-| Linux   | ffmpeg `pulse` input: default mic + `<default sink>.monitor`, mixed to one PCM WAV. Mic-only if no sink, with a TODO note.                                                                                         |
+| OS      | Approach                                                                                                                                                                                                                                   |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Windows | ffmpeg. WASAPI mic + playback loopback when `ffmpeg -devices` lists a `wasapi` demuxer. Otherwise DirectShow mic + Stereo Mix (or another loopback capture name). If that loopback is missing, mic-only with a user-facing note (no TODO). |
+| macOS   | Not implemented. Start is disabled in the Record UI and calendar prompt. `MacosCapture` / `assertCaptureSupported` reject with a clear message. Phased plan: [mac-system-audio-plan.md](mac-system-audio-plan.md).                         |
+| Linux   | ffmpeg `pulse` input: default mic + `<default sink>.monitor`, mixed to one PCM WAV. Mic-only if no sink, with a TODO note.                                                                                                                 |
 
 ## Mix
 
@@ -43,9 +43,11 @@ Current ffmpeg builds have no WASAPI demuxer ([ticket 9408](https://trac.ffmpeg.
 
 - List: `ffmpeg -list_devices true -f dshow -i dummy`
 - Mix the microphone with a loopback capture device (Stereo Mix, Wave Out Mix, What U Hear, Mixed Output, or a name containing `loopback`).
-- If none is listed, record the mic only and set a note that includes a TODO. Enable Stereo Mix under Sound → Recording → show disabled devices when the driver has it.
+- If none is listed, record the microphone only. The note says system audio is unavailable and only the microphone is being recorded. It tells the user to enable Stereo Mix under Sound → Recording (show disabled devices), or to use a build with WASAPI loopback. The note does not contain a TODO.
 
-When `ffmpeg -devices` lists `wasapi` and `ffmpeg -h demuxer=wasapi` shows a loopback option, capture uses that demuxer instead: default capture endpoint plus default render loopback (`-loopback 1`, or `loopback_device=` / `loopback_system=true` when that is the option ffmpeg prints). An unrecognized WASAPI device list throws.
+When `ffmpeg -devices` lists `wasapi` and `ffmpeg -h demuxer=wasapi` shows a loopback option, capture uses that demuxer instead: default capture endpoint plus default render loopback (`-loopback 1`, or `loopback_device=` / `loopback_system=true` when that is the option ffmpeg prints). An unrecognized WASAPI device list throws. If that demuxer has no loopback option, or no playback device is listed, capture stays microphone only (one input, no mix) and the note names what is missing in the same plain language.
+
+The Record tab shows the note while recording. A calendar start that is microphone-only leaves the prompt open with the same note. Stop keeps the note on `meta.json`, and Recording detail shows it. This is the existing mic-only fallback, not a new capture graph.
 
 Stop writes `q` to ffmpeg's stdin so the WAV header is flushed.
 

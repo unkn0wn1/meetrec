@@ -41,7 +41,7 @@ Direct commits and pushes to `main` are blocked. Override only for an emergency:
 
 Linux records with ffmpeg against Pulse (PipeWire). Prefer a mix of the default mic and `<default sink>.monitor`. If the monitor is missing, mic-only is allowed and the note must say so, including a TODO for system audio. Capture uses the packaged binary under `process.resourcesPath/ffmpeg` when it is there, and `ffmpeg` on PATH otherwise.
 
-Windows records with ffmpeg. DirectShow mixes the mic and a Stereo Mix / loopback capture device. If `ffmpeg -devices` lists a `wasapi` demuxer whose help shows a loopback option, that path is used instead. Mic-only still requires a TODO in the note. Live Windows smoke is manual.
+Windows records with ffmpeg. DirectShow mixes the mic and a Stereo Mix / loopback capture device. If `ffmpeg -devices` lists a `wasapi` demuxer whose help shows a loopback option, that path is used instead. If system audio is unavailable, capture stays mic-only (no extra mix graph) and the note tells the user that, including how to enable Stereo Mix or use a build with WASAPI loopback. That note is user-facing and must not contain a TODO. Live Windows smoke is manual.
 
 A recording is not done until Start writes `recordings/<id>/audio.wav` and Stop leaves a playable WAV plus `meta.json`. Older flat `*.wav` files are migrated into that layout on library scan. Transcription and summary HTTP stay in main.
 

@@ -1,4 +1,5 @@
 import type { CalendarStatus } from '../../shared/calendar-contract'
+import type { CaptureMode } from '../../shared/ipc-contract'
 import type { RecordingCalendarLink } from '../recording/meta'
 import type { SecretStore } from '../settings/secret-store'
 import type { CalendarPreferences } from './preferences'
@@ -13,7 +14,7 @@ export interface RecordingPort {
   start(input?: {
     title?: string | null
     calendar?: RecordingCalendarLink | null
-  }): Promise<unknown>
+  }): Promise<{ captureMode: CaptureMode; note: string | null }>
   stop(): Promise<unknown>
 }
 
@@ -59,6 +60,8 @@ export interface CalendarMemory {
 export interface CalendarCore {
   deps: CalendarDeps
   memory: CalendarMemory
+  /** Set just before publish when that calendar start recorded mic-only. */
+  revealMicOnlyNote: boolean
   publish(): Promise<void>
   saveRuntime(): Promise<void>
   fetchGoogle(): Promise<void>
