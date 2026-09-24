@@ -26,7 +26,7 @@
 
 | Domain       | Owns                                                                                      |
 | ------------ | ----------------------------------------------------------------------------------------- |
-| `recording`  | Folder layout, library scan, manual start/stop                                            |
+| `recording`  | Folder layout, library scan, permanent delete, manual start/stop                          |
 | `capture`    | OS audio backends only                                                                    |
 | `transcript` | STT document, diarization labels, speaker rename                                          |
 | `minutes`    | Summary prompt and `summary.md`                                                           |

@@ -31,6 +31,11 @@
 - Speakers: count plus editable names (empty until diarization or you type them)
 - Topic: filled after the summary; placeholder before
 
+**Delete:**
+
+- Detail view has **Delete recording**. Confirm with **Delete permanently** before anything is removed.
+- Permanent delete for v1 (no in-app trash). Removes the local `recordings/<id>/` folder (audio, transcript, summary, meta). Cloud copies already uploaded are left alone. An in-progress recording cannot be deleted until Stop.
+
 **Left rail:**
 
 1. **Playback** — play, pause, stop, and progress

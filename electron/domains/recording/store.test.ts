@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { recordingLayout } from './layout'
-import { migrateFlatWavs, scanRecordings, wavDurationMs } from './store'
+import { deleteRecording, migrateFlatWavs, scanRecordings, wavDurationMs, writeMeta } from './store'
+import { emptyMeta } from './meta'
 
 describe('flat wav migration', () => {
   const dirs: string[] = []
@@ -42,6 +43,49 @@ describe('flat wav migration', () => {
     expect(second).toEqual([])
     const listed = await scanRecordings(root)
     expect(listed.map((item) => item.meta.id)).toEqual([id])
+  })
+})
+
+describe('deleteRecording', () => {
+  const dirs: string[] = []
+
+  afterEach(() => {
+    for (const dir of dirs) rmSync(dir, { recursive: true, force: true })
+    dirs.length = 0
+  })
+
+  it('removes the recording folder and its artifacts', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-del-'))
+    dirs.push(root)
+    const id = '2026-09-22T13-58-02-629Z-ec02af'
+    const layout = recordingLayout(root, id)
+    await writeMeta(root, emptyMeta({ id, startedAt: '2026-09-22T13:58:02.629Z', durationMs: 100 }))
+    writeFileSync(layout.audioPath, wavBytes(16000, 1, 16, 1600))
+    writeFileSync(layout.transcriptPath, '{"text":"hi","segments":[]}\n')
+    writeFileSync(layout.summaryPath, '# Notes\n')
+
+    await deleteRecording(root, id)
+
+    const listed = await scanRecordings(root)
+    expect(listed).toHaveLength(0)
+    expect(() => readFileSync(layout.audioPath)).toThrow()
+    expect(() => readFileSync(layout.metaPath)).toThrow()
+  })
+
+  it('rejects an unsafe id without touching the root', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-del-'))
+    dirs.push(root)
+    writeFileSync(join(root, 'marker.txt'), 'keep')
+    await expect(deleteRecording(root, '../outside')).rejects.toThrow('Unknown recording')
+    expect(readFileSync(join(root, 'marker.txt'), 'utf8')).toBe('keep')
+  })
+
+  it('rejects a missing recording', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-del-'))
+    dirs.push(root)
+    await expect(deleteRecording(root, '2026-09-22T13-58-02-629Z-missing')).rejects.toThrow(
+      'Recording not found'
+    )
   })
 })
 

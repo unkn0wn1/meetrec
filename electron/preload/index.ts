@@ -43,7 +43,8 @@ const api: MeetrecApi = {
     detail: (id) => ipcRenderer.invoke(IPC.libraryDetail, id),
     updateSpeakers: (id, names) => ipcRenderer.invoke(IPC.librarySpeakers, id, names),
     transcribe: (id) => ipcRenderer.invoke(IPC.libraryTranscribe, id),
-    summarize: (id) => ipcRenderer.invoke(IPC.librarySummarize, id)
+    summarize: (id) => ipcRenderer.invoke(IPC.librarySummarize, id),
+    delete: (id) => ipcRenderer.invoke(IPC.libraryDelete, id)
   },
   settings: {
     get: () => ipcRenderer.invoke(IPC.settingsGet),

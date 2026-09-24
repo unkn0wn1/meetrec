@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
 import CloudUploadButton from '@/components/CloudUploadButton.vue'
+import DeleteRecordingButton from '@/components/DeleteRecordingButton.vue'
 import PlaybackPanel from '@/components/PlaybackPanel.vue'
 import RecordingHeader from '@/components/RecordingHeader.vue'
 import SummaryPanel from '@/components/SummaryPanel.vue'
@@ -26,6 +27,11 @@ watch(
   },
   { immediate: true }
 )
+
+async function onDelete(): Promise<void> {
+  const ok = await library.remove(id.value)
+  if (ok) void router.push({ name: 'library' })
+}
 
 const panes = [
   { id: 'playback', label: 'Playback' },
@@ -52,6 +58,7 @@ const panes = [
         @save="library.saveSpeakers(id, $event)"
       />
       <CloudUploadButton :recording-id="id" />
+      <DeleteRecordingButton :busy="library.busy" @confirm="onDelete" />
 
       <div class="grid gap-4 md:grid-cols-[11rem_1fr]">
         <nav class="flex flex-row gap-2 md:flex-col" aria-label="Recording sections">
