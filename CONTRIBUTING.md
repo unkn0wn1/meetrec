@@ -41,7 +41,7 @@ Installer builds are manual only ([`.github/workflows/package.yml`](.github/work
 
 ## Capture notes
 
-Linux (ffmpeg + Pulse / PipeWire) is the daily path. Windows records with ffmpeg (DirectShow, or WASAPI when that demuxer exists). Packaged apps include ffmpeg. `npm run dev` uses ffmpeg on PATH. macOS throws from its stub. A mic-only fallback must leave a TODO in the status note so system audio is not silently dropped.
+Linux (ffmpeg + Pulse / PipeWire) is the daily path. Windows records with ffmpeg (DirectShow, or WASAPI when that demuxer exists). Packaged apps include ffmpeg. `npm run dev` uses ffmpeg on PATH. macOS throws from its stub. A Linux mic-only fallback must leave a TODO in the status note so system audio is not silently dropped. A Windows mic-only fallback uses a user-facing note (no TODO) shown on the Record tab and, for a calendar start, on the prompt. Stop saves that note on the recording.
 
 ## Releases
 

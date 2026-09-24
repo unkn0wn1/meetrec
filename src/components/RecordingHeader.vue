@@ -81,7 +81,13 @@ function onInvitee(speakerId: string, event: Event): void {
       <span class="ml-2">{{ meta.topic || 'Appears after a summary.' }}</span>
     </p>
     <p v-if="captureLabel" class="mt-2 text-sm text-muted-foreground">{{ captureLabel }}</p>
-    <p v-if="meta.note" class="mt-2 text-sm text-amber-300">{{ meta.note }}</p>
+    <p
+      v-if="meta.note"
+      class="mt-2 rounded-md border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-sm text-amber-300"
+      role="status"
+    >
+      {{ meta.note }}
+    </p>
 
     <div class="mt-4">
       <p class="text-sm text-muted-foreground">

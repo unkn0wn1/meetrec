@@ -42,7 +42,13 @@ onMounted(() => {
         >
           {{ session.unsupportedReason }}
         </p>
-        <p v-if="session.note" class="mt-3 text-sm text-amber-300">{{ session.note }}</p>
+        <p
+          v-if="session.note"
+          class="mt-3 rounded-md border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-sm text-amber-300"
+          role="status"
+        >
+          {{ session.note }}
+        </p>
         <p v-if="session.error" class="mt-3 text-sm text-destructive" role="alert">
           {{ session.error }}
         </p>

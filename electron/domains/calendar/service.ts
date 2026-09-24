@@ -18,6 +18,7 @@ import { emptyPreferences, readPreferences, writePreferences } from './preferenc
 import { saveUploadPreference } from './upload-pref'
 import { nextRecordableEvent } from './event-view'
 import { clearSkippedArm, setRecordOptOut } from './record-opt'
+import { promptWindowVisible } from './prompt-window'
 import { decideSchedule, noticeBody } from './schedule'
 import { readAutoRecordFlag } from '../settings/settings-file'
 import { cachedEvents, fetchGoogleSnapshot, fetchMicrosoftSnapshot, freshEvents } from './snapshot'
@@ -34,6 +35,7 @@ export class CalendarService implements CalendarCore {
   private tickTimer: ReturnType<typeof setInterval> | null = null
   private lastEncoded = ''
   private promptKey: string | null = null
+  revealMicOnlyNote = false
 
   constructor(readonly deps: CalendarDeps) {
     this.memory = emptyMemory(emptyPreferences(), emptyRuntimeState())
@@ -96,10 +98,15 @@ export class CalendarService implements CalendarCore {
       })
     )
     const key = status.prompt?.occurrenceKey ?? null
-    if (key !== this.promptKey) {
-      this.promptKey = key
-      this.deps.onPrompt(key != null)
-    }
+    const reveal = this.revealMicOnlyNote
+    this.revealMicOnlyNote = false
+    const visible = promptWindowVisible({
+      promptKey: this.promptKey,
+      nextKey: key,
+      revealMicOnly: reveal
+    })
+    this.promptKey = key
+    if (visible != null) this.deps.onPrompt(visible)
   }
 
   renderTray(): void {

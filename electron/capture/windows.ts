@@ -17,13 +17,13 @@ import {
 const SAMPLE_RATE = 48000
 
 const DSHOW_MIC_ONLY =
-  'This ffmpeg has no WASAPI demuxer and no Stereo Mix or loopback capture device was listed. Recording microphone only. TODO: mix default playback loopback when WASAPI is available or Stereo Mix is enabled.'
+  'System audio is unavailable, so only the microphone is being recorded. Enable Stereo Mix under Sound → Recording (show disabled devices), or use a build with WASAPI loopback.'
 
 const WASAPI_NO_LOOPBACK =
-  'This ffmpeg WASAPI demuxer has no loopback option. Recording microphone only. TODO: mix default playback loopback.'
+  'System audio is unavailable, so only the microphone is being recorded. This ffmpeg build has no WASAPI loopback option. Enable Stereo Mix under Sound → Recording, or use a build with WASAPI loopback.'
 
 const WASAPI_NO_RENDER =
-  'No WASAPI render device was listed. Recording microphone only. TODO: mix default playback loopback.'
+  'System audio is unavailable, so only the microphone is being recorded. No playback device was listed. Connect a speaker or headphones, or enable Stereo Mix under Sound → Recording.'
 
 export interface CapturePlan {
   mode: CaptureMode

@@ -62,8 +62,16 @@ describe('planDshowCapture', () => {
     const plan = planDshowCapture([{ name: 'Microphone (Realtek(R) Audio)' }])
     expect(plan.mode).toBe('mic-only')
     expect(plan.system).toBeNull()
-    expect(plan.note).toContain('no WASAPI demuxer')
-    expect(plan.note).toContain('TODO')
+    expect(plan.note).toBe(
+      'System audio is unavailable, so only the microphone is being recorded. Enable Stereo Mix under Sound → Recording (show disabled devices), or use a build with WASAPI loopback.'
+    )
+    expect(plan.note).not.toContain('TODO')
+    const args = ffmpegArgs(plan, 'audio.wav', 48000)
+    expect(args.filter((_, index) => args[index - 1] === '-i')).toEqual([
+      'audio=Microphone (Realtek(R) Audio)'
+    ])
+    expect(args.some((arg) => arg.includes('amix'))).toBe(false)
+    expect(args).not.toContain('-filter_complex')
   })
 
   it('throws when no microphone is listed', () => {

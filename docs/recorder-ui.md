@@ -8,7 +8,7 @@
 - Record’s timer and Start / Stop stay in a left-aligned `max-w-md` block under that header. The header still spans the shell.
   On macOS, Start stays disabled and the panel shows that capture is not available in this build (Linux / Windows only until ScreenCaptureKit ships). The calendar prompt disables Start recording and Auto-arm the same way.
 - The main window opens at 960×720. Navigation does not resize it. There is no minimum width; below 48rem the column shrinks with the window.
-- The calendar prompt (`#/calendar-prompt`, 420×300) is not in this shell. It also does not show the update banner.
+- The calendar prompt (`#/calendar-prompt`, 420×400) is not in this shell. It also does not show the update banner. When a calendar start records microphone only, that window stays open and shows the capture note. Close does not stop the recording. A manual Record start does not open the prompt; the Record tab shows the note there.
 - When an update is ready, AppShell shows a banner above the page. During a recording the banner says to restart after recording and does not offer quit. While idle it offers Restart and install.
 - **Calendar** (`#/calendar`) lists timed events for the next 14 days from every checked Google or Microsoft calendar. Each row shows title, time, provider, the account email when meetrec has one, and **Record with meetrec** (on by default). Unchecking a repeating event asks for this occurrence or the entire series.
 - The AppShell header shows the mic-on-gradient tile plus a Meet**Rec** wordmark (Rec uses the marketing cyan→violet→pink gradient).
@@ -16,7 +16,7 @@
 - A tray icon is available (same gradient tile, filled mic for 16×16 readability). Opening the app focuses Library.
 - About 10 minutes before a timed event that is still set to record, the tray adds **Start: {title}**, **Auto-arm (T−1 min)**, and **Dismiss**. While one is armed, it shows **Armed: {title}** and **Cancel auto-arm**. While recording, it shows **Stop recording**.
 - The same Start, Dismiss, and Auto-arm actions appear in a small always-on-top prompt window (`#/calendar-prompt`). Auto-arm’s label says it starts one minute before. That route is not in the mode nav.
-- **General → Enable auto-record for selected meetings** replaces that prompt with a notification ("recording will start 1 minute before") and starts the recording at T−1. Opted-out events stay quiet.
+- **General → Enable auto-record for selected meetings** replaces that prompt with a notification ("recording will start 1 minute before") and starts the recording at T−1. Opted-out events stay quiet. If that start is microphone only, the prompt opens with the capture note.
 
 ## Library
 
@@ -31,6 +31,7 @@
 - Duration (from the file or `meta.json`)
 - Speakers: count plus editable names (empty until diarization or you type them). A calendar-linked meeting also lists its invitees; choosing one fills that speaker’s name, and Save writes it.
 - Topic: filled after the summary; placeholder before
+- Capture: "Mic + system audio" or "Microphone only". A microphone-only take keeps its note here after Stop.
 
 **Delete:**
 
