@@ -22,7 +22,7 @@ Manual Record, a local folder, Library (including permanent delete with confirm)
 6. Capture mic + system audio → one mixed **local** file.
 7. Stop on user Stop, tray Stop, or — only for a recording started from that event — at the event end plus 2 minutes. When **Stop recording after sustained silence** is on, near-silence for the chosen threshold also stops that recording. Manual Stop still works. A manual Record with no calendar link has no calendar grace stop.
 8. Transcribe (default: xAI Grok Voice Transcribe 2.0, diarization on).
-9. Show voice count; user names speakers if needed. Invitee names and emails are stored on `meta.json` for a later speaker map. This does not rename diarized speakers.
+9. Show voice count; user names speakers if needed. For a calendar-linked recording, each diarized speaker can be filled from an invitee, then saved onto that speaker. Invitees do not become speakers before diarization.
 10. Generate minutes via selected LLM provider → save **locally** next to the audio. Optional upload can copy artifacts to Drive or the OneDrive app folder after that. It is off by default.
 
 ## Non-goals (v1)

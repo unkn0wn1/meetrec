@@ -94,8 +94,13 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Manual Stop, tray Stop, and calendar end plus 2 minutes still work while the switch is on.
 - Calendar **Auto-arm (T−1 min)** and **Enable auto-record for selected meetings** are the shipped auto-start. Starting when audio resumes stays deferred.
 
+### 15. Invitee → speaker names — LOCKED (2026-09-25)
+
+- After diarization, the recording header can fill each speaker’s name from invitees stored on that recording’s `meta.json` `calendar.attendees`.
+- Choosing an invitee fills the text field. The user can still edit it. Save writes names through the existing speaker update (`meta.speakers[].name`). No new IPC.
+- Duplicate invitee names show the email in the picker. A meeting with no stored invitees stays free-text. Invitees are not turned into speakers before diarization, and there is no voice auto-match.
+
 ## Still soft / rename anytime
 
-- Mapping stored invitee names onto diarized speakers stays unwired.
 - xAI `GET /v1/models` often omits speech-to-text ids. After a passing Voice probe with a successful (chat-only) catalog, Settings stores the registry Voice seed so the picker is not stuck empty. A rejected catalog request still leaves selects empty (device-code tokens may be rejected by that route).
 - macOS system audio is still unimplemented. The phased plan is [mac-system-audio-plan.md](mac-system-audio-plan.md). Platform order stays Linux first. `captureSupported` stays false on darwin until a later change ships mic + system mix.

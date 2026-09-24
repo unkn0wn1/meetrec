@@ -96,6 +96,12 @@ export interface SpeakerView {
   name: string
 }
 
+/** Calendar fields the recording header needs to map invitees onto speakers. */
+export interface RecordingCalendarView {
+  title: string
+  attendees: { name: string; email: string | null }[]
+}
+
 export interface RecordingMetaView {
   id: string
   startedAt: string
@@ -106,6 +112,7 @@ export interface RecordingMetaView {
   captureMode: CaptureMode | null
   note: string | null
   title: string | null
+  calendar: RecordingCalendarView | null
 }
 
 export interface LibraryListItem {
