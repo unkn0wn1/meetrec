@@ -84,6 +84,24 @@ export const useLibraryStore = defineStore('library', () => {
     }
   }
 
+  async function remove(id: string): Promise<boolean> {
+    busy.value = true
+    error.value = null
+    try {
+      await useMeetrec().library.delete(id)
+      items.value = items.value.filter((item) => item.id !== id)
+      if (detail.value?.meta.id === id) {
+        detail.value = null
+      }
+      return true
+    } catch (caught) {
+      error.value = messageFrom(caught)
+      return false
+    } finally {
+      busy.value = false
+    }
+  }
+
   async function refreshQuiet(): Promise<void> {
     try {
       items.value = await useMeetrec().library.list()
@@ -92,7 +110,19 @@ export const useLibraryStore = defineStore('library', () => {
     }
   }
 
-  return { items, detail, error, loading, busy, refresh, open, saveSpeakers, transcribe, summarize }
+  return {
+    items,
+    detail,
+    error,
+    loading,
+    busy,
+    refresh,
+    open,
+    saveSpeakers,
+    transcribe,
+    summarize,
+    remove
+  }
 })
 
 function messageFrom(caught: unknown): string {

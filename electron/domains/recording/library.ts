@@ -11,6 +11,7 @@ import { parseTranscript, type TranscriptDocument } from '../transcript/parse'
 import { recordingLayout } from './layout'
 import { applySpeakerNames, uploadFlags, type RecordingMeta, type Speaker } from './meta'
 import {
+  deleteRecording,
   loadRecording,
   scanRecordings,
   writeMeta,
@@ -53,6 +54,11 @@ export class LibraryService {
       summary,
       audioUrl: `meetrec://recording/${encodeURIComponent(id)}/audio.wav`
     }
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.require(id)
+    await deleteRecording(this.recordingsDir(), id)
   }
 
   async updateSpeakers(id: string, names: Record<string, string>): Promise<RecordingMeta> {

@@ -21,6 +21,7 @@ export const IPC = {
   librarySpeakers: 'library:speakers',
   libraryTranscribe: 'library:transcribe',
   librarySummarize: 'library:summarize',
+  libraryDelete: 'library:delete',
   settingsGet: 'settings:get',
   settingsSetVoiceDefault: 'settings:setVoiceDefault',
   settingsSetAiDefault: 'settings:setAiDefault',
@@ -236,6 +237,7 @@ export interface MeetrecApi {
     updateSpeakers: (id: string, names: Record<string, string>) => Promise<RecordingMetaView>
     transcribe: (id: string) => Promise<LibraryDetail>
     summarize: (id: string) => Promise<LibraryDetail>
+    delete: (id: string) => Promise<void>
   }
   settings: {
     get: () => Promise<SettingsStatus>

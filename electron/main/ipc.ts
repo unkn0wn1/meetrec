@@ -45,6 +45,15 @@ export function registerAppIpc(
     await runHook(hooks, id)
     return toDetailView(detail)
   })
+  ipcMain.handle(IPC.libraryDelete, async (_event, id: unknown) => {
+    if (typeof id !== 'string') {
+      throw new Error('Unknown recording.')
+    }
+    if (controller.recordingId() === id) {
+      throw new Error('Stop the recording before deleting it.')
+    }
+    await library.delete(id)
+  })
   ipcMain.handle(IPC.settingsGet, (): Promise<SettingsStatus> => settings.status())
   ipcMain.handle(IPC.settingsSetVoiceDefault, (_event, provider: ProviderId) =>
     settings.setVoiceDefault(provider)

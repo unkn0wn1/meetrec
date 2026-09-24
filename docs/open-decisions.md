@@ -77,6 +77,12 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - **Enable auto-record for selected meetings** is off by default. Off keeps the 10-minute prompt (Start, Dismiss, Auto-arm). On, while the app is running, meetrec posts a notification about 10 minutes before and starts recording at **T−1 minute**. Opted-out occurrences and series are skipped. Manual Record is unchanged.
 - Library rows show a **Drive** and/or **OneDrive** badge when `meta.json` has an upload file id for that provider.
 
+### 13. Library delete — LOCKED (2026-09-24)
+
+- **Permanent delete** with an in-app confirm. No recycle bin or soft-trash for v1.
+- Main-process `library:delete` removes only `recordings/<id>/` under userData. Renderer never deletes paths.
+- Refuse delete while that id is still recording. Do not delete Drive / OneDrive copies from this action.
+
 ## Still soft / rename anytime
 
 - Silence auto-stop stays unwired. It is not a stop signal.

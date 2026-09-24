@@ -1,5 +1,6 @@
-import { mkdir, readdir, readFile, rename, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
+import { isSafeRecordingId } from '../../capture/paths'
 import { idFromFlatWav, recordingLayout, startedAtFromRecordingId } from './layout'
 import { emptyMeta, parseMeta, type RecordingMeta } from './meta'
 
@@ -49,6 +50,19 @@ export async function loadRecording(
 ): Promise<StoredRecording | null> {
   await migrateFlatWavs(recordingsDir)
   return loadFolder(recordingsDir, id)
+}
+
+/** Permanently removes the recording folder the app owns under recordingsDir. */
+export async function deleteRecording(recordingsDir: string, id: string): Promise<void> {
+  if (!isSafeRecordingId(id)) {
+    throw new Error('Unknown recording.')
+  }
+  const layout = recordingLayout(recordingsDir, id)
+  const info = await stat(layout.dir).catch(() => null)
+  if (!info?.isDirectory()) {
+    throw new Error('Recording not found.')
+  }
+  await rm(layout.dir, { recursive: true, force: false })
 }
 
 async function loadFolder(recordingsDir: string, id: string): Promise<StoredRecording | null> {
