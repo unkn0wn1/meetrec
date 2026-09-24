@@ -38,7 +38,7 @@
 
 **Left rail:**
 
-1. **Playback** — play, pause, stop, and progress
+1. **Playback** — play, pause, stop, and a scrubber. The clocks follow the playhead while playing and while dragging. Seeking does not start playback.
 2. **Transcript** — full text, or a **Transcribe** button when it is missing
 3. **Summary** — minutes and action items, or **Generate summary** when it is missing (requires a transcript)
 
