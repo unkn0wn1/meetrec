@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type {
-  ProviderCardStatus,
-  ProviderId,
-  ProviderRole,
-  RecordingDestination,
-  SettingsStatus
+import {
+  type ProviderCardStatus,
+  type ProviderId,
+  type ProviderRole,
+  type RecordingDestination,
+  type SettingsStatus,
+  SILENCE_AUTO_STOP_SECONDS_DEFAULT
 } from '../../electron/shared/ipc-contract'
 import { useMeetrec } from '@/composables/useMeetrec'
 
@@ -26,6 +27,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const oauthIntervalSec = ref<number | null>(null)
   const destination = ref<RecordingDestination>('local')
   const autoRecord = ref(false)
+  const silenceAutoStop = ref(false)
+  const silenceAutoStopSeconds = ref(SILENCE_AUTO_STOP_SECONDS_DEFAULT)
   const loading = ref(false)
   const saving = ref(false)
   const testingProviderId = ref<ProviderId | null>(null)
@@ -48,6 +51,8 @@ export const useSettingsStore = defineStore('settings', () => {
     oauthIntervalSec.value = status.oauthIntervalSec
     destination.value = status.destination
     autoRecord.value = status.autoRecord
+    silenceAutoStop.value = status.silenceAutoStop
+    silenceAutoStopSeconds.value = status.silenceAutoStopSeconds
     error.value = null
   }
 
@@ -158,6 +163,11 @@ export const useSettingsStore = defineStore('settings', () => {
     await save(() => useMeetrec().settings.setAutoRecord(enabled))
   }
 
+  async function setSilenceAutoStop(enabled: boolean, seconds: number): Promise<void> {
+    if (enabled === silenceAutoStop.value && seconds === silenceAutoStopSeconds.value) return
+    await save(() => useMeetrec().settings.setSilenceAutoStop({ enabled, seconds }))
+  }
+
   async function save(call: () => Promise<SettingsStatus>): Promise<SettingsStatus | null> {
     saving.value = true
     try {
@@ -189,6 +199,8 @@ export const useSettingsStore = defineStore('settings', () => {
     oauthIntervalSec,
     destination,
     autoRecord,
+    silenceAutoStop,
+    silenceAutoStopSeconds,
     loading,
     saving,
     testingProviderId,
@@ -207,7 +219,8 @@ export const useSettingsStore = defineStore('settings', () => {
     pollXaiOAuth,
     signOutXaiOAuth,
     setDestination,
-    setAutoRecord
+    setAutoRecord,
+    setSilenceAutoStop
   }
 })
 

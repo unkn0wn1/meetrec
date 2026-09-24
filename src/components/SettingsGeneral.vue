@@ -7,7 +7,11 @@ import { useCalendarStore } from '@/stores/calendar'
 import { useRecordingSessionStore } from '@/stores/recordingSession'
 import { useSettingsStore } from '@/stores/settings'
 import { useUpdaterStore } from '@/stores/updater'
-import type { RecordingDestination } from '../../electron/shared/ipc-contract'
+import {
+  SILENCE_AUTO_STOP_SECONDS_MAX,
+  SILENCE_AUTO_STOP_SECONDS_MIN,
+  type RecordingDestination
+} from '../../electron/shared/ipc-contract'
 
 const settings = useSettingsStore()
 const calendar = useCalendarStore()
@@ -46,6 +50,17 @@ function chooseDestination(destination: RecordingDestination): void {
 function onAutoRecord(event: Event): void {
   const checked = event.target instanceof HTMLInputElement && event.target.checked
   void settings.setAutoRecord(checked)
+}
+
+function onSilenceAutoStop(event: Event): void {
+  const checked = event.target instanceof HTMLInputElement && event.target.checked
+  void settings.setSilenceAutoStop(checked, settings.silenceAutoStopSeconds)
+}
+
+function onSilenceSeconds(event: Event): void {
+  const raw = event.target instanceof HTMLInputElement ? Number(event.target.value) : Number.NaN
+  if (!Number.isFinite(raw)) return
+  void settings.setSilenceAutoStop(true, raw)
 }
 </script>
 
@@ -132,5 +147,40 @@ function onAutoRecord(event: Event): void {
         </span>
       </span>
     </label>
+
+    <div class="flex flex-col gap-3">
+      <label class="flex items-start gap-2 text-sm">
+        <input
+          class="mt-0.5"
+          type="checkbox"
+          :checked="settings.silenceAutoStop"
+          :disabled="settings.saving"
+          @change="onSilenceAutoStop"
+        />
+        <span>
+          <span class="font-medium">Stop recording after sustained silence</span>
+          <span class="mt-1 block text-muted-foreground">
+            Watches this recording for near-silence and stops after the threshold. Calendar grace
+            and Stop still work. This is not perfect goodbye detection.
+          </span>
+        </span>
+      </label>
+      <label class="flex items-center gap-2 text-sm" for="silence-threshold">
+        <span class="font-medium">Silence threshold</span>
+        <input
+          id="silence-threshold"
+          class="h-10 w-24 rounded-md border border-white/15 bg-white/5 px-3 font-normal tabular-nums focus:border-cyan-400/60 focus:outline-none disabled:opacity-50"
+          type="number"
+          inputmode="numeric"
+          :min="SILENCE_AUTO_STOP_SECONDS_MIN"
+          :max="SILENCE_AUTO_STOP_SECONDS_MAX"
+          step="1"
+          :value="settings.silenceAutoStopSeconds"
+          :disabled="!settings.silenceAutoStop || settings.saving"
+          @change="onSilenceSeconds"
+        />
+        <span class="text-muted-foreground">seconds</span>
+      </label>
+    </div>
   </section>
 </template>

@@ -10,7 +10,7 @@ The person running the app on their own computer. They are responsible for telli
 
 ## What 0.1 does
 
-Manual Record, a local folder, Library (including permanent delete with confirm), Transcribe, and Generate summary. Settings has General, Providers, and Calendars. One Voice default and one AI default. The Calendar tab lists the next 14 days and can opt out of a meeting or a series. Google Calendar or Microsoft Calendar can prompt before a timed event, or auto-record selected meetings when that General switch is on. Optional upload can copy the audio, transcript, and summary to a `meetrec` folder in Google Drive or to the OneDrive app folder. Auto-upload follows the General destination and stays off until that provider’s upload checkbox is on. Delete confirm can also trash those Drive files and recycle those OneDrive items. The checkbox starts off, and the local folder stays if a cloud delete fails. Silence auto-stop stays out.
+Manual Record, a local folder, Library (including permanent delete with confirm), Transcribe, and Generate summary. Settings has General, Providers, and Calendars. One Voice default and one AI default. The Calendar tab lists the next 14 days and can opt out of a meeting or a series. Google Calendar or Microsoft Calendar can prompt before a timed event, or auto-record selected meetings when that General switch is on. Optional upload can copy the audio, transcript, and summary to a `meetrec` folder in Google Drive or to the OneDrive app folder. Auto-upload follows the General destination and stays off until that provider’s upload checkbox is on. Delete confirm can also trash those Drive files and recycle those OneDrive items. The checkbox starts off, and the local folder stays if a cloud delete fails. Optional silence auto-stop stays off until Settings → General turns it on. Calendar auto-record at T−1 minute is the shipped auto-start. Starting when audio resumes stays deferred.
 
 ## Happy path
 
@@ -20,7 +20,7 @@ Manual Record, a local folder, Library (including permanent delete with confirm)
 4. If Auto-arm was chosen, or auto-record is on, recording starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). Inside that last minute it starts immediately. Opted-out events do not start.
 5. While recording, tray **Stop recording** ends the capture when the main window is hidden. The always-on-top Stop popup stays deferred.
 6. Capture mic + system audio → one mixed **local** file.
-7. Stop on user Stop, or — only for a recording started from that event — at the event end plus 2 minutes. A manual Record with no calendar link keeps today’s stop behavior.
+7. Stop on user Stop, tray Stop, or — only for a recording started from that event — at the event end plus 2 minutes. When **Stop recording after sustained silence** is on, near-silence for the chosen threshold also stops that recording. Manual Stop still works. A manual Record with no calendar link has no calendar grace stop.
 8. Transcribe (default: xAI Grok Voice Transcribe 2.0, diarization on).
 9. Show voice count; user names speakers if needed. Invitee names and emails are stored on `meta.json` for a later speaker map. This does not rename diarized speakers.
 10. Generate minutes via selected LLM provider → save **locally** next to the audio. Optional upload can copy artifacts to Drive or the OneDrive app folder after that. It is off by default.
@@ -28,7 +28,7 @@ Manual Record, a local folder, Library (including permanent delete with confirm)
 ## Non-goals (v1)
 
 - Being a visible meeting bot.
-- Perfect goodbye / silence detection as the only stop signal. Silence auto-stop stays unwired.
+- Perfect goodbye detection as the only stop signal. Silence auto-stop is an optional extra and stays off until Settings turns it on. Starting a recording when audio resumes (an idle microphone watch) stays deferred.
 - Equal Windows/macOS polish on day one (Linux first).
 - Replacing local files with cloud storage. Optional Google Drive upload (folder `meetrec`) and OneDrive app-folder upload ship with the upload PR. Both stay off until the user enables them.
 - Mac App Store polish.

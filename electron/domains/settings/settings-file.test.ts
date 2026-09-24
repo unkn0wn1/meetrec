@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   OPENAI_CHAT_MODEL,
@@ -5,7 +8,7 @@ import {
   XAI_CHAT_MODEL,
   XAI_STT_MODEL
 } from '../providers/models'
-import { defaultAppSettings, parseAppSettings } from './settings-file'
+import { defaultAppSettings, parseAppSettings, readSilenceAutoStop } from './settings-file'
 
 const xaiModels = { voice: XAI_STT_MODEL, ai: XAI_CHAT_MODEL }
 const openaiModels = { voice: OPENAI_STT_MODEL, ai: OPENAI_CHAT_MODEL }
@@ -190,5 +193,70 @@ describe('app settings', () => {
     expect(unknown.settings.destination).toBe('local')
     expect(unknown.settings.autoRecord).toBe(false)
     expect(unknown.legacy).toBe(true)
+  })
+
+  it('defaults silence auto-stop for a legacy file and clamps the threshold', () => {
+    const missing = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'openai',
+        aiProviderId: 'xai-key',
+        models: defaultAppSettings().models
+      })
+    )
+    expect(missing.legacy).toBe(false)
+    expect(missing.settings.silenceAutoStop).toBe(false)
+    expect(missing.settings.silenceAutoStopSeconds).toBe(120)
+
+    const chosen = parseAppSettings(
+      JSON.stringify({
+        ...defaultAppSettings(),
+        silenceAutoStop: true,
+        silenceAutoStopSeconds: 90
+      })
+    )
+    expect(chosen.legacy).toBe(false)
+    expect(chosen.settings.silenceAutoStop).toBe(true)
+    expect(chosen.settings.silenceAutoStopSeconds).toBe(90)
+
+    const clamped = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'xai-key',
+        aiProviderId: 'xai-key',
+        models: defaultAppSettings().models,
+        silenceAutoStop: 'yes',
+        silenceAutoStopSeconds: 10
+      })
+    )
+    expect(clamped.legacy).toBe(true)
+    expect(clamped.settings.silenceAutoStop).toBe(false)
+    expect(clamped.settings.silenceAutoStopSeconds).toBe(30)
+
+    const high = parseAppSettings(
+      JSON.stringify({
+        ...defaultAppSettings(),
+        silenceAutoStopSeconds: 90.2
+      })
+    )
+    expect(high.legacy).toBe(true)
+    expect(high.settings.silenceAutoStop).toBe(false)
+    expect(high.settings.silenceAutoStopSeconds).toBe(90)
+
+    const maxed = parseAppSettings(
+      JSON.stringify({
+        ...defaultAppSettings(),
+        silenceAutoStop: true,
+        silenceAutoStopSeconds: 9000
+      })
+    )
+    expect(maxed.legacy).toBe(true)
+    expect(maxed.settings.silenceAutoStop).toBe(true)
+    expect(maxed.settings.silenceAutoStopSeconds).toBe(600)
+
+    const dir = mkdtempSync(join(tmpdir(), 'meetrec-silence-'))
+    try {
+      expect(readSilenceAutoStop(dir)).toEqual({ enabled: false, seconds: 120 })
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })

@@ -3,6 +3,11 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseDestination, type RecordingDestination } from '../../shared/destination'
 import {
+  SILENCE_AUTO_STOP_SECONDS_DEFAULT,
+  SILENCE_AUTO_STOP_SECONDS_MAX,
+  SILENCE_AUTO_STOP_SECONDS_MIN
+} from '../../shared/ipc-contract'
+import {
   DEFAULT_PROVIDER,
   PROVIDER_IDS,
   isProviderId,
@@ -33,6 +38,8 @@ export interface AppSettings {
   modelCache: Record<ProviderId, ProviderModelCache>
   destination: RecordingDestination
   autoRecord: boolean
+  silenceAutoStop: boolean
+  silenceAutoStopSeconds: number
 }
 
 export interface ParsedAppSettings {
@@ -47,7 +54,9 @@ export function defaultAppSettings(): AppSettings {
     models: defaultModels(),
     modelCache: emptyModelCache(),
     destination: 'local',
-    autoRecord: false
+    autoRecord: false,
+    silenceAutoStop: false,
+    silenceAutoStopSeconds: SILENCE_AUTO_STOP_SECONDS_DEFAULT
   }
 }
 
@@ -97,7 +106,9 @@ export function parseAppSettings(raw: string): ParsedAppSettings {
         models: parseModels(record.models, modelCache),
         modelCache,
         destination: general.destination,
-        autoRecord: general.autoRecord
+        autoRecord: general.autoRecord,
+        silenceAutoStop: general.silenceAutoStop,
+        silenceAutoStopSeconds: general.silenceAutoStopSeconds
       },
       legacy: true
     }
@@ -109,7 +120,9 @@ export function parseAppSettings(raw: string): ParsedAppSettings {
     models: parseModels(record.models, modelCache),
     modelCache,
     destination: general.destination,
-    autoRecord: general.autoRecord
+    autoRecord: general.autoRecord,
+    silenceAutoStop: general.silenceAutoStop,
+    silenceAutoStopSeconds: general.silenceAutoStopSeconds
   }
   const legacy =
     general.legacy ||
@@ -123,16 +136,62 @@ export function parseAppSettings(raw: string): ParsedAppSettings {
 function generalPrefs(record: Record<string, unknown>): {
   destination: RecordingDestination
   autoRecord: boolean
+  silenceAutoStop: boolean
+  silenceAutoStopSeconds: number
   legacy: boolean
 } {
   const destination = parseDestination(record.destination)
   const autoRecord = record.autoRecord === true
+  const silence = silencePrefs(record)
   return {
     destination,
     autoRecord,
+    silenceAutoStop: silence.enabled,
+    silenceAutoStopSeconds: silence.seconds,
     legacy:
       (record.destination !== undefined && record.destination !== destination) ||
-      (record.autoRecord !== undefined && typeof record.autoRecord !== 'boolean')
+      (record.autoRecord !== undefined && typeof record.autoRecord !== 'boolean') ||
+      silence.legacy
+  }
+}
+
+export function clampSilenceSeconds(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return SILENCE_AUTO_STOP_SECONDS_DEFAULT
+  const rounded = Math.round(value)
+  if (rounded < SILENCE_AUTO_STOP_SECONDS_MIN) return SILENCE_AUTO_STOP_SECONDS_MIN
+  if (rounded > SILENCE_AUTO_STOP_SECONDS_MAX) return SILENCE_AUTO_STOP_SECONDS_MAX
+  return rounded
+}
+
+function silencePrefs(record: Record<string, unknown>): {
+  enabled: boolean
+  seconds: number
+  legacy: boolean
+} {
+  const enabledRaw = record.silenceAutoStop
+  const secondsRaw = record.silenceAutoStopSeconds
+  const seconds = clampSilenceSeconds(secondsRaw)
+  const secondsLegacy = secondsRaw !== undefined && !silenceSecondsMatch(secondsRaw, seconds)
+  return {
+    enabled: enabledRaw === true,
+    seconds,
+    legacy: (enabledRaw !== undefined && typeof enabledRaw !== 'boolean') || secondsLegacy
+  }
+}
+
+function silenceSecondsMatch(value: unknown, seconds: number): boolean {
+  return typeof value === 'number' && Number.isFinite(value) && value === seconds
+}
+
+export function readSilenceAutoStop(userDataDir: string): {
+  enabled: boolean
+  seconds: number
+} {
+  try {
+    const settings = parseAppSettings(readFileSync(settingsFilePath(userDataDir), 'utf8')).settings
+    return { enabled: settings.silenceAutoStop, seconds: settings.silenceAutoStopSeconds }
+  } catch {
+    return { enabled: false, seconds: SILENCE_AUTO_STOP_SECONDS_DEFAULT }
   }
 }
 

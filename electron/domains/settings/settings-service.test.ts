@@ -175,6 +175,24 @@ describe('SettingsService model catalog', () => {
     expect(calls).toContain(`POST ${XAI_STT_URL}`)
     expect(calls).toContain(`POST ${XAI_CHAT_URL}`)
   })
+
+  it('stores silence auto-stop and clamps the threshold', async () => {
+    const dir = tempDir()
+    const service = createService(dir, routedFetch({}, []), () => 0)
+    const enabled = await service.setSilenceAutoStop(true, 10)
+    expect(enabled.silenceAutoStop).toBe(true)
+    expect(enabled.silenceAutoStopSeconds).toBe(30)
+    const saved = await readAppSettings(dir)
+    expect(saved.settings.silenceAutoStop).toBe(true)
+    expect(saved.settings.silenceAutoStopSeconds).toBe(30)
+
+    const off = await service.setSilenceAutoStop(false, 90)
+    expect(off.silenceAutoStop).toBe(false)
+    expect(off.silenceAutoStopSeconds).toBe(90)
+    const again = await readAppSettings(dir)
+    expect(again.settings.silenceAutoStop).toBe(false)
+    expect(again.settings.silenceAutoStopSeconds).toBe(90)
+  })
 })
 
 function tempDir(): string {

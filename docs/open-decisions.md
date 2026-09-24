@@ -31,7 +31,8 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
   - **Dismiss**
   - **Auto-arm**
 - Auto-arm starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). A user-facing offset control stays unwired. Inside that last minute, Auto-arm starts immediately.
-- A recording started from that event stops at the event end plus **2 minutes** (`CALENDAR_END_GRACE_MS`). Manual Record with no calendar link keeps today’s stop behavior. User Stop or tray Stop cancels that grace.
+- A recording started from that event stops at the event end plus **2 minutes** (`CALENDAR_END_GRACE_MS`). Manual Record with no calendar link keeps today’s stop behavior. User Stop or tray Stop cancels that grace. Silence auto-stop, when enabled in General, also ends the recording and clears the grace.
+- Calendar **Auto-arm** and **Enable auto-record for selected meetings** are the shipped auto-start. Meetrec does not open the microphone while idle, so starting when audio resumes stays deferred.
 - The always-on-top Stop popup stays deferred. Tray **Stop recording** stops a calendar-started recording while the main window is hidden.
 - Google Calendar and Microsoft Calendar connect, the 10-minute prompt, Auto-arm, and optional Drive / OneDrive upload are in the app.
 
@@ -86,9 +87,15 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Checked: trash Drive file ids and recycle OneDrive item ids from `meta.uploads`, then delete the local folder. If a cloud delete fails, the error names what failed and the local folder stays.
 - The shared Drive `meetrec` folder is left in place. Tokens and scopes stay the upload ones (`drive.file`, `Files.ReadWrite.AppFolder`). Drive uses the first Google connection with `drive.file`. One Microsoft account.
 
+### 14. Silence auto-stop — LOCKED (2026-09-25)
+
+- **Stop recording after sustained silence** is off by default. `settings.json` stores `silenceAutoStop` and `silenceAutoStopSeconds` (default 120, clamped to 30–600).
+- When the switch is on at the start of a recording, meetrec checks the growing WAV about once a second. Near-silence (int16 RMS below 500, about -36 dBFS) for the threshold stops through the same path as Stop, including save and upload. The first min(15 seconds, half the threshold) does not count. A settings change during that recording waits until the next one.
+- Manual Stop, tray Stop, and calendar end plus 2 minutes still work while the switch is on.
+- Calendar **Auto-arm (T−1 min)** and **Enable auto-record for selected meetings** are the shipped auto-start. Starting when audio resumes stays deferred.
+
 ## Still soft / rename anytime
 
-- Silence auto-stop stays unwired. It is not a stop signal.
 - Mapping stored invitee names onto diarized speakers stays unwired.
 - xAI `GET /v1/models` often omits speech-to-text ids. After a passing Voice probe with a successful (chat-only) catalog, Settings stores the registry Voice seed so the picker is not stuck empty. A rejected catalog request still leaves selects empty (device-code tokens may be rejected by that route).
 - macOS system audio is still unimplemented. The phased plan is [mac-system-audio-plan.md](mac-system-audio-plan.md). Platform order stays Linux first. `captureSupported` stays false on darwin until a later change ships mic + system mix.
