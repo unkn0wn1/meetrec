@@ -20,6 +20,7 @@
 - **Renderer:** UI only. Pinia holds view state and calls `window.meetrec`. Provider HTTP stays in main.
 - **Preload:** `contextBridge` exposes a narrow typed API (`window.meetrec.*`).
 - **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP (STT upload is mono 16 kHz MP3 from the WAV), Google and Microsoft calendar polls, the pre-meeting prompt, and optional Drive / OneDrive upload.
+- **Library job progress:** transcribe and summarize push `library:job-progress` to the calling window (`id`, `job`, `stage`, `startedAt`). `stage: null` clears the row. The renderer shows the stage label and elapsed time. There is no percent.
 - **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation rejects; `RecordingStatus.captureSupported` is false so the UI disables Start.
 
 ## Domains (keep separate)

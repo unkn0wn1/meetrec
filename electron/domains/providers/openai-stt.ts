@@ -16,6 +16,7 @@ export async function transcribeWavOpenAi(input: {
   mimeType?: string
   fileName?: string
   fetchImpl?: typeof fetch
+  onWaiting?: () => void
 }): Promise<TranscriptDocument> {
   const bytes = await readFile(input.audioPath)
   const mimeType = input.mimeType ?? 'audio/wav'
@@ -26,6 +27,7 @@ export async function transcribeWavOpenAi(input: {
   form.append('chunking_strategy', 'auto')
   form.append('file', new Blob([bytes], { type: mimeType }), fileName)
 
+  input.onWaiting?.()
   const fetchImpl = input.fetchImpl ?? fetch
   const response = await fetchImpl(OPENAI_STT_URL, {
     method: 'POST',

@@ -21,6 +21,7 @@ export const IPC = {
   librarySpeakers: 'library:speakers',
   libraryTranscribe: 'library:transcribe',
   librarySummarize: 'library:summarize',
+  libraryJobProgress: 'library:job-progress',
   libraryDelete: 'library:delete',
   settingsGet: 'settings:get',
   settingsSetVoiceDefault: 'settings:setVoiceDefault',
@@ -141,6 +142,25 @@ export interface LibraryDetail {
   audioUrl: string
 }
 
+export const TRANSCRIBE_STAGES = ['preparing', 'uploading', 'waiting', 'saving'] as const
+export type TranscribeStage = (typeof TRANSCRIBE_STAGES)[number]
+
+export const SUMMARIZE_STAGES = ['preparing', 'waiting', 'saving'] as const
+export type SummarizeStage = (typeof SUMMARIZE_STAGES)[number]
+
+export type LibraryJobKind = 'transcribe' | 'summarize'
+
+export interface LibraryJobProgress {
+  id: string
+  job: LibraryJobKind
+  /** null clears the row after the job settles. */
+  stage: TranscribeStage | SummarizeStage | null
+  /** Optional label override. Main leaves this unset. */
+  message?: string
+  /** Date.now() at job start. The same value on every event for that job, including the clear. */
+  startedAt: number
+}
+
 export type ProviderId = 'xai-oauth' | 'xai-key' | 'openai'
 
 export type ProviderRole = 'voice' | 'ai'
@@ -240,6 +260,7 @@ export interface MeetrecApi {
     transcribe: (id: string) => Promise<LibraryDetail>
     summarize: (id: string) => Promise<LibraryDetail>
     delete: (id: string) => Promise<void>
+    onJobProgress: (listener: (event: LibraryJobProgress) => void) => () => void
   }
   settings: {
     get: () => Promise<SettingsStatus>
