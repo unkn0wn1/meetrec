@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
+import DeleteRecordingButton from '@/components/DeleteRecordingButton.vue'
 import RecordingRow from '@/components/RecordingRow.vue'
 import { Button } from '@/components/ui/button'
 import { useLibraryStore } from '@/stores/library'
@@ -19,6 +20,10 @@ onMounted(() => {
 function open(id: string): void {
   void router.push({ name: 'recording', params: { id } })
 }
+
+function remove(id: string): void {
+  void library.remove(id)
+}
 </script>
 
 <template>
@@ -35,10 +40,25 @@ function open(id: string): void {
 
     <section v-else class="glass overflow-hidden">
       <ul>
-        <li v-for="item in library.items" :key="item.id" class="border-b last:border-b-0">
-          <button class="w-full text-left hover:bg-accent/60" type="button" @click="open(item.id)">
+        <li
+          v-for="item in library.items"
+          :key="item.id"
+          class="flex items-center border-b last:border-b-0"
+        >
+          <button
+            class="min-w-0 flex-1 text-left hover:bg-accent/60"
+            type="button"
+            @click="open(item.id)"
+          >
             <RecordingRow :item="item" />
           </button>
+          <div class="shrink-0 pr-3" @click.stop>
+            <DeleteRecordingButton
+              appearance="row"
+              :busy="library.busy"
+              @confirm="remove(item.id)"
+            />
+          </div>
         </li>
       </ul>
     </section>

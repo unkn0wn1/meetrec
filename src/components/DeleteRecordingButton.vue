@@ -2,9 +2,13 @@
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 
-defineProps<{
-  busy: boolean
-}>()
+withDefaults(
+  defineProps<{
+    busy: boolean
+    appearance?: 'panel' | 'row'
+  }>(),
+  { appearance: 'panel' }
+)
 
 const emit = defineEmits<{
   confirm: []
@@ -26,7 +30,7 @@ function confirm(): void {
 </script>
 
 <template>
-  <section class="glass p-5">
+  <section v-if="appearance !== 'row'" class="glass p-5">
     <template v-if="!confirming">
       <p class="text-sm text-muted-foreground">
         Remove this take from the library. Local audio, transcript, and summary are deleted. Cloud
@@ -49,4 +53,33 @@ function confirm(): void {
       </div>
     </template>
   </section>
+  <div v-else class="shrink-0" @click.stop>
+    <Button
+      v-if="!confirming"
+      size="sm"
+      variant="destructive"
+      type="button"
+      :disabled="busy"
+      @click.stop="ask"
+    >
+      Delete
+    </Button>
+    <div v-else class="flex max-w-56 flex-col items-end gap-2">
+      <p class="text-right text-xs text-muted-foreground">Local folder only. Cloud copies stay.</p>
+      <div class="flex flex-wrap justify-end gap-2">
+        <Button size="sm" variant="outline" type="button" :disabled="busy" @click.stop="cancel">
+          Cancel
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          type="button"
+          :disabled="busy"
+          @click.stop="confirm"
+        >
+          Delete permanently
+        </Button>
+      </div>
+    </div>
+  </div>
 </template>
