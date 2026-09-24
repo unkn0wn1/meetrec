@@ -14,7 +14,9 @@ export function idleStatus(): RecordingStatus {
     outPath: null,
     startedAt: null,
     captureMode: null,
-    note: null
+    note: null,
+    captureSupported: true,
+    unsupportedReason: null
   }
 }
 
@@ -25,6 +27,20 @@ export function statusFromSession(session: ActiveSession | null): RecordingStatu
     outPath: session.outPath,
     startedAt: new Date(session.startedAtMs).toISOString(),
     captureMode: session.captureMode,
-    note: session.note
+    note: session.note,
+    captureSupported: true,
+    unsupportedReason: null
+  }
+}
+
+/** Overlay OS capture support onto a session status snapshot. */
+export function withCaptureSupport(
+  status: RecordingStatus,
+  support: { supported: boolean; message: string | null }
+): RecordingStatus {
+  return {
+    ...status,
+    captureSupported: support.supported,
+    unsupportedReason: support.message
   }
 }

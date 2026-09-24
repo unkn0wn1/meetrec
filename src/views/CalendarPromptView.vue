@@ -1,10 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Button } from '@/components/ui/button'
+import { useMeetrec } from '@/composables/useMeetrec'
 import { useCalendarStore } from '@/stores/calendar'
 
 const calendar = useCalendarStore()
 const prompt = computed(() => calendar.status?.prompt ?? null)
+const captureSupported = ref(true)
+const unsupportedReason = ref<string | null>(null)
+
+onMounted(() => {
+  void useMeetrec()
+    .recording.status()
+    .then((status) => {
+      captureSupported.value = status.captureSupported
+      unsupportedReason.value = status.unsupportedReason
+    })
+    .catch(() => {
+      /* keep optimistic defaults; Start still fails via main if unsupported */
+    })
+})
 
 function formatWhen(iso: string): string {
   const parsed = Date.parse(iso)
@@ -19,7 +34,7 @@ function formatWhen(iso: string): string {
 }
 
 function start(): void {
-  if (!prompt.value) return
+  if (!prompt.value || !captureSupported.value) return
   void calendar.start(prompt.value.occurrenceKey)
 }
 
@@ -29,7 +44,7 @@ function dismiss(): void {
 }
 
 function arm(): void {
-  if (!prompt.value) return
+  if (!prompt.value || !captureSupported.value) return
   void calendar.arm(prompt.value.occurrenceKey)
 }
 </script>
@@ -45,13 +60,18 @@ function arm(): void {
       <p v-if="prompt.hint" class="text-sm text-muted-foreground">
         {{ prompt.provider === 'google' ? 'Google' : 'Microsoft' }} · {{ prompt.hint }}
       </p>
+      <p v-if="!captureSupported && unsupportedReason" class="text-sm text-amber-300" role="status">
+        {{ unsupportedReason }}
+      </p>
       <p v-if="calendar.error" class="text-sm text-destructive" role="alert">
         {{ calendar.error }}
       </p>
       <div class="mt-2 flex flex-col gap-2">
-        <Button :disabled="calendar.busy" @click="start">Start recording</Button>
+        <Button :disabled="calendar.busy || !captureSupported" @click="start"
+          >Start recording</Button
+        >
         <Button variant="outline" :disabled="calendar.busy" @click="dismiss">Dismiss</Button>
-        <Button variant="outline" :disabled="calendar.busy" @click="arm">
+        <Button variant="outline" :disabled="calendar.busy || !captureSupported" @click="arm">
           Auto-arm (starts one minute before)
         </Button>
       </div>

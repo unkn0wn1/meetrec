@@ -1,10 +1,19 @@
 import { stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
-import { createCapture, type AudioCapture } from '../capture'
+import {
+  assertCaptureSupported,
+  captureSupport,
+  createCapture,
+  type AudioCapture
+} from '../capture'
 import { buildRecordingFolder } from '../capture/paths'
 import { emptyMeta, type RecordingCalendarLink } from '../domains/recording/meta'
-import { statusFromSession, type ActiveSession } from '../domains/recording/session'
+import {
+  statusFromSession,
+  withCaptureSupport,
+  type ActiveSession
+} from '../domains/recording/session'
 import { readMeta, writeMeta } from '../domains/recording/store'
 import type {
   RecordingStartResult,
@@ -22,7 +31,7 @@ export class RecordingController {
   }
 
   status(): RecordingStatus {
-    return statusFromSession(this.session)
+    return withCaptureSupport(statusFromSession(this.session), captureSupport())
   }
 
   recordingId(): string | null {
@@ -36,6 +45,7 @@ export class RecordingController {
     if (this.session) {
       throw new Error('Already recording.')
     }
+    assertCaptureSupported()
     const folder = buildRecordingFolder(recordingsDir())
     const startedAt = new Date().toISOString()
     const capture = createCapture()
