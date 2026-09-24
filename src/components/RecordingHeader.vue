@@ -31,7 +31,7 @@ function save(): void {
 </script>
 
 <template>
-  <header class="rounded-xl border bg-card p-5 shadow-sm">
+  <header class="glass p-5">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p class="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">

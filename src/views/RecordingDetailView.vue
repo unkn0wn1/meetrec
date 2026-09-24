@@ -65,7 +65,7 @@ const panes = [
             {{ item.label }}
           </Button>
         </nav>
-        <section class="rounded-xl border bg-card p-5 shadow-sm">
+        <section class="glass p-5">
           <PlaybackPanel v-if="pane === 'playback'" :audio-url="library.detail.audioUrl" />
           <TranscriptPanel
             v-else-if="pane === 'transcript'"

@@ -25,10 +25,7 @@ function open(id: string): void {
   <AppShell title="Library">
     <p v-if="library.error" class="text-sm text-destructive" role="alert">{{ library.error }}</p>
 
-    <section
-      v-if="library.items.length === 0 && !library.loading"
-      class="rounded-xl border bg-card p-8"
-    >
+    <section v-if="library.items.length === 0 && !library.loading" class="glass p-8">
       <p class="font-medium">No recordings yet</p>
       <p class="mt-2 text-sm text-muted-foreground">
         Start a recording and it will show up here as a folder with the audio and notes.
@@ -36,7 +33,7 @@ function open(id: string): void {
       <Button class="mt-4" @click="router.push({ name: 'record' })">Record</Button>
     </section>
 
-    <section v-else class="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <section v-else class="glass overflow-hidden">
       <ul>
         <li v-for="item in library.items" :key="item.id" class="border-b last:border-b-0">
           <button class="w-full text-left hover:bg-accent/60" type="button" @click="open(item.id)">

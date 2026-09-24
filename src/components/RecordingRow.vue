@@ -23,7 +23,7 @@ defineProps<{
       }}</span>
       <span
         v-if="item.hasGoogleDrive"
-        class="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-accent px-2 py-0.5 text-xs text-accent-foreground"
+        class="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-xs text-primary"
         title="Uploaded to Google Drive"
       >
         <Cloud class="size-3" aria-hidden="true" />
@@ -31,7 +31,7 @@ defineProps<{
       </span>
       <span
         v-if="item.hasOneDrive"
-        class="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-accent px-2 py-0.5 text-xs text-accent-foreground"
+        class="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-xs text-primary"
         title="Uploaded to OneDrive"
       >
         <Cloud class="size-3" aria-hidden="true" />
@@ -41,7 +41,7 @@ defineProps<{
         class="rounded-full border px-2 py-0.5 text-xs"
         :class="
           item.hasTranscript
-            ? 'border-primary/30 bg-accent text-accent-foreground'
+            ? 'border-primary/30 bg-primary/15 text-primary'
             : 'border-border text-muted-foreground'
         "
       >
@@ -51,7 +51,7 @@ defineProps<{
         class="rounded-full border px-2 py-0.5 text-xs"
         :class="
           item.hasSummary
-            ? 'border-primary/30 bg-accent text-accent-foreground'
+            ? 'border-primary/30 bg-primary/15 text-primary'
             : 'border-border text-muted-foreground'
         "
       >

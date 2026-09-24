@@ -38,7 +38,7 @@ function probeLine(label: string, probe: RoleProbe): string {
 </script>
 
 <template>
-  <article class="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
+  <article class="glass flex flex-col gap-4 p-5">
     <div>
       <h3 class="text-base font-semibold tracking-tight">{{ card.label }}</h3>
       <p class="mt-1 text-sm text-muted-foreground">{{ card.statusLabel }}</p>
