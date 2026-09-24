@@ -142,6 +142,10 @@ export interface LibraryDetail {
   audioUrl: string
 }
 
+export interface LibraryDeleteOptions {
+  removeCloud?: boolean
+}
+
 export const TRANSCRIBE_STAGES = ['preparing', 'uploading', 'waiting', 'saving'] as const
 export type TranscribeStage = (typeof TRANSCRIBE_STAGES)[number]
 
@@ -259,7 +263,7 @@ export interface MeetrecApi {
     updateSpeakers: (id: string, names: Record<string, string>) => Promise<RecordingMetaView>
     transcribe: (id: string) => Promise<LibraryDetail>
     summarize: (id: string) => Promise<LibraryDetail>
-    delete: (id: string) => Promise<void>
+    delete: (id: string, options?: LibraryDeleteOptions) => Promise<void>
     onJobProgress: (listener: (event: LibraryJobProgress) => void) => () => void
   }
   settings: {

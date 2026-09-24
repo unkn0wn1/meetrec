@@ -143,11 +143,11 @@ export const useLibraryStore = defineStore('library', () => {
     }
   }
 
-  async function remove(id: string): Promise<boolean> {
+  async function remove(id: string, removeCloud = false): Promise<boolean> {
     busy.value = true
     error.value = null
     try {
-      await useMeetrec().library.delete(id)
+      await useMeetrec().library.delete(id, { removeCloud: removeCloud === true })
       items.value = items.value.filter((item) => item.id !== id)
       if (detail.value?.meta.id === id) {
         detail.value = null

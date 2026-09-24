@@ -14,7 +14,13 @@ import { summarizeWithAuth, transcribeWithAuth } from '../providers/dispatch'
 import { saveTranscript } from '../transcript/job'
 import { parseTranscript, type TranscriptDocument } from '../transcript/parse'
 import { recordingLayout } from './layout'
-import { applySpeakerNames, uploadFlags, type RecordingMeta, type Speaker } from './meta'
+import {
+  applySpeakerNames,
+  uploadFlags,
+  type RecordingMeta,
+  type RecordingUploads,
+  type Speaker
+} from './meta'
 import {
   deleteRecording,
   loadRecording,
@@ -32,12 +38,16 @@ export interface LibraryDetail {
   audioUrl: string
 }
 
+export type RemoveCloudCopies = (uploads: RecordingUploads) => Promise<void>
+
 export class LibraryService {
   constructor(
     private readonly recordingsDir: () => string,
     private readonly readAuth: (role: ProviderRole) => Promise<ActiveAuth> = async () => {
       throw new Error(providerGateHint('xai-key'))
-    }
+    },
+    private readonly removeCloudCopies: RemoveCloudCopies = () =>
+      Promise.reject(new Error('Cloud delete is not available.'))
   ) {}
 
   async list(): Promise<LibraryListItem[]> {
@@ -61,8 +71,15 @@ export class LibraryService {
     }
   }
 
-  async delete(id: string): Promise<void> {
-    await this.require(id)
+  async delete(id: string, options?: { removeCloud?: boolean }): Promise<void> {
+    const stored = await this.require(id)
+    if (options?.removeCloud === true) {
+      const uploads = stored.meta.uploads
+      const flags = uploadFlags(uploads)
+      if (uploads && (flags.hasGoogleDrive || flags.hasOneDrive)) {
+        await this.removeCloudCopies(uploads)
+      }
+    }
     await deleteRecording(this.recordingsDir(), id)
   }
 

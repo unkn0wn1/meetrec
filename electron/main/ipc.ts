@@ -1,4 +1,5 @@
 import { ipcMain, type IpcMainInvokeEvent } from 'electron'
+import { parseLibraryDeleteOptions } from '../domains/recording/delete-options'
 import type { LibraryService } from '../domains/recording/library'
 import type { SettingsService } from '../domains/settings/settings-service'
 import {
@@ -57,14 +58,15 @@ export function registerAppIpc(
     await runHook(hooks, id)
     return toDetailView(detail)
   })
-  ipcMain.handle(IPC.libraryDelete, async (_event, id: unknown) => {
+  ipcMain.handle(IPC.libraryDelete, async (_event, id: unknown, options: unknown) => {
     if (typeof id !== 'string') {
       throw new Error('Unknown recording.')
     }
+    const { removeCloud } = parseLibraryDeleteOptions(options)
     if (controller.recordingId() === id) {
       throw new Error('Stop the recording before deleting it.')
     }
-    await library.delete(id)
+    await library.delete(id, { removeCloud })
   })
   ipcMain.handle(IPC.settingsGet, (): Promise<SettingsStatus> => settings.status())
   ipcMain.handle(IPC.settingsSetVoiceDefault, (_event, provider: ProviderId) =>

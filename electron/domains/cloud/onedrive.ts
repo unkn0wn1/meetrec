@@ -54,6 +54,35 @@ export async function uploadOneDriveFile(input: {
   return typeof id === 'string' && id ? id : input.name
 }
 
+/** A dotted value is the artifact name stored when upload omitted a Graph item id. */
+export function oneDriveDeleteUrl(idOrName: string): string {
+  if (!idOrName || /[/\\]|\.\./.test(idOrName)) {
+    throw new Error('That cloud file id is not valid.')
+  }
+  if (idOrName.includes('.')) {
+    return `https://graph.microsoft.com/v1.0/me/drive/special/approot:/${encodeURIComponent(idOrName)}`
+  }
+  return `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(idOrName)}`
+}
+
+export async function deleteOneDriveItem(input: {
+  accessToken: string
+  fileId: string
+  fetchImpl?: typeof fetch
+}): Promise<void> {
+  const fetchImpl = input.fetchImpl ?? fetch
+  const response = await fetchImpl(oneDriveDeleteUrl(input.fileId), {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${input.accessToken}` }
+  })
+  if (response.ok || response.status === 404) return
+  const payload = await readJson(response)
+  throw new CloudHttpError(
+    response.status,
+    shortTokenError(payload, `OneDrive returned ${response.status}.`)
+  )
+}
+
 async function putOneDriveChunks(
   uploadUrl: string,
   body: Uint8Array,

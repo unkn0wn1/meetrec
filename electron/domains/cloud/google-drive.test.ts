@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { driveChunkRanges, folderQuery, resumableMetadata, resumableTarget } from './google-drive'
+import {
+  CloudHttpError,
+  driveChunkRanges,
+  driveTrashUrl,
+  folderQuery,
+  resumableMetadata,
+  resumableTarget,
+  trashDriveFile
+} from './google-drive'
 import { DRIVE_CHUNK_BYTES } from './ranges'
 
 describe('google drive upload', () => {
@@ -33,5 +41,34 @@ describe('google drive upload', () => {
       { start: DRIVE_CHUNK_BYTES, end: size - 1 }
     ])
     expect(ranges[0]!.end - ranges[0]!.start + 1).toBe(DRIVE_CHUNK_BYTES)
+  })
+})
+
+describe('trashDriveFile', () => {
+  it('patches the file as trashed', async () => {
+    const calls: { url: string; init: RequestInit }[] = []
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: String(input), init: init ?? {} })
+      return new Response('{"id":"file-a","trashed":true}', { status: 200 })
+    }) as typeof fetch
+    await trashDriveFile({ accessToken: 'test-token', fileId: 'file a', fetchImpl })
+    expect(calls[0]?.url).toBe(driveTrashUrl('file a'))
+    expect(calls[0]?.url).toBe('https://www.googleapis.com/drive/v3/files/file%20a')
+    expect(calls[0]?.init.method).toBe('PATCH')
+    expect(calls[0]?.init.body).toBe(JSON.stringify({ trashed: true }))
+    const headers = calls[0]?.init.headers as Record<string, string>
+    expect(headers.Authorization).toBe('Bearer test-token')
+    expect(headers['Content-Type']).toBe('application/json')
+  })
+
+  it('treats 404 as already gone and throws CloudHttpError on 403', async () => {
+    const missing = (async () => new Response('', { status: 404 })) as typeof fetch
+    await expect(
+      trashDriveFile({ accessToken: 'test-token', fileId: 'file-a', fetchImpl: missing })
+    ).resolves.toBeUndefined()
+    const denied = (async () => new Response('{}', { status: 403 })) as typeof fetch
+    await expect(
+      trashDriveFile({ accessToken: 'test-token', fileId: 'file-a', fetchImpl: denied })
+    ).rejects.toBeInstanceOf(CloudHttpError)
   })
 })

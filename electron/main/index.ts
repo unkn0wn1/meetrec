@@ -1,5 +1,7 @@
 import { app, BrowserWindow, protocol, safeStorage, shell } from 'electron'
 import { optimizer } from '@electron-toolkit/utils'
+import type { CalendarService } from '../domains/calendar/service'
+import { removeUploadedCopies } from '../domains/cloud/remove'
 import { LibraryService } from '../domains/recording/library'
 import { SecretStore } from '../domains/settings/secret-store'
 import { SettingsService } from '../domains/settings/settings-service'
@@ -80,12 +82,20 @@ app.whenReady().then(() => {
   })
   const controller = new RecordingController()
   const hooks: RecordingHooks = {}
-  registerAppIpc(
-    controller,
-    new LibraryService(recordingsDir, (role) => settings.readAuth(role)),
-    settings,
-    hooks
+  let calendarService: CalendarService | null = null
+  const library = new LibraryService(
+    recordingsDir,
+    (role) => settings.readAuth(role),
+    (uploads) => {
+      const calendar = calendarService
+      if (!calendar) throw new Error('Connect again.')
+      return removeUploadedCopies({
+        uploads,
+        getAccess: (provider, force = false) => calendar.accessToken(provider, force)
+      })
+    }
   )
+  registerAppIpc(controller, library, settings, hooks)
   mainWindow = createWindow()
   const calendar = attachCalendar({
     mainWindow,
@@ -93,6 +103,7 @@ app.whenReady().then(() => {
     controller,
     userDataDir
   })
+  calendarService = calendar.service
   hooks.afterSaved = (id) => uploadIfEnabled(calendar.service, id)
   settings.watchAutoRecord(() => {
     void calendar.service.refreshSchedule()

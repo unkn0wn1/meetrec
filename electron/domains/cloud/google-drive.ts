@@ -117,6 +117,32 @@ export async function uploadDriveFile(input: {
   return id
 }
 
+export async function trashDriveFile(input: {
+  accessToken: string
+  fileId: string
+  fetchImpl?: typeof fetch
+}): Promise<void> {
+  const fetchImpl = input.fetchImpl ?? fetch
+  const response = await fetchImpl(driveTrashUrl(input.fileId), {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ trashed: true })
+  })
+  if (response.ok || response.status === 404) return
+  const payload = await readJson(response)
+  throw new CloudHttpError(
+    response.status,
+    shortTokenError(payload, `Google Drive returned ${response.status}.`)
+  )
+}
+
+export function driveTrashUrl(fileId: string): string {
+  return `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}`
+}
+
 async function putDriveChunks(
   location: string,
   body: Uint8Array,
