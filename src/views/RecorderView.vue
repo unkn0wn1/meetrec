@@ -35,6 +35,13 @@ onMounted(() => {
           <template v-else-if="session.captureMode === 'mic-only'">Microphone only</template>
           <template v-else>Mic and system monitor, one local WAV</template>
         </p>
+        <p
+          v-if="!session.captureSupported && session.unsupportedReason"
+          class="mt-3 text-sm text-amber-300"
+          role="status"
+        >
+          {{ session.unsupportedReason }}
+        </p>
         <p v-if="session.note" class="mt-3 text-sm text-amber-300">{{ session.note }}</p>
         <p v-if="session.error" class="mt-3 text-sm text-destructive" role="alert">
           {{ session.error }}
@@ -46,7 +53,7 @@ onMounted(() => {
           v-if="!session.isRecording"
           size="lg"
           class="flex-1"
-          :disabled="session.busy"
+          :disabled="session.busy || !session.captureSupported"
           @click="session.start()"
         >
           Start

@@ -11,3 +11,4 @@ export function createCapture(platform: NodeJS.Platform = process.platform): Aud
 }
 
 export type { AudioCapture, CaptureMode, CaptureStartOptions, CaptureStopResult } from './types'
+export { assertCaptureSupported, captureSupport, type CaptureSupport } from './support'

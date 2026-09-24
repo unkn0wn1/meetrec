@@ -11,6 +11,8 @@ export const useRecordingSessionStore = defineStore('recordingSession', () => {
   const captureMode = ref<CaptureMode | null>(null)
   const note = ref<string | null>(null)
   const error = ref<string | null>(null)
+  const captureSupported = ref(true)
+  const unsupportedReason = ref<string | null>(null)
   const busy = ref(false)
   const elapsedLabel = ref('00:00')
   let ticker: ReturnType<typeof setInterval> | null = null
@@ -23,12 +25,16 @@ export const useRecordingSessionStore = defineStore('recordingSession', () => {
     startedAt: string | null
     captureMode: CaptureMode | null
     note: string | null
+    captureSupported: boolean
+    unsupportedReason: string | null
   }): void {
     phase.value = status.phase
     outPath.value = status.outPath
     startedAt.value = status.startedAt
     captureMode.value = status.captureMode
     note.value = status.note
+    captureSupported.value = status.captureSupported
+    unsupportedReason.value = status.unsupportedReason
   }
 
   function tick(): void {
@@ -72,6 +78,10 @@ export const useRecordingSessionStore = defineStore('recordingSession', () => {
   }
 
   async function start(): Promise<void> {
+    if (!captureSupported.value) {
+      error.value = unsupportedReason.value ?? 'Capture is not available on this platform.'
+      return
+    }
     busy.value = true
     error.value = null
     try {
@@ -114,6 +124,8 @@ export const useRecordingSessionStore = defineStore('recordingSession', () => {
     captureMode,
     note,
     error,
+    captureSupported,
+    unsupportedReason,
     busy,
     elapsedLabel,
     isRecording,

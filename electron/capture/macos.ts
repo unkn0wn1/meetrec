@@ -1,16 +1,14 @@
 import type { AudioCapture, CaptureStartOptions, CaptureStopResult } from './types'
+import { assertCaptureSupported } from './support'
 
 /** macOS capture is out of scope for v1. Interface exists so main can select by platform. */
 export class MacosCapture implements AudioCapture {
-  start(_opts: CaptureStartOptions): Promise<never> {
-    return Promise.reject(
-      new Error(
-        'macOS capture is not implemented. TODO: ScreenCaptureKit system audio, or a virtual device such as BlackHole. Linux is the supported path.'
-      )
-    )
+  async start(_opts: CaptureStartOptions): Promise<never> {
+    assertCaptureSupported('darwin')
+    throw new Error('macOS capture is not implemented.')
   }
 
-  stop(): Promise<CaptureStopResult> {
-    return Promise.reject(new Error('macOS capture is not implemented.'))
+  async stop(): Promise<CaptureStopResult> {
+    throw new Error('macOS capture is not available in this build.')
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { idleStatus, statusFromSession } from './session'
+import { idleStatus, statusFromSession, withCaptureSupport } from './session'
 
 describe('recording session status', () => {
   it('is idle when no session is active', () => {
@@ -8,7 +8,9 @@ describe('recording session status', () => {
       outPath: null,
       startedAt: null,
       captureMode: null,
-      note: null
+      note: null,
+      captureSupported: true,
+      unsupportedReason: null
     })
     expect(statusFromSession(null).phase).toBe('idle')
   })
@@ -25,5 +27,15 @@ describe('recording session status', () => {
     expect(status.outPath).toBe('/tmp/meetrec/a.wav')
     expect(status.startedAt).toBe('2026-09-22T12:00:00.000Z')
     expect(status.captureMode).toBe('mix')
+    expect(status.captureSupported).toBe(true)
+  })
+
+  it('overlays macOS unsupported reason', () => {
+    const status = withCaptureSupport(idleStatus(), {
+      supported: false,
+      message: 'macOS capture is not available in this build.'
+    })
+    expect(status.captureSupported).toBe(false)
+    expect(status.unsupportedReason).toMatch(/macOS capture is not available/)
   })
 })

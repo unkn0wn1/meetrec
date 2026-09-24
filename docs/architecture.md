@@ -20,7 +20,7 @@
 - **Renderer:** UI only. Pinia holds view state and calls `window.meetrec`. Provider HTTP stays in main.
 - **Preload:** `contextBridge` exposes a narrow typed API (`window.meetrec.*`).
 - **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP, Google and Microsoft calendar polls, the pre-meeting prompt, and optional Drive / OneDrive upload.
-- **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation throws.
+- **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation rejects; `RecordingStatus.captureSupported` is false so the UI disables Start.
 
 ## Domains (keep separate)
 

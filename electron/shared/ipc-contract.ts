@@ -63,6 +63,10 @@ export interface RecordingStatus {
   startedAt: string | null
   captureMode: CaptureMode | null
   note: string | null
+  /** False on macOS (and unknown OSes) until a real capture backend ships. */
+  captureSupported: boolean
+  /** User-facing reason when captureSupported is false. */
+  unsupportedReason: string | null
 }
 
 export interface RecordingStartResult {

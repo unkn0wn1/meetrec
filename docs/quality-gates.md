@@ -37,7 +37,7 @@ Installer **releases** are tag-only (`.github/workflows/release.yml` on `v*` tag
 - Linux PipeWire path: Start → `userData/recordings/<id>/audio.wav` → Stop. File must be playable PCM WAV. `meta.json` is written beside it.
 - Library opens that folder. Transcribe writes `transcript.json`. Generate summary writes `summary.md` and sets `meta.topic`.
 - Windows (manual, not CI): the packaged app includes ffmpeg. For `npm run dev`, `ffmpeg` on PATH (`ffmpeg -version`) is enough. Enable Stereo Mix if the driver hid it (Sound → Recording → show disabled devices). Start, play system audio, speak, Stop. `audio.wav` plays. `meta.json` `captureMode` is `mix`, or `mic-only` with a TODO note. The recorder shows that note.
-- macOS capture stays a stub until someone on that OS implements it.
+- macOS capture stays a stub until someone on that OS implements it. The Record tab and calendar prompt must disable Start (and Auto-arm) and show `unsupportedReason` instead of throwing only after click.
 
 ## Definition of done (feature)
 

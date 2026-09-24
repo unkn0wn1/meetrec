@@ -16,7 +16,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 ### 4. Platform order — LOCKED
 
-**Linux first** (daily use). Windows capture is implemented and experimental until someone verifies it on a Windows machine. macOS capture stays a stub until verified.
+**Linux first** (daily use). Windows capture is implemented and experimental until someone verifies it on a Windows machine. macOS capture stays a stub until verified; the Record UI and calendar prompt disable Start and show why.
 
 ### 5. Artifacts — LOCKED (2026-09-23)
 
