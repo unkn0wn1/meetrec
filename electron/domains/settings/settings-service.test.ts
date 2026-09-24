@@ -93,6 +93,44 @@ describe('SettingsService model catalog', () => {
     expect(calls.some((call) => call.startsWith(`GET ${OPENAI_MODELS_URL}`))).toBe(true)
   })
 
+  it('seeds xAI Voice from the registry when the catalog is chat-only', async () => {
+    const dir = tempDir()
+    const token = 'xai-chat-only-token'
+    const calls: string[] = []
+    const routes: Record<string, { status: number; body: string }> = {
+      [`GET ${XAI_MODELS_URL}`]: {
+        status: 200,
+        body: JSON.stringify({ data: [{ id: 'grok-4.5' }, { id: 'grok-4.7' }] })
+      },
+      [`POST ${XAI_STT_URL}`]: { status: 400, body: 'file is required' },
+      [`POST ${XAI_CHAT_URL}`]: { status: 200, body: '{"choices":[]}' }
+    }
+    const service = createService(dir, routedFetch(routes, calls), () => 1_700_000_000_000)
+    await service.setXaiKey(token)
+
+    const status = await service.testProvider('xai-key')
+    const card = status.cards.find((item) => item.id === 'xai-key')
+    expect(card?.voiceModels).toEqual([
+      { id: 'grok-voice-transcribe-2.0', label: 'grok-voice-transcribe-2.0' }
+    ])
+    expect(card?.aiModels).toEqual([
+      { id: 'grok-4.5', label: 'grok-4.5' },
+      { id: 'grok-4.7', label: 'grok-4.7' }
+    ])
+    expect(card?.voiceModel).toBe('grok-voice-transcribe-2.0')
+    expect(card?.aiModel).toBe('grok-4.5')
+    expect(card?.voiceProbe.state).toBe('pass')
+    expect(card?.aiProbe.state).toBe('pass')
+
+    const saved = await readAppSettings(dir)
+    expect(saved.settings.modelCache['xai-key'].voice).toEqual({
+      ids: ['grok-voice-transcribe-2.0'],
+      fetchedAt: new Date(1_700_000_000_000).toISOString()
+    })
+    expect(saved.settings.modelCache['xai-key'].ai.ids).toEqual(['grok-4.5', 'grok-4.7'])
+    expect(calls).toContain(`GET ${XAI_MODELS_URL}`)
+  })
+
   it('leaves the xAI cache empty when listing models is rejected', async () => {
     const dir = tempDir()
     const token = 'xai-secret-token'
