@@ -44,7 +44,7 @@ const api: MeetrecApi = {
     updateSpeakers: (id, names) => ipcRenderer.invoke(IPC.librarySpeakers, id, names),
     transcribe: (id) => ipcRenderer.invoke(IPC.libraryTranscribe, id),
     summarize: (id) => ipcRenderer.invoke(IPC.librarySummarize, id),
-    delete: (id) => ipcRenderer.invoke(IPC.libraryDelete, id),
+    delete: (id, options) => ipcRenderer.invoke(IPC.libraryDelete, id, options),
     onJobProgress: (listener) => subscribe<LibraryJobProgress>(IPC.libraryJobProgress, listener)
   },
   settings: {

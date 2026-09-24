@@ -33,8 +33,8 @@
 
 **Delete:**
 
-- Detail view has **Delete recording**. Confirm with **Delete permanently** before anything is removed.
-- Permanent delete for v1 (no in-app trash). Removes the local `recordings/<id>/` folder (audio, transcript, summary, meta). Cloud copies already uploaded are left alone. An in-progress recording cannot be deleted until Stop.
+- Detail view and each library row confirm before anything is removed. The checkbox **Also remove uploaded Drive / OneDrive copies** starts off.
+- Unchecked, delete removes the local `recordings/<id>/` folder (audio, transcript, summary, meta) and leaves uploaded copies. Checked, meetrec trashes the stored Drive file ids and recycles the stored OneDrive item ids first. If that fails, the local folder stays and the error names what failed. An in-progress recording cannot be deleted until Stop. There is no local recycle bin.
 
 **Left rail:**
 

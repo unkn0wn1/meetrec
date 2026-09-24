@@ -21,8 +21,8 @@ function open(id: string): void {
   void router.push({ name: 'recording', params: { id } })
 }
 
-function remove(id: string): void {
-  void library.remove(id)
+function remove(id: string, removeCloud: boolean): void {
+  void library.remove(id, removeCloud)
 }
 </script>
 
@@ -56,7 +56,7 @@ function remove(id: string): void {
             <DeleteRecordingButton
               appearance="row"
               :busy="library.busy"
-              @confirm="remove(item.id)"
+              @confirm="remove(item.id, $event)"
             />
           </div>
         </li>

@@ -79,9 +79,12 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 ### 13. Library delete — LOCKED (2026-09-24)
 
-- **Permanent delete** with an in-app confirm. No recycle bin or soft-trash for v1.
-- Main-process `library:delete` removes only `recordings/<id>/` under userData. Renderer never deletes paths.
-- Refuse delete while that id is still recording. Do not delete Drive / OneDrive copies from this action.
+- **Permanent local delete** with an in-app confirm. No local recycle bin.
+- Main-process `library:delete` removes `recordings/<id>/` under userData. The renderer never deletes paths.
+- Refuse delete while that id is still recording.
+- Confirm includes **Also remove uploaded Drive / OneDrive copies**. The box starts off every time confirm opens and is not stored in settings.
+- Checked: trash Drive file ids and recycle OneDrive item ids from `meta.uploads`, then delete the local folder. If a cloud delete fails, the error names what failed and the local folder stays.
+- The shared Drive `meetrec` folder is left in place. Tokens and scopes stay the upload ones (`drive.file`, `Files.ReadWrite.AppFolder`). Drive uses the first Google connection with `drive.file`. One Microsoft account.
 
 ## Still soft / rename anytime
 

@@ -16,7 +16,7 @@ meetrec/
     domains/            # main-side domain modules (small files)
       recording/        # session status, folder layout, library scan
       calendar/         # OAuth, multi-account Google slots, calendar selection, poll, schedule, opt-out
-      cloud/            # Drive and OneDrive upload
+      cloud/            # Drive and OneDrive upload and optional delete
       transcript/       # STT document + diarization segments
       minutes/          # summary markdown
       providers/        # xAI + OpenAI STT/chat, OAuth helpers (main only)

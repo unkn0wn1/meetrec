@@ -36,7 +36,7 @@ Calendar connect scopes:
 - Google: `openid`, `email`, `https://www.googleapis.com/auth/calendar.readonly`
 - Microsoft: `openid`, `profile`, `email`, `offline_access`, `User.Read`, `Calendars.Read`
 
-Upload is a second consent. It adds `https://www.googleapis.com/auth/drive.file` or `Files.ReadWrite.AppFolder`. It does not request full Drive or `Files.ReadWrite.All`.
+Upload is a second consent. It adds `https://www.googleapis.com/auth/drive.file` or `Files.ReadWrite.AppFolder`. It does not request full Drive or `Files.ReadWrite.All`. Deleting those uploaded copies uses the same tokens and the same scopes. The renderer sends a boolean on `library:delete` and never receives a token. Cloud errors use the same redaction as upload (`shortTokenError`).
 
 Publisher client ids (and the optional Google client secret) come only from build/env: `MEETREC_GOOGLE_CLIENT_ID`, `MEETREC_GOOGLE_CLIENT_SECRET`, `MEETREC_MICROSOFT_CLIENT_ID`. Settings has no paste fields. See [oauth-clients.md](oauth-clients.md).
 

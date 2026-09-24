@@ -43,8 +43,8 @@ function onTranscriptSeek(startMs: number): void {
   })
 }
 
-async function onDelete(): Promise<void> {
-  const ok = await library.remove(id.value)
+async function onDelete(removeCloud: boolean): Promise<void> {
+  const ok = await library.remove(id.value, removeCloud)
   if (ok) void router.push({ name: 'library' })
 }
 

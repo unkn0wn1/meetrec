@@ -10,7 +10,7 @@ The person running the app on their own computer. They are responsible for telli
 
 ## What 0.1 does
 
-Manual Record, a local folder, Library (including permanent delete with confirm), Transcribe, and Generate summary. Settings has General, Providers, and Calendars. One Voice default and one AI default. The Calendar tab lists the next 14 days and can opt out of a meeting or a series. Google Calendar or Microsoft Calendar can prompt before a timed event, or auto-record selected meetings when that General switch is on. Optional upload can copy the audio, transcript, and summary to a `meetrec` folder in Google Drive or to the OneDrive app folder. Auto-upload follows the General destination and stays off until that provider’s upload checkbox is on. Silence auto-stop stays out.
+Manual Record, a local folder, Library (including permanent delete with confirm), Transcribe, and Generate summary. Settings has General, Providers, and Calendars. One Voice default and one AI default. The Calendar tab lists the next 14 days and can opt out of a meeting or a series. Google Calendar or Microsoft Calendar can prompt before a timed event, or auto-record selected meetings when that General switch is on. Optional upload can copy the audio, transcript, and summary to a `meetrec` folder in Google Drive or to the OneDrive app folder. Auto-upload follows the General destination and stays off until that provider’s upload checkbox is on. Delete confirm can also trash those Drive files and recycle those OneDrive items. The checkbox starts off, and the local folder stays if a cloud delete fails. Silence auto-stop stays out.
 
 ## Happy path
 
