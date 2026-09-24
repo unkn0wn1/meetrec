@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BrandMark from '@/components/BrandMark.vue'
 import ModeNav from '@/components/ModeNav.vue'
+import UpdateBanner from '@/components/UpdateBanner.vue'
 
 defineProps<{
   title?: string
@@ -19,6 +20,7 @@ defineProps<{
       </div>
       <ModeNav />
     </header>
+    <UpdateBanner />
     <slot />
   </main>
 </template>

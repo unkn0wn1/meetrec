@@ -2,7 +2,7 @@
 
 Installable builds use **electron-builder**. electron-vite still compiles to `out/`. The builder reads `out/` and writes installers to `dist/` (gitignored). The package stays `private: true`. `appId` is `io.techglint.meetrec`.
 
-Tag releases sign Windows installers with Azure Trusted Signing. The Linux AppImage stays unsigned. Ad-hoc and local Windows builds stay unsigned. Nothing is auto-updated.
+Tag releases sign Windows installers with Azure Trusted Signing. The Linux AppImage stays unsigned. Ad-hoc and local Windows builds stay unsigned. NSIS and AppImage check GitHub Releases for updates. Portable is manual.
 
 ## Build
 
@@ -93,13 +93,25 @@ The packaged app has the same `chrome-sandbox` requirement as development. See t
 
 ## Auto-update
 
-Auto-update is not included. A follow-up can add `electron-updater` and a publish URL after a real release exists. Tag Windows builds are signed, and an updater is still a follow-up because SmartScreen reputation builds over time.
+Packaged Linux AppImage and Windows NSIS check the public GitHub Releases for `unkn0wn1/meetrec` on launch and from Settings → General. electron-updater reads `latest-linux.yml` or `latest.yml`. A prerelease `package.json` version reads the `beta`, `rc`, or `alpha` channel file instead (`0.2.0-beta.1` → `beta.yml` and `beta-linux.yml`). The yml `path` is `meetrec-<version>.AppImage` or `meetrec-<version>-setup.exe`.
+
+The tag workflow uploads those yml files and `*.blockmap` next to the installers. `npm run dist`, `dist:linux`, and `dist:win` keep `--publish never`, so electron-builder writes the metadata and does not upload it. softprops uploads the files. No token is stored in the app or the repo. The repository is public.
+
+Windows auto-update installs the signed NSIS setup. `publisherName` in the publish config is the TechGlint subject (`CN=TechGlint, O=TechGlint, L=London, S=Greater London, C=GB`). Signature verification stays on. Portable users download the new `meetrec-<version>-portable.exe`. The portable build says that and does not call GitHub.
+
+`npm run dev` (`app.isPackaged === false`) does not check GitHub. Settings says updates apply to packaged installs.
+
+A downloaded update does not quit the app during a recording. Restart and install is explicit, and only while recording is idle.
+
+SmartScreen reputation is still separate from the signature. The updater does not change “Windows protected your PC”.
+
+The first real feed check is the next `v*` tag after this ships. CI does not perform that round-trip.
 
 ## GitHub Actions
 
 **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes to `main`: typecheck, lint, format, file-size guard, tests. See [quality-gates.md](quality-gates.md). Merging to `main` does **not** publish installers.
 
-**Releases** (`.github/workflows/release.yml`) run only when you push a `v*` tag. GitHub-hosted runners build Linux (`ubuntu-latest` → AppImage) and Windows (`windows-latest` → NSIS + portable exe), then attach those files to a GitHub Release. The Windows job signs with Azure Trusted Signing when `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are set. The Linux AppImage stays unsigned. Tags with a hyphen (`v0.1.0-alpha.1`, `v0.2.0-beta.1`, `v1.0.0-rc.1`) are marked **prerelease**. Plain tags like `v1.0.0` are a full release.
+**Releases** (`.github/workflows/release.yml`) run only when you push a `v*` tag. GitHub-hosted runners build Linux (`ubuntu-latest` → AppImage) and Windows (`windows-latest` → NSIS + portable exe), then attach those installers, the channel yml files, and blockmaps to a GitHub Release. `--publish never` stays on the dist scripts, so electron-builder writes the metadata and softprops is the only uploader. The Windows job signs with Azure Trusted Signing when `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are set. The Linux AppImage stays unsigned. Tags with a hyphen (`v0.1.0-alpha.1`, `v0.2.0-beta.1`, `v1.0.0-rc.1`) are marked **prerelease**. Plain tags like `v1.0.0` are a full release. A prerelease tag uploads `beta` / `rc` / `alpha` yml files instead of `latest`.
 
 Cut a release after the version bump is on `main`:
 
@@ -111,7 +123,7 @@ git push origin v0.1.0
 
 For a prerelease, use a hyphenated tag that matches `package.json` (e.g. `v0.1.0-alpha.3`).
 
-**Ad-hoc package** (`.github/workflows/package.yml`) is **workflow_dispatch** only: same builders, upload artifacts, no GitHub Release. It does not receive the Azure secrets. The Windows job passes `--config.win.signAndEditExecutable=false`, so those artifacts stay unsigned. Use it to smoke-test packaging without tagging.
+**Ad-hoc package** (`.github/workflows/package.yml`) is **workflow_dispatch** only: same builders, upload artifacts, no GitHub Release. It does not receive the Azure secrets. The Windows job passes `--config.win.signAndEditExecutable=false`, so those artifacts stay unsigned. It uploads installers only. Those artifacts are not the update feed. Use it to smoke-test packaging without tagging.
 
 ## Local installer smoke
 

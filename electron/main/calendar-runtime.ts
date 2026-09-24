@@ -16,6 +16,7 @@ export function attachCalendar(input: {
   secrets: SecretStore
   controller: RecordingController
   userDataDir: () => string
+  onRecordingChange?: () => void
 }): { stop: () => void; service: CalendarService } {
   const prompt = createCalendarPrompt()
   let promptKey: string | null = null
@@ -59,6 +60,7 @@ export function attachCalendar(input: {
 
   input.controller.setOnChange((status) => {
     broadcast(IPC.recordingChanged, status)
+    input.onRecordingChange?.()
     if (status.phase !== 'recording') void service?.noteStopped()
     service?.renderTray()
   })

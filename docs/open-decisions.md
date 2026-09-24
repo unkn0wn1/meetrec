@@ -45,7 +45,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 - **electron-builder**. `appId` is `io.techglint.meetrec`. `private: true` stays.
 - Windows: NSIS installer and a portable exe, both x64. Linux: AppImage.
-- Windows tag releases use electron-builder 26 `win.azureSignOptions` (Azure Trusted Signing), not a PFX. Public values: account `techglint`, profile `meetrec-public`, endpoint `https://eus.codesigning.azure.net/`, publisher `CN=TechGlint, O=TechGlint, L=London, S=Greater London, C=GB`. Credentials stay GitHub Actions secrets. Ad-hoc `package.yml` and local Windows builds stay unsigned. SmartScreen reputation is separate from the signature. Updated 2026-09-24. No auto-update yet.
+- Windows tag releases use electron-builder 26 `win.azureSignOptions` (Azure Trusted Signing), not a PFX. Public values: account `techglint`, profile `meetrec-public`, endpoint `https://eus.codesigning.azure.net/`, publisher `CN=TechGlint, O=TechGlint, L=London, S=Greater London, C=GB`. Credentials stay GitHub Actions secrets. Ad-hoc `package.yml` and local Windows builds stay unsigned. SmartScreen reputation is separate from the signature. Packaged NSIS and AppImage update from public GitHub Releases (`unkn0wn1/meetrec`). Portable builds stay a manual download. Dev builds do not check. Updated 2026-09-24.
 - Linux and Windows installers ship a pinned BtbN LGPL-static ffmpeg under `resources/ffmpeg/`. `npm run dev` uses ffmpeg on `PATH`. See [packaging.md](packaging.md).
 
 ### 9. Calendar / Drive OAuth clients — LOCKED 2026-09-23
