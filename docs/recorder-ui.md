@@ -38,8 +38,8 @@
 
 **Left rail:**
 
-1. **Playback** — play, pause, stop, and a scrubber. The clocks follow the playhead while playing and while dragging. Seeking does not start playback.
-2. **Transcript** — full text, or a **Transcribe** button when it is missing
+1. **Playback** — play, pause, stop, and a scrubber. The clocks follow the playhead while playing and while dragging. Dragging the scrubber seeks without starting playback. A transcript bubble switches to this pane, seeks to that segment’s start, and plays.
+2. **Transcript** — one bubble per segment (speaker name and timestamp). Full text sits under a collapsed **Full text** disclosure. A missing transcript shows **Transcribe**.
 3. **Summary** — minutes and action items, or **Generate summary** when it is missing (requires a transcript)
 
 Order of work: record, optionally rename speakers, transcribe, then summarize. **Upload to Google Drive** and **Upload to OneDrive** copy the files that exist. They stay disabled until that provider's upload consent is granted under **Settings → Calendars**. Auto-upload after Stop, Transcribe, and Generate summary follows **Settings → General → Default destination**, and only if that provider’s upload checkbox and scope are on.

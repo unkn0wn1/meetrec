@@ -118,7 +118,9 @@ export interface LibraryListItem {
 export interface TranscriptSegmentView {
   speakerId: string
   speakerLabel: string
+  /** Seconds from the start of the audio. Playback seek uses milliseconds. */
   start: number
+  /** Seconds from the start of the audio. */
   end: number
   text: string
 }
