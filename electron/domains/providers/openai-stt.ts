@@ -13,14 +13,18 @@ export async function transcribeWavOpenAi(input: {
   apiKey: string
   audioPath: string
   model: string
+  mimeType?: string
+  fileName?: string
   fetchImpl?: typeof fetch
 }): Promise<TranscriptDocument> {
   const bytes = await readFile(input.audioPath)
+  const mimeType = input.mimeType ?? 'audio/wav'
+  const fileName = input.fileName ?? basename(input.audioPath)
   const form = new FormData()
   form.append('model', input.model)
   form.append('response_format', 'diarized_json')
   form.append('chunking_strategy', 'auto')
-  form.append('file', new Blob([bytes], { type: 'audio/wav' }), basename(input.audioPath))
+  form.append('file', new Blob([bytes], { type: mimeType }), fileName)
 
   const fetchImpl = input.fetchImpl ?? fetch
   const response = await fetchImpl(OPENAI_STT_URL, {
@@ -83,10 +87,16 @@ export function segmentsFromDiarized(payload: unknown): TranscriptSegment[] {
 }
 
 export function openAiErrorMessage(status: number, body: string, action: string): string {
-  const detail = body.replace(/\s+/g, ' ').trim().slice(0, 240)
   if (status === 401 || status === 403) {
     return 'OpenAI rejected the API key. Open Settings and save a working key.'
   }
+  if (status === 413) {
+    return (
+      `${action} rejected the upload as too large (HTTP 413). ` +
+      'OpenAI caps uploads near 25 MB; try a shorter recording.'
+    )
+  }
+  const detail = body.replace(/\s+/g, ' ').trim().slice(0, 240)
   return detail ? `${action} failed (${status}): ${detail}` : `${action} failed (${status}).`
 }
 

@@ -9,15 +9,19 @@ export async function transcribeWav(input: {
   apiKey: string
   audioPath: string
   model: string
+  mimeType?: string
+  fileName?: string
   fetchImpl?: typeof fetch
 }): Promise<TranscriptDocument> {
   const bytes = await readFile(input.audioPath)
+  const mimeType = input.mimeType ?? 'audio/wav'
+  const fileName = input.fileName ?? basename(input.audioPath)
   const form = new FormData()
   form.append('model', input.model)
   form.append('diarize', 'true')
   form.append('language', 'en')
   form.append('format', 'true')
-  form.append('file', new Blob([bytes], { type: 'audio/wav' }), basename(input.audioPath))
+  form.append('file', new Blob([bytes], { type: mimeType }), fileName)
 
   const fetchImpl = input.fetchImpl ?? fetch
   const response = await fetchImpl(STT_URL, {
@@ -39,10 +43,16 @@ export async function transcribeWav(input: {
 }
 
 export function sttErrorMessage(status: number, body: string): string {
-  const detail = body.replace(/\s+/g, ' ').trim().slice(0, 240)
   if (status === 400 || status === 401 || status === 403) {
     return 'xAI rejected the credentials. Open Settings and sign in or save a working key.'
   }
+  if (status === 413) {
+    return (
+      'Speech-to-text rejected the upload as too large (HTTP 413). ' +
+      'MeetRec compresses audio before upload; try a shorter recording if this persists.'
+    )
+  }
+  const detail = body.replace(/\s+/g, ' ').trim().slice(0, 240)
   return detail
     ? `Speech-to-text failed (${status}): ${detail}`
     : `Speech-to-text failed (${status}).`
