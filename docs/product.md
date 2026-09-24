@@ -14,7 +14,7 @@ Manual Record, a local folder, Library (including permanent delete with confirm)
 
 ## Happy path
 
-1. Google Calendar or Microsoft Calendar Connect (publisher-bundled OAuth) → the Calendar tab lists timed events for the next 14 days. Connect another Google account when a meeting lives on a second login, and check the calendars to watch. **Record with meetrec** is on unless you opt out of an occurrence or a series.
+1. Google Calendar or Microsoft Calendar Connect (publisher-bundled OAuth) → the Calendar tab lists timed events for the next 14 days. Connect another Google account, or a second Microsoft account, when a meeting lives on another login, and check the calendars to watch. **Record with meetrec** is on unless you opt out of an occurrence or a series.
 2. App lives in the **system tray**. Hiding the window does not stop calendar polling.
 3. **~10 minutes before** a selected timed event: notification and prompt with **Start recording**, **Dismiss**, or **Auto-arm**. The soonest event owns the prompt. If **Enable auto-record for selected meetings** is on, this step is a notification only ("recording will start 1 minute before") and the prompt window stays closed.
 4. If Auto-arm was chosen, or auto-record is on, recording starts at **T−1 minute** (`AUTO_ARM_LEAD_MS`). Inside that last minute it starts immediately. Opted-out events do not start.

@@ -22,13 +22,18 @@ export interface GoogleConnection extends CalendarTokenSet {
   id: string
 }
 
+/** One signed-in Microsoft account. `id` is the Graph user id when known. */
+export interface MicrosoftConnection extends CalendarTokenSet {
+  id: string
+}
+
 export interface SecretBag {
   xaiApiKey: string | null
   openaiApiKey: string | null
   xaiOAuth: OAuthTokenSet | null
   googleClientSecret: string | null
   googleConnections: GoogleConnection[]
-  microsoftOAuth: CalendarTokenSet | null
+  microsoftConnections: MicrosoftConnection[]
 }
 
 export function emptySecretBag(): SecretBag {
@@ -38,7 +43,7 @@ export function emptySecretBag(): SecretBag {
     xaiOAuth: null,
     googleClientSecret: null,
     googleConnections: [],
-    microsoftOAuth: null
+    microsoftConnections: []
   }
 }
 
@@ -49,7 +54,7 @@ export function encodeSecretBag(bag: SecretBag): string {
     xaiOAuth: bag.xaiOAuth,
     googleClientSecret: bag.googleClientSecret,
     googleConnections: bag.googleConnections,
-    microsoftOAuth: bag.microsoftOAuth
+    microsoftConnections: bag.microsoftConnections
   })
 }
 
@@ -69,12 +74,18 @@ export function decodeSecretBag(raw: string): SecretBag | null {
     xaiOAuth: parseOAuth(record.xaiOAuth),
     googleClientSecret: trimOrNull(record.googleClientSecret),
     googleConnections: parseGoogleConnections(record),
-    microsoftOAuth: parseCalendarToken(record.microsoftOAuth)
+    microsoftConnections: parseMicrosoftConnections(record)
   }
 }
 
 /** Legacy single-account files used `email:<address>` until userinfo returned an id. */
 export function legacyGoogleConnectionId(email: string | null): string {
+  if (!email) return 'legacy'
+  return `email:${email.toLowerCase()}`
+}
+
+/** Legacy Microsoft files used `email:<address>` until Graph returned a user id. */
+export function legacyMicrosoftConnectionId(email: string | null): string {
   if (!email) return 'legacy'
   return `email:${email.toLowerCase()}`
 }
@@ -94,6 +105,32 @@ function parseGoogleConnections(record: Record<string, unknown>): GoogleConnecti
 }
 
 function parseGoogleConnection(value: unknown): GoogleConnection | null {
+  const token = parseCalendarToken(value)
+  if (!token || !value || typeof value !== 'object') return null
+  const id = trimOrNull((value as Record<string, unknown>).id)
+  if (!id) return null
+  return { ...token, id }
+}
+
+/**
+ * A missing `microsoftConnections` array promotes `microsoftOAuth`.
+ * A present array is authoritative, including when it is empty.
+ */
+function parseMicrosoftConnections(record: Record<string, unknown>): MicrosoftConnection[] {
+  if (Array.isArray(record.microsoftConnections)) {
+    const connections: MicrosoftConnection[] = []
+    for (const item of record.microsoftConnections) {
+      const parsed = parseMicrosoftConnection(item)
+      if (parsed) connections.push(parsed)
+    }
+    return connections
+  }
+  const legacy = parseCalendarToken(record.microsoftOAuth)
+  if (!legacy) return []
+  return [{ ...legacy, id: legacyMicrosoftConnectionId(legacy.accountEmail) }]
+}
+
+function parseMicrosoftConnection(value: unknown): MicrosoftConnection | null {
   const token = parseCalendarToken(value)
   if (!token || !value || typeof value !== 'object') return null
   const id = trimOrNull((value as Record<string, unknown>).id)

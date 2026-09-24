@@ -1,3 +1,5 @@
+export { MAX_MICROSOFT_CONNECTIONS } from '../../shared/calendar-contract'
+
 /** Clocks for the calendar prompt, poll, grace stop, and the Calendar tab. */
 export const PROMPT_LEAD_MS = 600_000
 export const AUTO_ARM_LEAD_MS = 60_000

@@ -1,4 +1,4 @@
-import type { CalendarTokenSet, GoogleConnection } from '../settings/secret-codec'
+import type { CalendarTokenSet } from '../settings/secret-codec'
 import type { CalendarDeps, CalendarMemory } from './deps'
 import {
   OAUTH_CLIENT_MISSING,
@@ -9,10 +9,12 @@ import {
 import { driveConnection, replaceGoogleConnection } from './google-connections'
 import { removeGoogleConnection } from './google-fetch'
 import { refreshGoogleTokens } from './google-oauth'
+import { oneDriveConnection, replaceMicrosoftConnection } from './microsoft-connections'
+import { removeMicrosoftConnection } from './microsoft-fetch'
 import { refreshMicrosoftTokens } from './microsoft-oauth'
 import { needsRefresh } from './tokens'
 
-/** Google returns the first connection that granted Drive. Microsoft stays the single slot. */
+/** Drive and OneDrive each use the first connection that granted that upload scope. */
 export async function loadAccess(
   deps: CalendarDeps,
   memory: CalendarMemory,
@@ -59,7 +61,7 @@ async function loadMicrosoft(
   force: boolean
 ): Promise<string> {
   const bag = await deps.secrets.readBag()
-  const current = bag.microsoftOAuth
+  const current = oneDriveConnection(bag.microsoftConnections)
   if (!current?.refreshToken) throw new Error('Connect again')
   const clientId = effectiveMicrosoftClientId()
   if (!clientId) throw new Error(OAUTH_CLIENT_MISSING)
@@ -71,25 +73,23 @@ async function loadMicrosoft(
       fetchImpl: deps.fetchImpl,
       now: deps.now()
     })
-    const next = { ...refreshed, accountEmail: refreshed.accountEmail ?? current.accountEmail }
+    const next = withIdentity(current, refreshed)
     await deps.secrets.update((draft) => {
-      if (draft.microsoftOAuth) draft.microsoftOAuth = next
+      draft.microsoftConnections = replaceMicrosoftConnection(draft.microsoftConnections, next)
     })
     return next.accessToken
   } catch {
-    await deps.secrets.update((draft) => {
-      draft.microsoftOAuth = null
-    })
-    memory.events.microsoft = []
-    memory.fetchedAt.microsoft = null
-    memory.lists.microsoft = []
-    memory.errors.microsoft = 'Connect again'
+    await removeMicrosoftConnection(deps, memory, current.id, 'Connect again')
     throw new Error('Connect again')
   }
 }
 
-function withIdentity(current: GoogleConnection, refreshed: CalendarTokenSet): GoogleConnection {
+function withIdentity<T extends { id: string; accountEmail: string | null }>(
+  current: T,
+  refreshed: CalendarTokenSet
+): T {
   return {
+    ...current,
     ...refreshed,
     id: current.id,
     accountEmail: refreshed.accountEmail ?? current.accountEmail

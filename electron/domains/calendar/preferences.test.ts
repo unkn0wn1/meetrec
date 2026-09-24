@@ -2,7 +2,12 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { emptyPreferences, readPreferences, writePreferences } from './preferences'
+import {
+  adoptFlatMicrosoftCalendars,
+  emptyPreferences,
+  readPreferences,
+  writePreferences
+} from './preferences'
 
 const EMPTY = emptyPreferences()
 
@@ -50,5 +55,22 @@ describe('calendar preferences', () => {
     }
     await writePreferences(dir, prefs)
     expect(await readPreferences(dir)).toEqual(prefs)
+  })
+
+  it('copies a flat Microsoft calendar list onto one connection', () => {
+    const prefs = { ...EMPTY, microsoftCalendarIds: ['cal-1', 'cal-2'] }
+    expect(adoptFlatMicrosoftCalendars(prefs, 'email:ada@contoso.com')).toEqual({
+      ...EMPTY,
+      microsoftCalendars: { 'email:ada@contoso.com': ['cal-1', 'cal-2'] }
+    })
+    const chosen = {
+      ...EMPTY,
+      microsoftCalendars: { 'oid-1': ['kept'] },
+      microsoftCalendarIds: ['cal-1']
+    }
+    expect(adoptFlatMicrosoftCalendars(chosen, 'oid-1').microsoftCalendarIds).toBeNull()
+    expect(adoptFlatMicrosoftCalendars(chosen, 'oid-1').microsoftCalendars).toEqual({
+      'oid-1': ['kept']
+    })
   })
 })

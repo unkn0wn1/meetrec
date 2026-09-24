@@ -35,21 +35,22 @@ export interface CalendarMemory {
   runtime: CalendarRuntimeState
   events: {
     googleByConnection: Record<string, CalendarEvent[]>
-    microsoft: CalendarEvent[]
+    microsoftByConnection: Record<string, CalendarEvent[]>
   }
   fetchedAt: {
     googleByConnection: Record<string, number>
-    microsoft: number | null
+    microsoftByConnection: Record<string, number>
   }
-  /** Section-level connect error. Per-account fetch errors live in `accountErrors`. */
+  /** Section-level connect error. Per-account fetch errors are keyed by connection id. */
   errors: { google: string | null; microsoft: string | null }
   accountErrors: Record<string, string | null>
+  microsoftAccountErrors: Record<string, string | null>
   lists: {
     google: Record<string, ListedCalendar[]>
-    microsoft: ListedCalendar[]
+    microsoft: Record<string, ListedCalendar[]>
   }
   connectPending: 'google' | 'microsoft' | null
-  /** Google card a reconnect or Drive consent is updating. Null adds an account. */
+  /** Account card a reconnect or upload consent is updating. Null adds an account. */
   connectTargetId: string | null
   connectCancel: (() => void) | null
   connectGeneration: number
@@ -72,11 +73,12 @@ export function emptyMemory(
   return {
     prefs,
     runtime,
-    events: { googleByConnection: {}, microsoft: [] },
-    fetchedAt: { googleByConnection: {}, microsoft: null },
+    events: { googleByConnection: {}, microsoftByConnection: {} },
+    fetchedAt: { googleByConnection: {}, microsoftByConnection: {} },
     errors: { google: null, microsoft: null },
     accountErrors: {},
-    lists: { google: {}, microsoft: [] },
+    microsoftAccountErrors: {},
+    lists: { google: {}, microsoft: {} },
     connectPending: null,
     connectTargetId: null,
     connectCancel: null,

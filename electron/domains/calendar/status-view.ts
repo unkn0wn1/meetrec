@@ -1,13 +1,15 @@
 import type {
   CalendarChoice,
   CalendarStatus,
-  GoogleConnectionStatus
+  GoogleConnectionStatus,
+  MicrosoftConnectionStatus
 } from '../../shared/calendar-contract'
 import { readAutoRecordFlag } from '../settings/settings-file'
 import { GOOGLE_DRIVE_SCOPE, MICROSOFT_APPFOLDER_SCOPE } from './constants'
 import type { CalendarCore } from './deps'
 import { upcomingEvents } from './event-view'
 import { driveConnection } from './google-connections'
+import { oneDriveConnection } from './microsoft-connections'
 import { armSkipped, decideSchedule } from './schedule'
 import type { ListedCalendar } from './selection'
 import { cachedEvents, freshEvents } from './snapshot'
@@ -35,6 +37,9 @@ export async function buildCalendarStatus(core: CalendarCore): Promise<CalendarS
   const connections = bag.googleConnections
   const drive = driveConnection(connections)
   const first = connections[0] ?? null
+  const microsoftConnections = bag.microsoftConnections
+  const oneDrive = oneDriveConnection(microsoftConnections)
+  const firstMicrosoft = microsoftConnections[0] ?? null
   const arm = visibleArm(core)
   const googleAccounts: GoogleConnectionStatus[] = connections.map((connection) => ({
     id: connection.id,
@@ -46,12 +51,22 @@ export async function buildCalendarStatus(core: CalendarCore): Promise<CalendarS
       core.memory.prefs.googleCalendars[connection.id]
     )
   }))
+  const microsoftAccounts: MicrosoftConnectionStatus[] = microsoftConnections.map((connection) => ({
+    id: connection.id,
+    accountEmail: connection.accountEmail,
+    error: core.memory.microsoftAccountErrors[connection.id] ?? null,
+    uploadScopeGranted: scopeIncludes(connection.scope, MICROSOFT_APPFOLDER_SCOPE),
+    calendars: choices(
+      core.memory.lists.microsoft[connection.id] ?? [],
+      core.memory.prefs.microsoftCalendars[connection.id]
+    )
+  }))
   return {
     connectPending: core.memory.connectPending,
     connectTargetId: core.memory.connectTargetId,
     connected:
       connections.some((item) => Boolean(item.refreshToken)) ||
-      Boolean(bag.microsoftOAuth?.refreshToken),
+      microsoftConnections.some((item) => Boolean(item.refreshToken)),
     google: {
       connected: connections.some((item) => Boolean(item.refreshToken)),
       accountEmail: drive?.accountEmail ?? first?.accountEmail ?? null,
@@ -61,16 +76,13 @@ export async function buildCalendarStatus(core: CalendarCore): Promise<CalendarS
     },
     googleAccounts,
     microsoft: {
-      connected: Boolean(bag.microsoftOAuth?.refreshToken),
-      accountEmail: bag.microsoftOAuth?.accountEmail ?? null,
+      connected: microsoftConnections.some((item) => Boolean(item.refreshToken)),
+      accountEmail: oneDrive?.accountEmail ?? firstMicrosoft?.accountEmail ?? null,
       uploadEnabled: core.memory.prefs.uploadMicrosoft,
-      uploadScopeGranted: scopeIncludes(bag.microsoftOAuth?.scope ?? '', MICROSOFT_APPFOLDER_SCOPE),
-      error: core.memory.errors.microsoft,
-      calendars: choices(
-        core.memory.lists.microsoft,
-        core.memory.prefs.microsoftCalendarIds ?? undefined
-      )
+      uploadScopeGranted: Boolean(oneDrive),
+      error: core.memory.errors.microsoft
     },
+    microsoftAccounts,
     upcoming: upcomingEvents(cachedEvents(core.memory), core.memory.runtime, now),
     prompt: decision.prompt,
     arm: arm ? { occurrenceKey: arm.occurrenceKey, title: arm.title, fireAt: arm.fireAt } : null

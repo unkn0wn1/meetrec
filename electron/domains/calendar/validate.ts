@@ -14,7 +14,7 @@ export function cleanPurpose(value: unknown): 'calendar' | 'drive' {
 
 export function cleanConnectionId(value: unknown): string | null {
   if (value == null || value === '') return null
-  if (typeof value !== 'string') throw new Error('Choose a Google account.')
+  if (typeof value !== 'string') throw new Error('Choose an account.')
   const trimmed = value.trim()
   return trimmed || null
 }

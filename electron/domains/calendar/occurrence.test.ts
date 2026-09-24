@@ -23,9 +23,21 @@ describe('occurrence keys', () => {
       provider: 'microsoft',
       eventId: 'evt:1',
       startsAt: START,
+      connectionId: 'user:1',
       calendarId: 'cal:1'
     })
     expect(parseOccurrenceKey(microsoft)).toEqual({
+      provider: 'microsoft',
+      eventId: 'evt:1',
+      startsAt: START,
+      connectionId: 'user:1',
+      calendarId: 'cal:1'
+    })
+    expect(
+      parseOccurrenceKey(
+        `microsoft:v2:${encodeURIComponent('cal:1')}:${encodeURIComponent('evt:1')}:${START}`
+      )
+    ).toEqual({
       provider: 'microsoft',
       eventId: 'evt:1',
       startsAt: START,

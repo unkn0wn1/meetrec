@@ -50,6 +50,17 @@ describe('oauth requests', () => {
     expect(url.searchParams.get('prompt')).toBe('select_account')
     expect(url.searchParams.get('response_mode')).toBe('query')
     expect(url.searchParams.get('access_type')).toBeNull()
+    expect(url.searchParams.get('login_hint')).toBeNull()
+    const hinted = new URL(
+      authorizeUrl({
+        ...shared,
+        provider: 'microsoft',
+        redirectUri: 'http://localhost:9/callback',
+        loginHint: 'ada@contoso.com'
+      })
+    )
+    expect(hinted.searchParams.get('prompt')).toBe('select_account')
+    expect(hinted.searchParams.get('login_hint')).toBe('ada@contoso.com')
   })
 
   it('includes client_secret in the token body only when one is provided', () => {

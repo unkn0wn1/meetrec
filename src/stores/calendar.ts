@@ -50,8 +50,14 @@ export const useCalendarStore = defineStore('calendar', () => {
     )
   }
 
-  async function connectMicrosoft(): Promise<boolean> {
-    return run(() => useMeetrec().calendar.connect({ provider: 'microsoft', purpose: 'calendar' }))
+  async function connectMicrosoft(connectionId?: string | null): Promise<boolean> {
+    return run(() =>
+      useMeetrec().calendar.connect({
+        provider: 'microsoft',
+        purpose: 'calendar',
+        connectionId: connectionId ?? null
+      })
+    )
   }
 
   async function connectDrive(
@@ -79,8 +85,13 @@ export const useCalendarStore = defineStore('calendar', () => {
     return run(() => useMeetrec().cloud.setUpload({ provider, enabled }))
   }
 
-  async function disconnectMicrosoft(): Promise<boolean> {
-    return run(() => useMeetrec().calendar.disconnect({ provider: 'microsoft' }))
+  async function disconnectMicrosoft(connectionId?: string | null): Promise<boolean> {
+    return run(() =>
+      useMeetrec().calendar.disconnect({
+        provider: 'microsoft',
+        connectionId: connectionId ?? null
+      })
+    )
   }
 
   async function dismiss(occurrenceKey: string): Promise<boolean> {

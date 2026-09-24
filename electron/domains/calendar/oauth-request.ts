@@ -13,6 +13,7 @@ export function authorizeUrl(input: {
   codeChallenge: string
   /** Google only. Asks the browser to pick an account and still returns a refresh token. */
   selectAccount?: boolean
+  /** Pre-selects an account on Google Drive reconnect and Microsoft reconnect. */
   loginHint?: string | null
 }): string {
   const url = new URL(input.provider === 'google' ? GOOGLE_AUTHORIZE_URL : MICROSOFT_AUTHORIZE_URL)
@@ -31,6 +32,7 @@ export function authorizeUrl(input: {
   } else {
     url.searchParams.set('prompt', 'select_account')
     url.searchParams.set('response_mode', 'query')
+    if (input.loginHint) url.searchParams.set('login_hint', input.loginHint)
   }
   return url.toString()
 }

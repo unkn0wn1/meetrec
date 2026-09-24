@@ -2,13 +2,13 @@ import { CALENDAR_END_GRACE_MS } from './constants'
 import type { CalendarCore } from './deps'
 import { removeGoogleConnection } from './google-fetch'
 import { revokeGoogleRefresh } from './google-oauth'
+import { removeMicrosoftConnection } from './microsoft-fetch'
 import { parseOccurrenceKey } from './occurrence'
-import { writePreferences } from './preferences'
 import { clearSkippedArm } from './record-opt'
 import { armFromEvent, occurrenceSkipped } from './schedule'
 import { cachedEvents } from './snapshot'
 import type { CalendarEvent } from './source'
-import { dropProviderKeys, rememberKey, type CalendarArm } from './state-file'
+import { rememberKey, type CalendarArm } from './state-file'
 import { requireEvent } from './validate'
 
 export async function dismissOccurrence(core: CalendarCore, key: unknown): Promise<void> {
@@ -108,17 +108,22 @@ function assertRecording(core: CalendarCore, event: CalendarEvent): void {
   }
 }
 
-export async function disconnectMicrosoft(core: CalendarCore): Promise<void> {
-  await core.deps.secrets.update((draft) => {
-    draft.microsoftOAuth = null
-  })
-  core.memory.events.microsoft = []
-  core.memory.fetchedAt.microsoft = null
-  core.memory.lists.microsoft = []
+export async function disconnectMicrosoft(
+  core: CalendarCore,
+  connectionId?: string | null
+): Promise<void> {
+  const bag = await core.deps.secrets.readBag()
+  const targets = connectionId
+    ? bag.microsoftConnections.filter((item) => item.id === connectionId)
+    : bag.microsoftConnections
+  if (!connectionId) {
+    for (const target of targets) {
+      await removeMicrosoftConnection(core.deps, core.memory, target.id, null)
+    }
+  } else if (targets.length > 0) {
+    await removeMicrosoftConnection(core.deps, core.memory, connectionId, null)
+  }
   core.memory.errors.microsoft = null
-  core.memory.prefs = { ...core.memory.prefs, microsoftCalendarIds: null }
-  core.memory.runtime = dropProviderKeys(core.memory.runtime, 'microsoft')
-  await writePreferences(core.deps.userDataDir(), core.memory.prefs)
   await core.saveRuntime()
   await core.publish()
 }

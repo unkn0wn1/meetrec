@@ -5,6 +5,7 @@ import type { CalendarAttendee, CalendarEvent, CalendarSource } from './source'
 import { CalendarHttpError } from './google-events'
 
 export interface MicrosoftEventContext {
+  connectionId?: string | null
   calendarId: string
   accountEmail: string | null
   calendarLabel: string | null
@@ -86,9 +87,10 @@ function parseMicrosoftEvent(
       provider: 'microsoft',
       eventId,
       startsAt: start,
+      connectionId: context?.connectionId,
       calendarId: context?.calendarId
     }),
-    connectionId: null,
+    connectionId: context?.connectionId ?? null,
     calendarId: context?.calendarId ?? null,
     accountEmail: context?.accountEmail ?? null,
     calendarLabel: context?.calendarLabel ?? null,

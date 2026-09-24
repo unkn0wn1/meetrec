@@ -25,7 +25,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 ### 6. Calendar / arm UX — LOCKED (2026-09-23)
 
 - System **tray / toolbar** presence while the app runs. Hiding the window keeps calendar polling running.
-- **Google Calendar** (readonly) and **Microsoft Calendar** (Graph). Google can be more than one signed-in account (up to five). Each account, and the single Microsoft account, can watch one or more calendars. The primary calendar starts checked. Cancelled, all-day, and declined events are skipped. A second Microsoft account is a follow-up. Drive upload uses the first Google connection whose token includes `drive.file`.
+- **Google Calendar** (readonly) and **Microsoft Calendar** (Graph). Google can be up to five signed-in accounts. Microsoft can be up to two. Each account can watch one or more calendars. The primary calendar starts checked. Cancelled, all-day, and declined events are skipped. Drive upload uses the first Google connection whose token includes `drive.file`. OneDrive upload uses the first Microsoft connection whose token includes `Files.ReadWrite.AppFolder`.
 - **~10 minutes before** a timed event (`PROMPT_LEAD_MS`): a prompt and a desktop notification. Actions:
   - **Start recording**
   - **Dismiss**
@@ -67,7 +67,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 
 - Mode nav **Calendar** sits between Record and Settings. It stays disabled until Google or Microsoft calendar is connected. Tooltip: "Connect a calendar in Settings".
 - The tab lists timed events for the next **14 days** (`LOOKAHEAD_MS`, up to 100 events) merged from every checked calendar. Each row shows title, time, provider, and the account email when one is known. **Record with meetrec** is checked by default.
-- Newly fetched occurrence keys are `google:v2:<account>:<calendar>:<event>:<start>` and `microsoft:v2:<calendar>:<event>:<start>`. Keys already stored in `calendar-state.json` are not rewritten, so an opt-out from an older build does not follow the event. Those keys age out with the existing prune.
+- Newly fetched occurrence keys are `google:v2:<account>:<calendar>:<event>:<start>` and `microsoft:v2:<account>:<calendar>:<event>:<start>`. Older Microsoft keys `microsoft:v2:<calendar>:<event>:<start>` still parse. Keys already stored in `calendar-state.json` are not rewritten, so an opt-out from an older build does not follow the event. Those keys age out with the existing prune.
 - Unchecking an occurrence skips the 10-minute prompt, auto-arm, and tray actions for that occurrence. A repeating event can skip this occurrence or the whole series (Google `recurringEventId`, Microsoft `seriesMasterId`).
 - Opt-outs live in `calendar-state.json` as `disabledOccurrences` and `disabledSeries`, separate from one-shot `dismissed`. Upload consent stays in `calendar.json`.
 
@@ -85,7 +85,7 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Refuse delete while that id is still recording.
 - Confirm includes **Also remove uploaded Drive / OneDrive copies**. The box starts off every time confirm opens and is not stored in settings.
 - Checked: trash Drive file ids and recycle OneDrive item ids from `meta.uploads`, then delete the local folder. If a cloud delete fails, the error names what failed and the local folder stays.
-- The shared Drive `meetrec` folder is left in place. Tokens and scopes stay the upload ones (`drive.file`, `Files.ReadWrite.AppFolder`). Drive uses the first Google connection with `drive.file`. One Microsoft account.
+- The shared Drive `meetrec` folder is left in place. Tokens and scopes stay the upload ones (`drive.file`, `Files.ReadWrite.AppFolder`). Drive uses the first Google connection with `drive.file`. OneDrive uses the first Microsoft connection with `Files.ReadWrite.AppFolder`. A second Microsoft calendar account does not add a second OneDrive destination.
 
 ### 14. Silence auto-stop — LOCKED (2026-09-25)
 
