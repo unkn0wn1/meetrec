@@ -23,11 +23,11 @@ Pick implementation once at startup from `process.platform`.
 
 ## Backends
 
-| OS      | Approach                                                                                                                                                                                        |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Windows | ffmpeg. WASAPI mic + playback loopback when `ffmpeg -devices` lists a `wasapi` demuxer. Otherwise DirectShow mic + Stereo Mix (or another loopback capture name).                               |
-| macOS   | Not implemented. Start is disabled in the Record UI and calendar prompt. `MacosCapture` / `assertCaptureSupported` reject with a clear message. ScreenCaptureKit (or BlackHole) is future work. |
-| Linux   | ffmpeg `pulse` input: default mic + `<default sink>.monitor`, mixed to one PCM WAV. Mic-only if no sink, with a TODO note.                                                                      |
+| OS      | Approach                                                                                                                                                                                                           |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Windows | ffmpeg. WASAPI mic + playback loopback when `ffmpeg -devices` lists a `wasapi` demuxer. Otherwise DirectShow mic + Stereo Mix (or another loopback capture name).                                                  |
+| macOS   | Not implemented. Start is disabled in the Record UI and calendar prompt. `MacosCapture` / `assertCaptureSupported` reject with a clear message. Phased plan: [mac-system-audio-plan.md](mac-system-audio-plan.md). |
+| Linux   | ffmpeg `pulse` input: default mic + `<default sink>.monitor`, mixed to one PCM WAV. Mic-only if no sink, with a TODO note.                                                                                         |
 
 ## Mix
 

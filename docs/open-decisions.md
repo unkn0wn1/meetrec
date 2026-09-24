@@ -82,3 +82,4 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Silence auto-stop stays unwired. It is not a stop signal.
 - Mapping stored invitee names onto diarized speakers stays unwired.
 - xAI `GET /v1/models` often omits speech-to-text ids. After a passing Voice probe with a successful (chat-only) catalog, Settings stores the registry Voice seed so the picker is not stuck empty. A rejected catalog request still leaves selects empty (device-code tokens may be rejected by that route).
+- macOS system audio is still unimplemented. The phased plan is [mac-system-audio-plan.md](mac-system-audio-plan.md). Platform order stays Linux first. `captureSupported` stays false on darwin until a later change ships mic + system mix.
