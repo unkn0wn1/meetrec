@@ -1,6 +1,7 @@
 name: release
 
-# Publishes a GitHub Release with Linux AppImage + Windows NSIS/portable exe.
+# Publishes a GitHub Release with Linux AppImage, Windows NSIS/portable exe,
+# and updater metadata (channel yml files and blockmaps).
 # Trigger: push a version tag only (not every merge to main).
 #
 #   1. PR that bumps package.json "version" (e.g. 0.1.0-alpha.1)
@@ -60,6 +61,9 @@ jobs:
           path: |
             dist/*.AppImage
             dist/*.exe
+            dist/*.blockmap
+            dist/*.yml
+            !dist/builder-debug.yml
           if-no-files-found: error
 
   publish:
@@ -75,9 +79,17 @@ jobs:
       - name: Stage release assets
         run: |
           mkdir -p release-assets
-          find artifacts -type f \( -name '*.AppImage' -o -name '*.exe' \) -print -exec cp -v {} release-assets/ \;
+          find artifacts -type f \
+            \( -name '*.AppImage' -o -name '*.exe' -o -name '*.blockmap' -o -name '*.yml' \) \
+            ! -name 'builder-debug.yml' \
+            -print -exec cp -v {} release-assets/ \;
           ls -la release-assets
           test -n "$(ls -A release-assets)"
+          test -n "$(find release-assets -name '*.AppImage' -print -quit)"
+          test -n "$(find release-assets -name '*-setup.exe' -print -quit)"
+          test -n "$(find release-assets -name '*-portable.exe' -print -quit)"
+          test -n "$(find release-assets -name '*-linux.yml' -print -quit)"
+          test -n "$(find release-assets -name '*.yml' ! -name '*-linux.yml' ! -name 'builder-debug.yml' -print -quit)"
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -91,9 +103,11 @@ jobs:
 
             | Asset | Platform |
             | --- | --- |
-            | `*-setup.exe` | Windows NSIS installer (x64) |
-            | `*-portable.exe` | Windows portable (x64) |
-            | `*.AppImage` | Linux |
+            | `*-setup.exe` | Windows NSIS installer (x64). This is the auto-update package. |
+            | `*-setup.exe.blockmap` | Block map for the NSIS installer. |
+            | `*-portable.exe` | Windows portable (x64). Download a new exe to update. No auto-update. |
+            | `*.AppImage` | Linux. Auto-update reads `*-linux.yml`. |
+            | `latest.yml` / `latest-linux.yml` (or `beta` / `rc` / `alpha` on a prerelease tag) | Update metadata for electron-updater. |
 
             ### Windows SmartScreen (“Windows protected your PC”)
 
@@ -107,5 +121,6 @@ jobs:
             - The Linux AppImage stays unsigned.
             - Linux and Windows builds include ffmpeg (BtbN LGPL static). `npm run dev` still uses PATH.
             - Linux is the daily path; Windows capture is experimental; macOS is stubbed.
+            - In-app update installs the signed NSIS setup. Portable users download the new exe. SmartScreen reputation still builds over time.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

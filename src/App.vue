@@ -3,8 +3,10 @@ import { onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useRecordingSessionStore } from '@/stores/recordingSession'
 import { useSettingsStore } from '@/stores/settings'
+import { useUpdaterStore } from '@/stores/updater'
 
 const settings = useSettingsStore()
+const updater = useUpdaterStore()
 useRecordingSessionStore()
 
 function onFocus(): void {
@@ -13,6 +15,7 @@ function onFocus(): void {
 
 onMounted(() => {
   void settings.refreshAndValidate()
+  void updater.refresh()
   window.addEventListener('focus', onFocus)
 })
 

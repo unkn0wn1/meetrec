@@ -52,7 +52,11 @@ export const IPC = {
   calendarSetCalendars: 'calendar:setCalendars',
   calendarChanged: 'calendar:changed',
   cloudSetUpload: 'cloud:setUpload',
-  cloudUpload: 'cloud:upload'
+  cloudUpload: 'cloud:upload',
+  updaterGet: 'updater:get',
+  updaterCheck: 'updater:check',
+  updaterInstall: 'updater:install',
+  updaterChanged: 'updater:changed'
 } as const
 
 export type CaptureMode = 'mix' | 'mic-only'
@@ -232,6 +236,26 @@ export interface SetModelInput {
   modelId: string
 }
 
+export type UpdatePhase =
+  | 'idle'
+  | 'unsupported'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'ready'
+  | 'up-to-date'
+  | 'error'
+
+export interface UpdateSnapshot {
+  phase: UpdatePhase
+  currentVersion: string
+  availableVersion: string | null
+  message: string
+  transferred: number | null
+  total: number | null
+  deferred: boolean
+}
+
 export interface MeetrecApi {
   recording: {
     start: () => Promise<RecordingStartResult>
@@ -282,5 +306,11 @@ export interface MeetrecApi {
     validate: () => Promise<SettingsStatus>
     setDestination: (destination: RecordingDestination) => Promise<SettingsStatus>
     setAutoRecord: (enabled: boolean) => Promise<SettingsStatus>
+  }
+  updater: {
+    get: () => Promise<UpdateSnapshot>
+    check: () => Promise<UpdateSnapshot>
+    install: () => Promise<UpdateSnapshot>
+    onChanged: (listener: (snapshot: UpdateSnapshot) => void) => () => void
   }
 }

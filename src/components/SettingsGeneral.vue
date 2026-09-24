@@ -2,12 +2,23 @@
 import { computed } from 'vue'
 import { version } from '../../package.json'
 import { effectiveDestination } from '../../electron/shared/destination'
+import { Button } from '@/components/ui/button'
 import { useCalendarStore } from '@/stores/calendar'
+import { useRecordingSessionStore } from '@/stores/recordingSession'
 import { useSettingsStore } from '@/stores/settings'
+import { useUpdaterStore } from '@/stores/updater'
 import type { RecordingDestination } from '../../electron/shared/ipc-contract'
 
 const settings = useSettingsStore()
 const calendar = useCalendarStore()
+const updater = useUpdaterStore()
+const recording = useRecordingSessionStore()
+
+const updateBusy = computed(
+  () => updater.snapshot.phase === 'checking' || updater.snapshot.phase === 'downloading'
+)
+const canRestart = computed(() => updater.snapshot.phase === 'ready' && !recording.isRecording)
+const updateFailed = computed(() => updater.snapshot.phase === 'error')
 
 const googleReady = computed(
   () =>
@@ -44,6 +55,23 @@ function onAutoRecord(event: Event): void {
       <h2 class="text-lg font-semibold tracking-tight">General</h2>
       <p class="mt-1 text-sm text-muted-foreground">
         Version <span class="font-medium tabular-nums">{{ version }}</span>
+      </p>
+      <p
+        class="mt-2 text-sm"
+        :class="updateFailed ? 'text-destructive' : 'text-muted-foreground'"
+        :role="updateFailed ? 'alert' : 'status'"
+        aria-live="polite"
+      >
+        {{ updater.snapshot.message }}
+      </p>
+      <div class="mt-3 flex flex-wrap items-center gap-3">
+        <Button variant="outline" :disabled="updateBusy" @click="updater.check()">
+          Check for updates
+        </Button>
+        <Button v-if="canRestart" @click="updater.confirmOrInstall()">Restart and install</Button>
+      </div>
+      <p v-if="updater.confirming && canRestart" class="mt-2 text-sm text-muted-foreground">
+        This closes meetrec and installs the update.
       </p>
     </div>
 

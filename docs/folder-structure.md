@@ -21,6 +21,7 @@ meetrec/
       minutes/          # summary markdown
       providers/        # xAI + OpenAI STT/chat, OAuth helpers (main only)
       settings/         # Voice and AI defaults, secret bag, device-code session
+      updater/          # GitHub Releases feed policy and update snapshot
   src/                  # renderer (Vue) — electron-vite renderer root
     main.ts
     App.vue

@@ -8,7 +8,8 @@
 - Record’s timer and Start / Stop stay in a left-aligned `max-w-md` block under that header. The header still spans the shell.
   On macOS, Start stays disabled and the panel shows that capture is not available in this build (Linux / Windows only until ScreenCaptureKit ships). The calendar prompt disables Start recording and Auto-arm the same way.
 - The main window opens at 960×720. Navigation does not resize it. There is no minimum width; below 48rem the column shrinks with the window.
-- The calendar prompt (`#/calendar-prompt`, 420×300) is not in this shell.
+- The calendar prompt (`#/calendar-prompt`, 420×300) is not in this shell. It also does not show the update banner.
+- When an update is ready, AppShell shows a banner above the page. During a recording the banner says to restart after recording and does not offer quit. While idle it offers Restart and install.
 - **Calendar** (`#/calendar`) lists timed events for the next 14 days from every checked Google or Microsoft calendar. Each row shows title, time, provider, the account email when meetrec has one, and **Record with meetrec** (on by default). Unchecking a repeating event asks for this occurrence or the entire series.
 - The AppShell header shows the mic-on-gradient tile plus a Meet**Rec** wordmark (Rec uses the marketing cyan→violet→pink gradient).
 - Theme is always dark: ink-800 page shell (`#111527`), glass panels (`rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-xl` via `.glass`), solid cyan primary buttons (no purple), cyan-tinted accent/hover, white/10 borders — aligned with [meetrec.dev](https://meetrec.dev). Tokens and `.glass` live in `src/styles/globals.css`. Prefer `bg-background`, `text-muted-foreground`, `.glass`, etc. over one-off hex. Wordmark Rec may keep cyan→violet→pink; buttons must not.
@@ -50,7 +51,7 @@ Order of work: record, optionally rename speakers, transcribe, then summarize. *
 
 Left rail: **General**, **Providers**, **Calendars**.
 
-- **General** shows the app version, the default destination (local, or an enabled Drive / OneDrive), and auto-record for selected meetings.
+- **General** shows the app version, Check for updates, an update status line, and Restart and install when an update is ready and recording is idle. A shell banner stays up while a recording is in progress and an update is ready. General also shows the default destination (local, or an enabled Drive / OneDrive) and auto-record for selected meetings.
 - **Providers** is the Voice and AI cards.
 - **Calendars** is Connect / Disconnect and the upload checkboxes.
 

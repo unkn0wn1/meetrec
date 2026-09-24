@@ -1,5 +1,11 @@
 appId: io.techglint.meetrec
 productName: meetrec
+publish:
+  provider: github
+  owner: unkn0wn1
+  repo: meetrec
+  publisherName:
+    - 'CN=TechGlint, O=TechGlint, L=London, S=Greater London, C=GB'
 asar: true
 directories:
   output: dist

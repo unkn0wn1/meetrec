@@ -10,7 +10,7 @@ Desktop meeting recorder. Linux capture plus a local library, transcript, and su
 - Linux first. Windows capture is implemented (ffmpeg DirectShow, or WASAPI when that demuxer exists). macOS capture is still a stub; the UI disables Start and shows why (`captureSupported` / `unsupportedReason`).
 - Artifacts are local files. Optional Google Drive and OneDrive app-folder upload is off by default.
 - Google and Microsoft calendar polling, the pre-meeting prompt, token HTTP, and cloud upload stay in the main process.
-- Installers use electron-builder. A `v*` tag release signs the Windows NSIS and portable exes with Azure Trusted Signing (`win.azureSignOptions`) when `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are present. Ad-hoc `package.yml` builds and local `dist:win` stay unsigned. The Linux AppImage stays unsigned. SmartScreen reputation still builds over time. Installers ship a pinned LGPL ffmpeg under `resources/ffmpeg/`. `npm run dev` uses `ffmpeg` on PATH when that file is absent. No auto-update yet. See `docs/packaging.md`.
+- Installers use electron-builder. A `v*` tag release signs the Windows NSIS and portable exes with Azure Trusted Signing (`win.azureSignOptions`) when `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET` are present. Ad-hoc `package.yml` builds and local `dist:win` stay unsigned. The Linux AppImage stays unsigned. SmartScreen reputation still builds over time. Installers ship a pinned LGPL ffmpeg under `resources/ffmpeg/`. `npm run dev` uses `ffmpeg` on PATH when that file is absent. Packaged NSIS and AppImage update from public GitHub Releases. The Windows portable exe is a manual download. Dev builds do not check. See `docs/packaging.md`.
 
 ## Process boundary
 

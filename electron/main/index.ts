@@ -5,6 +5,8 @@ import { removeUploadedCopies } from '../domains/cloud/remove'
 import { LibraryService } from '../domains/recording/library'
 import { SecretStore } from '../domains/settings/secret-store'
 import { SettingsService } from '../domains/settings/settings-service'
+import { createElectronFeed, isWindowsPortable } from '../domains/updater/electron-feed'
+import { UpdateService } from '../domains/updater/service'
 import { attachHideToTray, markAppQuitting } from './app-lifecycle'
 import { attachCalendar } from './calendar-runtime'
 import { uploadIfEnabled } from './cloud-ipc'
@@ -13,6 +15,7 @@ import { registerLibraryProtocol } from './library-protocol'
 import { RecordingController, recordingsDir } from './recording-controller'
 import { loadWindowIcon } from './app-icon'
 import { loadRenderer, preloadPath } from './renderer-window'
+import { registerUpdaterIpc, scheduleLaunchUpdateCheck } from './updater-ipc'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -29,6 +32,7 @@ protocol.registerSchemesAsPrivileged([
 
 let mainWindow: BrowserWindow | null = null
 let stopCalendar: (() => void) | null = null
+let cancelUpdateCheck: (() => void) | null = null
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -96,12 +100,24 @@ app.whenReady().then(() => {
     }
   )
   registerAppIpc(controller, library, settings, hooks)
+  const updater = new UpdateService({
+    packaged: app.isPackaged,
+    portable: isWindowsPortable(),
+    currentVersion: app.getVersion(),
+    isRecording: () => controller.status().phase === 'recording',
+    createClient: createElectronFeed
+  })
+  registerUpdaterIpc(updater)
   mainWindow = createWindow()
+  cancelUpdateCheck = scheduleLaunchUpdateCheck(mainWindow, () => updater.check())
   const calendar = attachCalendar({
     mainWindow,
     secrets,
     controller,
-    userDataDir
+    userDataDir,
+    onRecordingChange: () => {
+      updater.syncRecording()
+    }
   })
   calendarService = calendar.service
   hooks.afterSaved = (id) => uploadIfEnabled(calendar.service, id)
@@ -119,6 +135,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   markAppQuitting()
+  cancelUpdateCheck?.()
   stopCalendar?.()
 })
 
