@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { isSafeRecordingId } from '../../capture/paths'
 import { minutesPrompt, topicFromMarkdown } from '../minutes/markdown'
 import { saveSummary } from '../minutes/job'
@@ -13,7 +14,8 @@ import { providerGateHint } from '../providers/auth'
 import { summarizeWithAuth, transcribeWithAuth } from '../providers/dispatch'
 import { saveTranscript } from '../transcript/job'
 import { parseTranscript, type TranscriptDocument } from '../transcript/parse'
-import { recordingLayout } from './layout'
+import { resolveLibraryAudio } from './encode-mp3'
+import { LIBRARY_AUDIO_FILE, libraryAudioContentType, recordingLayout } from './layout'
 import {
   applySpeakerNames,
   uploadFlags,
@@ -62,12 +64,14 @@ export class LibraryService {
       ? await readTranscript(layout.transcriptPath)
       : null
     const summary = stored.flags.hasSummary ? await readFile(layout.summaryPath, 'utf8') : null
+    const audio = await resolveLibraryAudio(layout.dir)
+    const fileName = audio?.fileName ?? LIBRARY_AUDIO_FILE
     return {
       meta: stored.meta,
       flags: stored.flags,
       transcript,
       summary,
-      audioUrl: `meetrec://recording/${encodeURIComponent(id)}/audio.wav`
+      audioUrl: `meetrec://recording/${encodeURIComponent(id)}/${fileName}`
     }
   }
 
@@ -98,9 +102,11 @@ export class LibraryService {
     const stored = await this.require(id)
     const auth = await this.readAuth('voice')
     const layout = recordingLayout(this.recordingsDir(), id)
+    const audio = await resolveLibraryAudio(layout.dir)
+    if (!audio) throw new Error('Recording audio is missing.')
     const document = await transcribeWithAuth({
       auth,
-      audioPath: layout.audioPath,
+      audioPath: audio.path,
       onStage: report
     })
     report('saving')
@@ -186,8 +192,14 @@ function speakerLines(speakers: Speaker[], transcript: TranscriptDocument): stri
   return lines
 }
 
-export async function readAudioBytes(recordingsDir: string, id: string): Promise<Buffer> {
-  if (!isSafeRecordingId(id)) throw new Error('Unknown recording.')
+export async function readAudioBytes(
+  recordingsDir: string,
+  id: string,
+  fileName: string
+): Promise<Buffer> {
+  if (!isSafeRecordingId(id) || !libraryAudioContentType(fileName)) {
+    throw new Error('Unknown recording.')
+  }
   const layout = recordingLayout(recordingsDir, id)
-  return readFile(layout.audioPath)
+  return readFile(join(layout.dir, fileName))
 }

@@ -1,8 +1,9 @@
-import { spawn } from 'node:child_process'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { copyFile, mkdtemp, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { basename, join } from 'node:path'
+import { basename, extname, join } from 'node:path'
 import { resolveFfmpegBinary } from '../../capture/ffmpeg-binary'
+import { runFfmpeg as runCapturedFfmpeg } from '../../capture/ffmpeg-run'
+import { LIBRARY_MP3_BITRATE } from '../recording/encode-mp3'
 
 /** Speech models prefer 16 kHz mono; MP3 keeps uploads under Cloudflare/OpenAI body caps. */
 export const STT_SAMPLE_RATE = 16_000
@@ -15,6 +16,8 @@ export interface PreparedSttAudio {
   mimeType: string
   fileName: string
   cleanup: () => Promise<void>
+  /** Set when `path` is already the library MP3 (or a temp copy of it). Split uses this. */
+  bitrate?: string
 }
 
 export function sttPrepareArgs(inputPath: string, outputPath: string): string[] {
@@ -40,8 +43,11 @@ export async function prepareSttUpload(
   options?: {
     resolveFfmpeg?: () => Promise<string>
     runFfmpeg?: (ffmpeg: string, args: string[]) => Promise<void>
+    stat?: (path: string) => Promise<{ size: number; isFile?: () => boolean }>
+    copyFile?: (from: string, to: string) => Promise<void>
   }
 ): Promise<PreparedSttAudio> {
+  if (extname(audioPath).toLowerCase() === '.mp3') return adoptLibraryMp3(audioPath, options)
   const resolveFfmpeg = options?.resolveFfmpeg ?? (() => resolveFfmpegBinary())
   const runFfmpeg = options?.runFfmpeg ?? spawnFfmpeg
   const dir = await mkdtemp(join(tmpdir(), 'meetrec-stt-'))
@@ -69,27 +75,42 @@ function spawnFfmpeg(ffmpeg: string, args: string[]): Promise<void> {
 }
 
 export function runSttFfmpeg(ffmpeg: string, args: string[], failure: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(ffmpeg, args, {
-      stdio: ['ignore', 'ignore', 'pipe'],
-      windowsHide: true
-    })
-    const chunks: Buffer[] = []
-    child.stderr?.on('data', (chunk: Buffer) => chunks.push(chunk))
-    child.once('error', (error) => {
-      reject(new Error(`ffmpeg failed to start: ${error.message}`))
-    })
-    child.once('exit', (code) => {
-      if (code === 0) {
-        resolve()
-        return
-      }
-      const detail = Buffer.concat(chunks)
-        .toString('utf8')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 200)
-      reject(new Error(detail ? `${failure}: ${detail}` : failure))
-    })
-  })
+  return runCapturedFfmpeg(ffmpeg, args, failure)
+}
+
+async function adoptLibraryMp3(
+  audioPath: string,
+  options?: {
+    stat?: (path: string) => Promise<{ size: number; isFile?: () => boolean }>
+    copyFile?: (from: string, to: string) => Promise<void>
+  }
+): Promise<PreparedSttAudio> {
+  const statFile = options?.stat ?? stat
+  const copy = options?.copyFile ?? copyFile
+  const info = await statFile(audioPath)
+  const isFile = typeof info.isFile === 'function' ? info.isFile() : info.size > 0
+  if (!isFile || info.size <= 0) throw new Error(COMPRESS_FAILURE)
+  const fileName = basename(audioPath)
+  const prepared = {
+    mimeType: STT_MIME,
+    fileName,
+    bitrate: LIBRARY_MP3_BITRATE
+  }
+  // stt-chunk imports this module. Load the cap once both modules have finished initializing.
+  const { needsSttSplit } = await import('./stt-chunk')
+  if (!needsSttSplit(info.size)) {
+    return { ...prepared, path: audioPath, cleanup: async () => {} }
+  }
+  const dir = await mkdtemp(join(tmpdir(), 'meetrec-stt-'))
+  const path = join(dir, fileName)
+  const cleanup = async (): Promise<void> => {
+    await rm(dir, { recursive: true, force: true })
+  }
+  try {
+    await copy(audioPath, path)
+  } catch (error) {
+    await cleanup()
+    throw error instanceof Error ? error : new Error(COMPRESS_FAILURE)
+  }
+  return { ...prepared, path, cleanup }
 }

@@ -1,7 +1,8 @@
 import { stat, readFile } from 'node:fs/promises'
 import { isSafeRecordingId } from '../../capture/paths'
-import { readMeta, writeMeta } from '../recording/store'
-import { recordingLayout } from '../recording/layout'
+import { resolveLibraryAudio } from '../recording/encode-mp3'
+import { CAPTURE_AUDIO_FILE, recordingLayout } from '../recording/layout'
+import { migrateLibraryFolder, readMeta, writeMeta } from '../recording/store'
 import type { RecordingMeta, RecordingUploads } from '../recording/meta'
 import { CloudHttpError, ensureMeetrecFolder, uploadDriveFile } from './google-drive'
 import { artifactName } from './names'
@@ -50,10 +51,12 @@ async function runUpload(
   },
   force: boolean
 ): Promise<void> {
+  await migrateLibraryFolder(input.recordingsRoot, input.recordingId)
   const meta = await readMeta(input.recordingsRoot, input.recordingId)
   if (!meta) throw new Error('That recording was not found.')
   const layout = recordingLayout(input.recordingsRoot, input.recordingId)
-  const files = await presentFiles(layout)
+  const audio = await resolveLibraryAudio(layout.dir)
+  const files = await presentFiles(layout, audio)
   if (files.length === 0) throw new Error('There is no file to upload yet.')
   const token = await input.getAccess(force)
   if (input.provider === 'google') {
@@ -64,7 +67,7 @@ async function runUpload(
       const id = await uploadDriveFile({
         accessToken: token,
         folderId,
-        name: artifactName({ ...meta, kind: file.kind }),
+        name: artifactName({ ...meta, kind: file.kind, audioExtension: file.audioExtension }),
         mimeType: file.mime,
         body: file.body,
         fileId: uploads.google?.files[file.kind],
@@ -84,7 +87,7 @@ async function runUpload(
   }
   let uploads = meta.uploads ?? {}
   for (const file of files) {
-    const name = artifactName({ ...meta, kind: file.kind })
+    const name = artifactName({ ...meta, kind: file.kind, audioExtension: file.audioExtension })
     const id = await uploadOneDriveFile({
       accessToken: token,
       name,
@@ -107,23 +110,39 @@ function withFolder(uploads: RecordingUploads | undefined, folderId: string): Re
   }
 }
 
-async function presentFiles(layout: {
-  audioPath: string
-  transcriptPath: string
-  summaryPath: string
-}): Promise<{ kind: Kind; mime: string; body: Uint8Array }[]> {
-  const specs: { kind: Kind; path: string; mime: string }[] = [
-    { kind: 'audio', path: layout.audioPath, mime: 'audio/wav' },
+async function presentFiles(
+  layout: {
+    transcriptPath: string
+    summaryPath: string
+  },
+  audio: { path: string; fileName: string; mime: string } | null
+): Promise<{ kind: Kind; mime: string; body: Uint8Array; audioExtension?: 'mp3' | 'wav' }[]> {
+  const specs: {
+    kind: Kind
+    path: string
+    mime: string
+    audioExtension?: 'mp3' | 'wav'
+  }[] = [
     { kind: 'transcript', path: layout.transcriptPath, mime: 'application/json' },
     { kind: 'summary', path: layout.summaryPath, mime: 'text/markdown' }
   ]
-  const present: { kind: Kind; mime: string; body: Uint8Array }[] = []
+  if (audio) {
+    specs.unshift({
+      kind: 'audio',
+      path: audio.path,
+      mime: audio.mime,
+      audioExtension: audio.fileName === CAPTURE_AUDIO_FILE ? 'wav' : 'mp3'
+    })
+  }
+  const present: { kind: Kind; mime: string; body: Uint8Array; audioExtension?: 'mp3' | 'wav' }[] =
+    []
   for (const spec of specs) {
     if (!(await fileExists(spec.path))) continue
     present.push({
       kind: spec.kind,
       mime: spec.mime,
-      body: new Uint8Array(await readFile(spec.path))
+      body: new Uint8Array(await readFile(spec.path)),
+      ...(spec.audioExtension ? { audioExtension: spec.audioExtension } : {})
     })
   }
   return present

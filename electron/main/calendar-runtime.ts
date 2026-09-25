@@ -88,7 +88,13 @@ function onTrayAction(
   const key = promptKey()
   if (action === 'show') showMeetrecWindow(window)
   if (action === 'quit') quitMeetrec()
-  if (action === 'stop') void controller.stop()
+  if (action === 'stop') {
+    void controller.stop().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Stop failed.'
+      if (message === 'Not recording.') return
+      console.warn(message)
+    })
+  }
   if (action === 'cancel-arm') void calendar?.cancelArm()
   if (!calendar || !key) return
   if (action === 'start') {

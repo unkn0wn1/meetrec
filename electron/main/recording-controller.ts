@@ -8,6 +8,12 @@ import {
   type AudioCapture
 } from '../capture'
 import { buildRecordingFolder } from '../capture/paths'
+import { encodeWavToLibraryMp3 } from '../domains/recording/encode-mp3'
+import {
+  CAPTURE_AUDIO_FILE,
+  LIBRARY_AUDIO_FILE,
+  recordingLayout
+} from '../domains/recording/layout'
 import { emptyMeta, type RecordingCalendarLink } from '../domains/recording/meta'
 import {
   statusFromSession,
@@ -100,7 +106,6 @@ export class RecordingController {
     this.capture = null
     try {
       const stopped = await capture.stop()
-      const info = await stat(stopped.outPath)
       const endedAt = new Date().toISOString()
       const prior = await readMeta(recordingsDir(), session.id)
       const base =
@@ -111,18 +116,33 @@ export class RecordingController {
           captureMode: session.captureMode,
           note: session.note
         })
-      await writeMeta(recordingsDir(), {
+      const layout = recordingLayout(recordingsDir(), session.id)
+      const finished = {
         ...base,
         endedAt,
         durationMs: stopped.durationMs,
         captureMode: session.captureMode,
         note: session.note
+      }
+      try {
+        await encodeWavToLibraryMp3(stopped.outPath, layout.audioPath)
+      } catch (error) {
+        await writeMeta(recordingsDir(), {
+          ...finished,
+          paths: { ...base.paths, audio: CAPTURE_AUDIO_FILE }
+        })
+        throw error
+      }
+      const mp3 = await stat(layout.audioPath)
+      await writeMeta(recordingsDir(), {
+        ...finished,
+        paths: { ...base.paths, audio: LIBRARY_AUDIO_FILE }
       })
       return {
-        outPath: stopped.outPath,
+        outPath: layout.audioPath,
         id: session.id,
         durationMs: stopped.durationMs,
-        bytes: info.size,
+        bytes: mp3.size,
         captureMode: session.captureMode
       }
     } finally {

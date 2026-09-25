@@ -125,7 +125,7 @@ Exit: on an Apple Silicon Mac, a signed build records system audio (browser or M
 - Update [audio-capture.md](audio-capture.md) and the manual gate in [quality-gates.md](quality-gates.md) in the same change that flips the flag. Linux and Windows rows stay as they are.
 - Tests: extend `support.ts` cases for the four darwin states (no helper, missing screen, missing mic, ready). No ScreenCaptureKit call in CI.
 
-Exit: Spencer (or another person on Apple Silicon) records a call, speaks, plays remote audio, stops, and plays `audio.wav` with both. Record and calendar Start follow `captureSupported`. A fresh install with permissions denied cannot start, and the reason is visible without reading the console.
+Exit: Spencer (or another person on Apple Silicon) records a call, speaks, plays remote audio, stops, and plays `audio.mp3` with both. Record and calendar Start follow `captureSupported`. A fresh install with permissions denied cannot start, and the reason is visible without reading the console.
 
 ### Phase 4 — Notarized release
 

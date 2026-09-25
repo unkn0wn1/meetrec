@@ -10,6 +10,15 @@ describe('cloud file names', () => {
         id: '2026-09-23T15-04-00-000Z-ab12cd',
         kind: 'audio'
       })
+    ).toBe('2026-09-23-standup-ab12-audio.mp3')
+    expect(
+      artifactName({
+        startedAt: '2026-09-23T15:04:00.000Z',
+        title: 'Standup',
+        id: '2026-09-23T15-04-00-000Z-ab12cd',
+        kind: 'audio',
+        audioExtension: 'wav'
+      })
     ).toBe('2026-09-23-standup-ab12-audio.wav')
     expect(
       artifactName({

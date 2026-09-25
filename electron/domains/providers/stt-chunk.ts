@@ -108,6 +108,7 @@ export async function splitPreparedMp3(
     resolveFfmpeg?: () => Promise<string>
     runFfmpeg?: (ffmpeg: string, args: string[]) => Promise<void>
     stat?: (path: string) => Promise<{ size: number }>
+    bitrate?: string
   }
 ): Promise<SttSplitResult> {
   const resolveFfmpeg = options?.resolveFfmpeg ?? (() => resolveFfmpegBinary())
@@ -121,7 +122,12 @@ export async function splitPreparedMp3(
   const ffmpeg = await resolveFfmpeg()
   await runFfmpeg(
     ffmpeg,
-    sttSegmentArgs(preparedPath, listPath, outputPattern, sttSegmentSeconds())
+    sttSegmentArgs(
+      preparedPath,
+      listPath,
+      outputPattern,
+      sttSegmentSeconds(STT_CHUNK_TARGET_BYTES, options?.bitrate ?? STT_BITRATE)
+    )
   )
   const rows = parseSegmentList(await readFile(listPath, 'utf8'), dir)
   for (const row of rows) {

@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  STT_CHUNK_TARGET_BYTES,
   STT_UPLOAD_MAX_BYTES,
   needsSttSplit,
   parseSegmentList,
@@ -25,6 +26,11 @@ describe('STT upload threshold', () => {
   it('plans 3666 second pieces at 48 kbps', () => {
     expect(sttBytesPerSecond('48k')).toBe(6000)
     expect(sttSegmentSeconds()).toBe(3666)
+  })
+
+  it('plans 1833 second pieces at 96 kbps', () => {
+    expect(sttBytesPerSecond('96k')).toBe(12_000)
+    expect(sttSegmentSeconds(STT_CHUNK_TARGET_BYTES, '96k')).toBe(1833)
   })
 })
 
