@@ -50,6 +50,11 @@ function cancelConfirm(): void {
   confirming.value = false
 }
 
+function confirmRebuild(): void {
+  rebuildConfirm.value = false
+  void search.rebuild()
+}
+
 async function onSchedule(
   field: 'indexAfterTranscript' | 'indexAfterSummary' | 'idleCatchUp',
   event: Event
@@ -152,14 +157,7 @@ async function onSchedule(
           Rebuild deletes the local index and re-embeds every transcript. That can take a while.
         </p>
         <div class="flex gap-2">
-          <Button
-            @click="
-              rebuildConfirm = false
-              void search.rebuild()
-            "
-          >
-            Rebuild index
-          </Button>
+          <Button @click="confirmRebuild">Rebuild index</Button>
           <Button variant="outline" @click="rebuildConfirm = false">Cancel</Button>
         </div>
       </div>
