@@ -7,6 +7,8 @@ import type {
   UpdateSnapshot
 } from '../shared/ipc-contract'
 import { IPC } from '../shared/ipc-contract'
+import type { SearchSnapshot } from '../shared/search-contract'
+import { SEARCH_IPC } from '../shared/search-contract'
 
 function subscribe<T>(channel: string, listener: (payload: T) => void): () => void {
   const wrapped = (_event: IpcRendererEvent, payload: T): void => {
@@ -75,6 +77,19 @@ const api: MeetrecApi = {
     check: () => ipcRenderer.invoke(IPC.updaterCheck),
     install: () => ipcRenderer.invoke(IPC.updaterInstall),
     onChanged: (listener) => subscribe<UpdateSnapshot>(IPC.updaterChanged, listener)
+  },
+  search: {
+    get: () => ipcRenderer.invoke(SEARCH_IPC.get),
+    preflight: () => ipcRenderer.invoke(SEARCH_IPC.preflight),
+    enable: () => ipcRenderer.invoke(SEARCH_IPC.enable),
+    disable: () => ipcRenderer.invoke(SEARCH_IPC.disable),
+    setSchedule: (input) => ipcRenderer.invoke(SEARCH_IPC.setSchedule, input),
+    indexAll: () => ipcRenderer.invoke(SEARCH_IPC.indexAll),
+    rebuild: () => ipcRenderer.invoke(SEARCH_IPC.rebuild),
+    retry: (id) => ipcRenderer.invoke(SEARCH_IPC.retry, id),
+    cancelDownload: () => ipcRenderer.invoke(SEARCH_IPC.cancelDownload),
+    query: (text) => ipcRenderer.invoke(SEARCH_IPC.query, text),
+    onChanged: (listener) => subscribe<SearchSnapshot>(SEARCH_IPC.changed, listener)
   }
 }
 

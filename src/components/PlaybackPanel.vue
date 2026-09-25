@@ -8,6 +8,10 @@ const props = defineProps<{
   audioUrl: string
 }>()
 
+const emit = defineEmits<{
+  unplayable: []
+}>()
+
 const audio = useTemplateRef<HTMLAudioElement>('audio')
 const playing = ref(false)
 const currentMs = ref(0)
@@ -148,6 +152,7 @@ onBeforeUnmount(() => {
       @timeupdate="onTime"
       @loadedmetadata="onMeta"
       @ended="onEnded"
+      @error="emit('unplayable')"
     />
   </section>
 </template>

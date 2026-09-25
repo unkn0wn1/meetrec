@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
 import DeleteRecordingButton from '@/components/DeleteRecordingButton.vue'
 import RecordingRow from '@/components/RecordingRow.vue'
+import SearchIndexIcon from '@/components/SearchIndexIcon.vue'
 import { Button } from '@/components/ui/button'
 import { useLibraryStore } from '@/stores/library'
 import { useSettingsStore } from '@/stores/settings'
@@ -52,7 +53,8 @@ function remove(id: string, removeCloud: boolean): void {
           >
             <RecordingRow :item="item" />
           </button>
-          <div class="shrink-0 pr-3" @click.stop>
+          <div class="flex shrink-0 items-center pr-3" @click.stop>
+            <SearchIndexIcon :id="item.id" />
             <DeleteRecordingButton
               appearance="row"
               :busy="library.busy"

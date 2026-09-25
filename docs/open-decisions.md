@@ -100,6 +100,15 @@ Provider API keys and OAuth refresh tokens live in **Electron main** (OS secret 
 - Choosing an invitee fills the text field. The user can still edit it. Save writes names through the existing speaker update (`meta.speakers[].name`). No new IPC.
 - Duplicate invitee names show the email in the picker. A meeting with no stored invitees stays free-text. Invitees are not turned into speakers before diarization, and there is no voice auto-match.
 
+### 16. Meeting search (local) — LOCKED (2026-09-25)
+
+- **Off by default.** Settings → General turns it on only after the person confirms a download of the stock qmd models (about 2 GB, on-device CPU, about 16 GB of RAM recommended). Low RAM does not block the switch.
+- MeetRec installs pinned `@tobilu/qmd` under userData, or uses `qmd` on `PATH`. The installer does not vendor qmd or the GGUF files. `QMD_LLAMA_GPU=false`. The cache stays under userData.
+- One markdown file per meeting at `userData/qmd-export/meetings/<id>.md`. The qmd collection is `meetings`. The index is the transcript and the summary when one exists. Audio is not indexed. A meeting with no local transcript stays unindexed.
+- Per-recording status is `recordings/<id>/search.json` (`pending`, `indexed`, `error`). A missing file is none. Existing meetings stay unindexed until Index all, a later transcript or summary save, a row retry, or idle catch-up.
+- Index after transcript and index after summary default on. Idle catch-up defaults off and runs only while the app is open.
+- Hits open the recording through the same playback seek as a transcript bubble.
+
 ## Still soft / rename anytime
 
 - xAI `GET /v1/models` often omits speech-to-text ids. After a passing Voice probe with a successful (chat-only) catalog, Settings stores the registry Voice seed so the picker is not stuck empty. A rejected catalog request still leaves selects empty (device-code tokens may be rejected by that route).

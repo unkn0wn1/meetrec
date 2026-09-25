@@ -15,6 +15,7 @@ import { registerLibraryProtocol } from './library-protocol'
 import { RecordingController, recordingsDir } from './recording-controller'
 import { loadWindowIcon } from './app-icon'
 import { loadRenderer, preloadPath } from './renderer-window'
+import { attachSearch } from './search-ipc'
 import { registerUpdaterIpc, scheduleLaunchUpdateCheck } from './updater-ipc'
 
 protocol.registerSchemesAsPrivileged([
@@ -33,6 +34,7 @@ protocol.registerSchemesAsPrivileged([
 let mainWindow: BrowserWindow | null = null
 let stopCalendar: (() => void) | null = null
 let cancelUpdateCheck: (() => void) | null = null
+let stopSearch: (() => void) | null = null
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -121,6 +123,16 @@ app.whenReady().then(() => {
   })
   calendarService = calendar.service
   hooks.afterSaved = (id) => uploadIfEnabled(calendar.service, id)
+  const search = attachSearch({
+    userDataDir: userDataDir(),
+    recordingsDir: recordingsDir(),
+    isRecording: () => controller.status().phase === 'recording'
+  })
+  hooks.afterTranscript = (id) => search.notifyTranscript(id)
+  hooks.afterSummary = (id) => search.notifySummary(id)
+  hooks.afterSpeakers = (id) => search.notifySpeakers(id)
+  hooks.afterDelete = (id) => search.notifyDelete(id)
+  stopSearch = () => search.stop()
   controller.setSilenceStop(() => {
     void stopRecording(controller, hooks).catch((error: unknown) => {
       const message = error instanceof Error ? error.message : 'Stop failed.'
@@ -144,6 +156,7 @@ app.on('before-quit', () => {
   markAppQuitting()
   cancelUpdateCheck?.()
   stopCalendar?.()
+  stopSearch?.()
 })
 
 app.on('window-all-closed', () => {

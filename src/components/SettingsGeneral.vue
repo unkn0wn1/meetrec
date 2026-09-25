@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { version } from '../../package.json'
 import { effectiveDestination } from '../../electron/shared/destination'
+import SettingsMeetingSearch from '@/components/SettingsMeetingSearch.vue'
 import { Button } from '@/components/ui/button'
 import { useCalendarStore } from '@/stores/calendar'
 import { useRecordingSessionStore } from '@/stores/recordingSession'
@@ -182,5 +183,7 @@ function onSilenceSeconds(event: Event): void {
         <span class="text-muted-foreground">seconds</span>
       </label>
     </div>
+
+    <SettingsMeetingSearch />
   </section>
 </template>

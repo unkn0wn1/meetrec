@@ -20,6 +20,10 @@ import type { RecordingController } from './recording-controller'
 
 export interface RecordingHooks {
   afterSaved?: (id: string) => Promise<void>
+  afterTranscript?: (id: string) => void
+  afterSummary?: (id: string) => void
+  afterSpeakers?: (id: string) => void
+  afterDelete?: (id: string) => void
 }
 
 export function registerAppIpc(
@@ -33,9 +37,11 @@ export function registerAppIpc(
   ipcMain.handle(IPC.recordingStatus, () => controller.status())
   ipcMain.handle(IPC.libraryList, () => library.list())
   ipcMain.handle(IPC.libraryDetail, (_event, id: string) => library.detail(id).then(toDetailView))
-  ipcMain.handle(IPC.librarySpeakers, (_event, id: string, names: Record<string, string>) =>
-    library.updateSpeakers(id, names).then(toMetaView)
-  )
+  ipcMain.handle(IPC.librarySpeakers, async (_event, id: string, names: Record<string, string>) => {
+    const meta = await library.updateSpeakers(id, names)
+    if (typeof id === 'string') void hooks.afterSpeakers?.(id)
+    return toMetaView(meta)
+  })
   ipcMain.handle(IPC.libraryTranscribe, async (event, id: unknown) => {
     if (typeof id !== 'string') {
       throw new Error('Unknown recording.')
@@ -43,6 +49,7 @@ export function registerAppIpc(
     const detail = await withJobProgress(event, id, 'transcribe', (report) =>
       library.transcribe(id, report)
     )
+    void hooks.afterTranscript?.(id)
     await runHook(hooks, id)
     return toDetailView(detail)
   })
@@ -53,6 +60,7 @@ export function registerAppIpc(
     const detail = await withJobProgress(event, id, 'summarize', (report) =>
       library.summarize(id, report)
     )
+    void hooks.afterSummary?.(id)
     await runHook(hooks, id)
     return toDetailView(detail)
   })
@@ -65,6 +73,7 @@ export function registerAppIpc(
       throw new Error('Stop the recording before deleting it.')
     }
     await library.delete(id, { removeCloud })
+    void hooks.afterDelete?.(id)
   })
   ipcMain.handle(IPC.settingsGet, (): Promise<SettingsStatus> => settings.status())
   ipcMain.handle(IPC.settingsSetVoiceDefault, (_event, provider: ProviderId) =>

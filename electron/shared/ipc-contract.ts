@@ -9,6 +9,7 @@ import type {
 } from './calendar-contract'
 import type { CloudSetUploadInput, CloudUploadInput, CloudUploadResult } from './cloud-contract'
 import type { RecordingDestination } from './destination'
+import type { SearchHit, SearchScheduleInput, SearchSnapshot } from './search-contract'
 
 export type { RecordingDestination }
 
@@ -332,5 +333,18 @@ export interface MeetrecApi {
     check: () => Promise<UpdateSnapshot>
     install: () => Promise<UpdateSnapshot>
     onChanged: (listener: (snapshot: UpdateSnapshot) => void) => () => void
+  }
+  search: {
+    get: () => Promise<SearchSnapshot>
+    preflight: () => Promise<SearchSnapshot>
+    enable: () => Promise<SearchSnapshot>
+    disable: () => Promise<SearchSnapshot>
+    setSchedule: (input: SearchScheduleInput) => Promise<SearchSnapshot>
+    indexAll: () => Promise<SearchSnapshot>
+    rebuild: () => Promise<SearchSnapshot>
+    retry: (id: string) => Promise<SearchSnapshot>
+    cancelDownload: () => Promise<SearchSnapshot>
+    query: (text: string) => Promise<SearchHit[]>
+    onChanged: (listener: (snapshot: SearchSnapshot) => void) => () => void
   }
 }

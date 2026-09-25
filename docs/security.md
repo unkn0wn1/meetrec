@@ -44,7 +44,8 @@ Where secrets live:
 
 - `userData/secrets.bin` (safeStorage): one token set per connected Google account (`googleConnections`) and per connected Microsoft account (`microsoftConnections`, up to two). An older file with a single `googleOAuth` or `microsoftOAuth` object is read as one connection.
 - `userData/calendar.json` (not a secret): upload toggles and the calendar ids the user checked. Calendar ids and account emails are not secrets. The renderer still never receives tokens.
-- `userData/settings.json` (not a secret): Voice and AI defaults, default destination, the auto-record switch, and the silence auto-stop switch and threshold. `userData/calendar-state.json` stores dismissals and record opt-outs. Neither file holds tokens.
+- `userData/settings.json` (not a secret): Voice and AI defaults, default destination, the auto-record switch, the silence auto-stop switch and threshold, and `meetingSearch` (enabled, index after transcript, index after summary, idle catch-up). Those search switches are not secrets. `userData/calendar-state.json` stores dismissals and record opt-outs. Neither file holds tokens.
+- qmd’s cache and the export markdown stay under userData (`qmd-home`, `qmd-export`). Query text and transcript text go to the local qmd process. After confirm, the model download is the qmd package’s own fetch (its default model host), not a MeetRec server. The renderer never receives a filesystem path to the models.
 
 The renderer never receives tokens or the Google client secret. Status IPC returns account emails, connect errors, calendar ids and names, and upload flags. Token responses are redacted before they reach logs or thrown errors (`access_token`, `refresh_token`, `id_token`, `code`, `client_secret`).
 
