@@ -10,6 +10,7 @@ import RecordingHeader from '@/components/RecordingHeader.vue'
 import SummaryPanel from '@/components/SummaryPanel.vue'
 import TranscriptPanel from '@/components/TranscriptPanel.vue'
 import { Button } from '@/components/ui/button'
+import { seekMsFromQuery } from '@/lib/search-open'
 import { useLibraryStore } from '@/stores/library'
 import { useSettingsStore } from '@/stores/settings'
 
@@ -24,6 +25,8 @@ const playback = useTemplateRef<{
 }>('playback')
 
 const id = computed(() => String(route.params.id ?? ''))
+const consumedSeek = ref('')
+const pendingQuerySeek = ref(false)
 
 watch(
   id,
@@ -32,6 +35,27 @@ watch(
   },
   { immediate: true }
 )
+
+watch(
+  () => [id.value, library.detail?.meta.id, route.query.t] as const,
+  () => {
+    const detail = library.detail
+    if (!detail || detail.meta.id !== id.value) return
+    const ms = seekMsFromQuery(route.query.t)
+    if (ms === null) return
+    const key = `${id.value}:${String(route.query.t)}`
+    if (consumedSeek.value === key) return
+    consumedSeek.value = key
+    pendingQuerySeek.value = true
+    onTranscriptSeek(ms)
+  }
+)
+
+function onUnplayable(): void {
+  if (!pendingQuerySeek.value) return
+  pendingQuerySeek.value = false
+  pane.value = 'transcript'
+}
 
 function onTranscriptSeek(startMs: number): void {
   pane.value = 'playback'
@@ -101,6 +125,7 @@ const panes = [
             v-if="pane === 'playback'"
             ref="playback"
             :audio-url="library.detail.audioUrl"
+            @unplayable="onUnplayable"
           />
           <TranscriptPanel
             v-else-if="pane === 'transcript'"

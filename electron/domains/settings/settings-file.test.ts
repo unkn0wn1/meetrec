@@ -259,4 +259,38 @@ describe('app settings', () => {
       rmSync(dir, { recursive: true, force: true })
     }
   })
+
+  it('keeps meeting search defaults, round-trips enabled, and rejects a bad object', () => {
+    const missing = parseAppSettings(
+      JSON.stringify({
+        voiceProviderId: 'openai',
+        aiProviderId: 'xai-key',
+        models: defaultAppSettings().models
+      })
+    )
+    expect(missing.legacy).toBe(false)
+    expect(missing.settings.meetingSearch).toEqual(defaultAppSettings().meetingSearch)
+    expect(missing.settings.meetingSearch.enabled).toBe(false)
+
+    const enabled = parseAppSettings(
+      JSON.stringify({
+        ...defaultAppSettings(),
+        meetingSearch: { ...defaultAppSettings().meetingSearch, enabled: true }
+      })
+    )
+    expect(enabled.legacy).toBe(false)
+    expect(enabled.settings.meetingSearch.enabled).toBe(true)
+    expect(parseAppSettings(JSON.stringify(enabled.settings)).settings.meetingSearch.enabled).toBe(
+      true
+    )
+
+    const broken = parseAppSettings(
+      JSON.stringify({
+        ...defaultAppSettings(),
+        meetingSearch: 'yes'
+      })
+    )
+    expect(broken.legacy).toBe(true)
+    expect(broken.settings.meetingSearch.enabled).toBe(false)
+  })
 })

@@ -49,7 +49,10 @@ recordings/<id>/
   meta.json
   transcript.json    # after Transcribe
   summary.md         # after Generate summary
+  search.json        # optional, after meeting search indexes that recording
 ```
+
+The export markdown and the model cache are under `userData`, not in the recording folder.
 
 Older flat `*.wav` files in that recordings directory are moved into folders the first time Library scans. A folder that still has `audio.wav` is encoded to `audio.mp3` on that scan, and the WAV is deleted.
 

@@ -4,6 +4,7 @@
 
 - The app opens on **Library** (the list of past recordings).
 - Top-level modes: **Library**, **Record**, **Calendar**, and **Settings**. Calendar stays disabled until Google or Microsoft calendar is connected. The tooltip is "Connect a calendar in Settings".
+- The header also has a search control on Library, Record, Calendar, Settings, and Recording detail. It stays disabled until Meeting search is on and the models are ready. While it is off, the tooltip is "Turn on Meeting search in Settings". While models download, the control shows a spinner and the file name and size. A ready click opens a search dialog. A hit closes the dialog and opens that recording. The calendar prompt does not show the control.
 - Library, Record, Calendar, Settings, and Recording detail share one centered column, `max-w-3xl` (48rem), with horizontal padding `px-6`, through `AppShell`.
 - Record’s timer and Start / Stop stay in a left-aligned `max-w-md` block under that header. The header still spans the shell.
   On macOS, Start stays disabled and the panel shows that capture is not available in this build (Linux / Windows only until ScreenCaptureKit ships). The calendar prompt disables Start recording and Auto-arm the same way.
@@ -22,6 +23,7 @@
 
 - Rows show title or date, duration, and whether Transcript and Summary are missing or ready. A **Drive** or **OneDrive** badge appears when that recording’s `meta.json` has an upload file id. Local files stay the copy of record. A recording started from a calendar event uses the event title.
 - Click a row to open **Recording detail** in the same window.
+- When meeting search is on, a row can show a search icon beside delete: a spinner while indexing, a check when the transcript is in the index, or an alert that retries that row. The icon is hidden when search is off.
 
 ## Recording detail
 
@@ -40,7 +42,7 @@
 
 **Left rail:**
 
-1. **Playback** — play, pause, stop, and a scrubber. The clocks follow the playhead while playing and while dragging. Dragging the scrubber seeks without starting playback. A transcript bubble switches to this pane, seeks to that segment’s start, and plays.
+1. **Playback** — play, pause, stop, and a scrubber. The clocks follow the playhead while playing and while dragging. Dragging the scrubber seeks without starting playback. A transcript bubble switches to this pane, seeks to that segment’s start, and plays. A search hit uses that same seek. A recording with no audio file opens on the transcript instead.
 2. **Transcript** — one bubble per segment (speaker name and timestamp). Full text sits under a collapsed **Full text** disclosure. A missing transcript shows **Transcribe**.
 3. **Summary** — minutes and action items, or **Generate summary** when it is missing (requires a transcript)
 
@@ -52,7 +54,7 @@ Order of work: record, optionally rename speakers, transcribe, then summarize. *
 
 Left rail: **General**, **Providers**, **Calendars**.
 
-- **General** shows the app version, Check for updates, an update status line, and Restart and install when an update is ready and recording is idle. A shell banner stays up while a recording is in progress and an update is ready. General also shows the default destination (local, or an enabled Drive / OneDrive), auto-record for selected meetings, and **Stop recording after sustained silence** (off by default). The **Silence threshold** in seconds stays disabled until that box is on.
+- **General** shows the app version, Check for updates, an update status line, and Restart and install when an update is ready and recording is idle. A shell banner stays up while a recording is in progress and an update is ready. General also shows the default destination (local, or an enabled Drive / OneDrive), auto-record for selected meetings, and **Stop recording after sustained silence** (off by default). The **Silence threshold** in seconds stays disabled until that box is on. **Meeting search (local)** stays off until the person confirms the download. The confirm step states the about 2 GB download, CPU use, and about 16 GB of RAM. After it is on, General shows index-after-transcript, index-after-summary, and idle catch-up, plus Index all and Rebuild. Rebuild asks first. The markdown export and the models live under userData, outside `recordings/<id>/`.
 - **Providers** is the Voice and AI cards.
 - **Calendars** is Connect / Disconnect and the upload checkboxes.
 
@@ -66,6 +68,7 @@ recordings/<id>/
   audio.mp3          # durable mix after Stop
   transcript.json    # STT result and diarization segments
   summary.md         # minutes and actions
+  search.json        # optional; pending, indexed, or error after meeting search
 ```
 
 `audio.wav` exists only while a recording is in progress, and on a folder whose MP3 encode failed. Older flat `*.wav` files are moved into folders on the first library scan when that is possible. A folder that still has `audio.wav` and no `audio.mp3` is encoded on that scan. A failed encode leaves the WAV, and the recording still lists.

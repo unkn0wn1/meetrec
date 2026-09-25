@@ -5,7 +5,7 @@
 1. `npm run typecheck` — `tsc` for main/preload plus `vue-tsc` for the renderer.
 2. `npm run lint:check` — ESLint flat config (Vue + TypeScript). `npm run lint` auto-fixes.
 3. `npm run format:check` — Prettier. `npm run format` writes.
-4. `npm run test` — Vitest. Pure helpers only (paths, duration, Pulse parse, Windows device lists, session status, folder layout, WAV migration, transcript segments, minutes markdown, provider selection, settings migration, provider registry, role probes, xAI device-code parsing, secret-bag codec, ffmpeg binary resolution). No Electron window required.
+4. `npm run test` — Vitest. Pure helpers only (paths, duration, Pulse parse, Windows device lists, session status, folder layout, WAV migration, transcript segments, minutes markdown, provider selection, settings migration, provider registry, role probes, xAI device-code parsing, secret-bag codec, ffmpeg binary resolution, meeting-search export, qmd argv, hit parsing). No Electron window required.
 5. `npm run guard:file-size` — fail if a source file under `electron/`, `src/`, or `scripts/` exceeds 400 lines.
 
 ## Hooks

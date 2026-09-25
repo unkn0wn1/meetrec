@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BrandMark from '@/components/BrandMark.vue'
+import MeetingSearchDialog from '@/components/MeetingSearchDialog.vue'
 import ModeNav from '@/components/ModeNav.vue'
 import UpdateBanner from '@/components/UpdateBanner.vue'
 
@@ -22,5 +23,6 @@ defineProps<{
     </header>
     <UpdateBanner />
     <slot />
+    <MeetingSearchDialog />
   </main>
 </template>

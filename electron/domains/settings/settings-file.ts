@@ -15,6 +15,11 @@ import {
   type ProviderId
 } from '../providers/ids'
 import { coerceModel } from '../providers/registry'
+import {
+  defaultMeetingSearchPrefs,
+  parseMeetingSearchPrefs,
+  type MeetingSearchPrefs
+} from './meeting-search-prefs'
 
 export interface ProviderModels {
   voice: string
@@ -40,6 +45,7 @@ export interface AppSettings {
   autoRecord: boolean
   silenceAutoStop: boolean
   silenceAutoStopSeconds: number
+  meetingSearch: MeetingSearchPrefs
 }
 
 export interface ParsedAppSettings {
@@ -56,7 +62,8 @@ export function defaultAppSettings(): AppSettings {
     destination: 'local',
     autoRecord: false,
     silenceAutoStop: false,
-    silenceAutoStopSeconds: SILENCE_AUTO_STOP_SECONDS_DEFAULT
+    silenceAutoStopSeconds: SILENCE_AUTO_STOP_SECONDS_DEFAULT,
+    meetingSearch: defaultMeetingSearchPrefs()
   }
 }
 
@@ -96,6 +103,7 @@ export function parseAppSettings(raw: string): ParsedAppSettings {
   const record = parsed as Record<string, unknown>
   const hasBoth = 'voiceProviderId' in record && 'aiProviderId' in record
   const modelCache = parseModelCache(record.modelCache)
+  const meeting = parseMeetingSearchPrefs(record.meetingSearch)
   if (!hasBoth) {
     const provider = isProviderId(record.provider) ? record.provider : DEFAULT_PROVIDER
     const general = generalPrefs(record)
@@ -108,7 +116,8 @@ export function parseAppSettings(raw: string): ParsedAppSettings {
         destination: general.destination,
         autoRecord: general.autoRecord,
         silenceAutoStop: general.silenceAutoStop,
-        silenceAutoStopSeconds: general.silenceAutoStopSeconds
+        silenceAutoStopSeconds: general.silenceAutoStopSeconds,
+        meetingSearch: meeting.prefs
       },
       legacy: true
     }
@@ -122,10 +131,12 @@ export function parseAppSettings(raw: string): ParsedAppSettings {
     destination: general.destination,
     autoRecord: general.autoRecord,
     silenceAutoStop: general.silenceAutoStop,
-    silenceAutoStopSeconds: general.silenceAutoStopSeconds
+    silenceAutoStopSeconds: general.silenceAutoStopSeconds,
+    meetingSearch: meeting.prefs
   }
   const legacy =
     general.legacy ||
+    meeting.legacy ||
     record.voiceProviderId !== settings.voiceProviderId ||
     record.aiProviderId !== settings.aiProviderId ||
     !modelsMatch(record.models, settings.models) ||
