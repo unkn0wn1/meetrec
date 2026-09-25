@@ -49,12 +49,12 @@ When `ffmpeg -devices` lists `wasapi` and `ffmpeg -h demuxer=wasapi` shows a loo
 
 The Record tab shows the note while recording. A calendar start that is microphone-only leaves the prompt open with the same note. Stop keeps the note on `meta.json`, and Recording detail shows it. This is the existing mic-only fallback, not a new capture graph.
 
-Stop writes `q` to ffmpeg's stdin so the WAV header is flushed.
+Stop writes `q` to ffmpeg's stdin so the WAV header is flushed. After that, the recording domain (not the capture backend) encodes 96 kbps MP3 and deletes the WAV.
 
 ## Stop helpers (recording domain, not capture)
 
 - Manual Stop (shipped)
 - Calendar end plus 2 minutes, only for a recording started from that event. Tray Stop or the Record Stop cancels it.
-- Near-silence for the Settings threshold when **Stop recording after sustained silence** is on (default off, 30–600 seconds, default 120). Recording tails the WAV (`pcm_s16le`, 48 kHz) and stops through the normal stop path. Capture backends stay start/stop only.
+- Near-silence for the Settings threshold when **Stop recording after sustained silence** is on (default off, 30–600 seconds, default 120). Recording tails the live WAV (`pcm_s16le`, 48 kHz) and stops through the normal stop path. It does not tail the MP3. Capture backends stay start/stop only.
 
 Capture backend only starts, stops, and reports capture mode plus a note. Policy lives in `recording`.

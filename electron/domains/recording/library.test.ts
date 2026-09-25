@@ -7,6 +7,26 @@ import { recordingLayout } from './layout'
 import { emptyMeta, type RecordingUploads } from './meta'
 import { scanRecordings, writeMeta } from './store'
 
+describe('LibraryService.detail audio url', () => {
+  const dirs: string[] = []
+
+  afterEach(() => {
+    for (const dir of dirs) rmSync(dir, { recursive: true, force: true })
+    dirs.length = 0
+  })
+
+  it('points playback at audio.mp3 when that file is present', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-lib-url-'))
+    dirs.push(root)
+    const id = '2026-09-24T10-00-00-000Z-abcdef'
+    const layout = recordingLayout(root, id)
+    await writeMeta(root, emptyMeta({ id, startedAt: '2026-09-24T10:00:00.000Z' }))
+    writeFileSync(layout.audioPath, 'mp3')
+    const detail = await new LibraryService(() => root).detail(id)
+    expect(detail.audioUrl).toBe(`meetrec://recording/${encodeURIComponent(id)}/audio.mp3`)
+  })
+})
+
 describe('LibraryService.delete', () => {
   const dirs: string[] = []
 

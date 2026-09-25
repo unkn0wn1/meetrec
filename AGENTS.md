@@ -43,7 +43,7 @@ Linux records with ffmpeg against Pulse (PipeWire). Prefer a mix of the default 
 
 Windows records with ffmpeg. DirectShow mixes the mic and a Stereo Mix / loopback capture device. If `ffmpeg -devices` lists a `wasapi` demuxer whose help shows a loopback option, that path is used instead. If system audio is unavailable, capture stays mic-only (no extra mix graph) and the note tells the user that, including how to enable Stereo Mix or use a build with WASAPI loopback. That note is user-facing and must not contain a TODO. Live Windows smoke is manual.
 
-A recording is not done until Start writes `recordings/<id>/audio.wav` and Stop leaves a playable WAV plus `meta.json`. Older flat `*.wav` files are migrated into that layout on library scan. Transcription and summary HTTP stay in main.
+A recording is not done until Start writes `recordings/<id>/audio.wav` and Stop leaves a playable `audio.mp3`, deletes the WAV, and writes `meta.json`. Older flat `*.wav` files are folded into folders and then encoded on library scan. Transcription and summary HTTP stay in main.
 
 ## Docs
 

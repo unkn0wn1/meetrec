@@ -39,19 +39,19 @@ npm install
 npm run dev
 ```
 
-The window opens on **Library**. Switch to **Record**, press Start, then Stop. Start creates a folder. Stop writes `audio.wav` and `meta.json`.
+The window opens on **Library**. Switch to **Record**, press Start, then Stop. Start creates a folder and a capture WAV. Stop encodes `audio.mp3`, deletes the WAV, and writes `meta.json`.
 
 Recordings live in Electron's `userData` directory. On Linux that is `~/.config/meetrec`. On Windows it is `%APPDATA%\meetrec`.
 
 ```
 recordings/<id>/
-  audio.wav
+  audio.mp3
   meta.json
   transcript.json    # after Transcribe
   summary.md         # after Generate summary
 ```
 
-Older flat `*.wav` files in that recordings directory are moved into folders the first time Library scans.
+Older flat `*.wav` files in that recordings directory are moved into folders the first time Library scans. A folder that still has `audio.wav` is encoded to `audio.mp3` on that scan, and the WAV is deleted.
 
 ### Linux sandbox
 

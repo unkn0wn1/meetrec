@@ -5,7 +5,10 @@ describe('recording layout', () => {
   it('places audio, meta, transcript, and summary inside the id folder', () => {
     const layout = recordingLayout('/data/recordings', '2026-09-22T12-00-00-000Z-abc123')
     expect(layout.dir).toBe('/data/recordings/2026-09-22T12-00-00-000Z-abc123')
-    expect(layout.audioPath).toBe('/data/recordings/2026-09-22T12-00-00-000Z-abc123/audio.wav')
+    expect(layout.audioPath).toBe('/data/recordings/2026-09-22T12-00-00-000Z-abc123/audio.mp3')
+    expect(layout.captureAudioPath).toBe(
+      '/data/recordings/2026-09-22T12-00-00-000Z-abc123/audio.wav'
+    )
     expect(layout.metaPath.endsWith('/meta.json')).toBe(true)
     expect(layout.transcriptPath.endsWith('/transcript.json')).toBe(true)
     expect(layout.summaryPath.endsWith('/summary.md')).toBe(true)

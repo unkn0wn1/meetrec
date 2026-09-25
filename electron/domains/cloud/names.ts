@@ -5,11 +5,17 @@ export function artifactName(input: {
   title: string | null
   id: string
   kind: 'audio' | 'transcript' | 'summary'
+  audioExtension?: 'mp3' | 'wav'
 }): string {
   const date = utcDate(input.startedAt)
   const slug = slugTitle(input.title)
   const short = shortId(input.id)
-  const ext = input.kind === 'audio' ? 'wav' : input.kind === 'transcript' ? 'json' : 'md'
+  const ext =
+    input.kind === 'audio'
+      ? (input.audioExtension ?? 'mp3')
+      : input.kind === 'transcript'
+        ? 'json'
+        : 'md'
   return `${date}-${slug}-${short}-${input.kind}.${ext}`
 }
 

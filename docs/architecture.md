@@ -19,7 +19,7 @@
 
 - **Renderer:** UI only. Pinia holds view state and calls `window.meetrec`. Provider HTTP stays in main.
 - **Preload:** `contextBridge` exposes a narrow typed API (`window.meetrec.*`).
-- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP (STT upload is mono 16 kHz MP3 from the WAV, and a file over 24 MB is split in the temp directory before upload), Google and Microsoft calendar polls, the pre-meeting prompt, optional Drive / OneDrive upload, and update checks for packaged NSIS and AppImage builds.
+- **Main:** window and tray, start and stop capture, library files, settings and secrets, speech-to-text and summary HTTP (the library file is 96 kbps MP3 and transcribe uploads that file; a legacy WAV is still compressed to mono 16 kHz 48 kbps; a file over 24 MB is still split in a temp directory), Google and Microsoft calendar polls, the pre-meeting prompt, optional Drive / OneDrive upload, and update checks for packaged NSIS and AppImage builds.
 - **Library job progress:** transcribe and summarize push `library:job-progress` to the calling window (`id`, `job`, `stage`, `startedAt`). The event may include `message`. `stage: null` clears the row. The renderer shows that text instead of the stage label, plus elapsed time. Multi-piece transcribe uses it for `Uploading chunk i of n` and `Waiting for model (chunk i of n)`. There is still no percent.
 - **Capture backends:** one interface, three implementations selected by `process.platform`. The macOS implementation rejects; `RecordingStatus.captureSupported` is false so the UI disables Start.
 
@@ -43,7 +43,7 @@ One domain, one folder. Cross-domain calls go through small facades or IPC handl
 
 One folder per recording (see [recorder-ui.md](recorder-ui.md)), under Electron `userData`:
 
-- `recordings/<id>/audio.wav`
+- `recordings/<id>/audio.mp3` — durable library audio. Start writes `audio.wav` in that folder; Stop encodes 96 kbps MP3 and deletes the WAV.
 - `recordings/<id>/meta.json`
 - `recordings/<id>/transcript.json`
 - `recordings/<id>/summary.md`

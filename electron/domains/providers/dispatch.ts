@@ -26,7 +26,7 @@ export async function transcribeWithAuth(input: {
     if (!needsSttSplit(info.size)) {
       return await transcribeSingle(input, prepared)
     }
-    const split = await splitPreparedMp3(prepared.path)
+    const split = await splitPreparedMp3(prepared.path, { bitrate: prepared.bitrate })
     const createdAt = new Date().toISOString()
     return await transcribeChunks({
       chunks: split.chunks,

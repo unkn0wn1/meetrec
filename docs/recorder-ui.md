@@ -63,12 +63,12 @@ Under Electron `userData` (on Linux, `~/.config/meetrec`):
 ```
 recordings/<id>/
   meta.json          # id, startedAt, endedAt, durationMs, speakers[], topic?, paths
-  audio.wav          # mixed capture
+  audio.mp3          # durable mix after Stop
   transcript.json    # STT result and diarization segments
   summary.md         # minutes and actions
 ```
 
-Older flat `*.wav` files are moved into folders on the first library scan when that is possible.
+`audio.wav` exists only while a recording is in progress, and on a folder whose MP3 encode failed. Older flat `*.wav` files are moved into folders on the first library scan when that is possible. A folder that still has `audio.wav` and no `audio.mp3` is encoded on that scan. A failed encode leaves the WAV, and the recording still lists.
 
 ## Providers (main process only)
 

@@ -24,8 +24,9 @@ describe('flat wav migration', () => {
     expect(moved).toEqual([id])
 
     const layout = recordingLayout(root, id)
-    expect(readFileSync(layout.audioPath).length).toBeGreaterThan(44)
-    const listed = await scanRecordings(root)
+    expect(readFileSync(layout.captureAudioPath).length).toBeGreaterThan(44)
+    expect(JSON.parse(readFileSync(layout.metaPath, 'utf8')).paths.audio).toBe('audio.wav')
+    const listed = await scanRecordings(root, { encode: swapInMp3 })
     expect(listed).toHaveLength(1)
     expect(listed[0]?.meta.id).toBe(id)
     expect(listed[0]?.meta.startedAt).toBe('2026-09-22T13:58:02.629Z')
@@ -41,10 +42,57 @@ describe('flat wav migration', () => {
     await migrateFlatWavs(root)
     const second = await migrateFlatWavs(root)
     expect(second).toEqual([])
-    const listed = await scanRecordings(root)
+    const listed = await scanRecordings(root, { encode: swapInMp3 })
     expect(listed.map((item) => item.meta.id)).toEqual([id])
+    expect(listed[0]?.meta.paths.audio).toBe('audio.mp3')
+    expect(readFileSync(recordingLayout(root, id).audioPath, 'utf8')).toBe('mp3')
+  })
+
+  it('keeps a wav when library encode fails', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-lib-'))
+    dirs.push(root)
+    const id = '2026-09-22T15-12-54-630Z-816c7b'
+    writeFileSync(join(root, `${id}.wav`), wavBytes(16000, 1, 16, 1600))
+    await migrateFlatWavs(root)
+    const layout = recordingLayout(root, id)
+    const listed = await scanRecordings(root, {
+      encode: async () => {
+        throw new Error('ffmpeg failed')
+      }
+    })
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.meta.paths.audio).toBe('audio.wav')
+    expect(readFileSync(layout.captureAudioPath).length).toBeGreaterThan(44)
+    expect(() => readFileSync(layout.audioPath)).toThrow()
+  })
+
+  it('does not encode again when the mp3 is already present', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'meetrec-lib-'))
+    dirs.push(root)
+    const id = '2026-09-22T15-12-54-630Z-816c7b'
+    writeFileSync(join(root, `${id}.wav`), wavBytes(16000, 1, 16, 1600))
+    await migrateFlatWavs(root)
+    let calls = 0
+    await scanRecordings(root, {
+      encode: async (wav, mp3) => {
+        calls += 1
+        await swapInMp3(wav, mp3)
+      }
+    })
+    await scanRecordings(root, {
+      encode: async () => {
+        calls += 1
+      }
+    })
+    expect(calls).toBe(1)
   })
 })
+
+function swapInMp3(wav: string, mp3: string): Promise<void> {
+  writeFileSync(mp3, 'mp3')
+  rmSync(wav)
+  return Promise.resolve()
+}
 
 describe('deleteRecording', () => {
   const dirs: string[] = []
